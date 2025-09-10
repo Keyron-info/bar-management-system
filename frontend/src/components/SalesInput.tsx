@@ -23,16 +23,24 @@ const SalesInput: React.FC<SalesInputProps> = ({ onSalesAdded }) => {
     drink_count: 0,
     champagne_count: 0,
     catch_count: 0,
-    work_hours: 0,
+    work_hours: 0
   });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
 
+  // 認証ヘッダーを含むリクエストを作成
+  const createAuthenticatedRequest = () => {
+    const token = localStorage.getItem('token');
+    return axios.create({
+      headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+    });
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type } = e.target;
+    const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'number' ? Number(value) : value
+      [name]: name === 'employee_name' ? value : Number(value)
     }));
   };
 
@@ -40,11 +48,13 @@ const SalesInput: React.FC<SalesInputProps> = ({ onSalesAdded }) => {
     e.preventDefault();
     setLoading(true);
     setMessage('');
-
+    
     try {
-      await axios.post('https://bar-management-system.onrender.com/api/sales', formData);
+      const axiosInstance = createAuthenticatedRequest();
+      await axiosInstance.post('https://bar-management-system.onrender.com/api/sales', formData);
       setMessage('✅ 売上データを保存しました');
       
+      // フォームをリセット
       setFormData({
         date: new Date().toISOString().split('T')[0],
         employee_name: '',
@@ -52,12 +62,23 @@ const SalesInput: React.FC<SalesInputProps> = ({ onSalesAdded }) => {
         drink_count: 0,
         champagne_count: 0,
         catch_count: 0,
-        work_hours: 0,
+        work_hours: 0
       });
       
+      // 親コンポーネントに通知
       onSalesAdded();
-    } catch (error) {
-      setMessage('❌ 保存に失敗しました');
+      
+    } catch (error: any) {
+      if (error.response?.status === 401) {
+        setMessage('❌ 認証が必要です。再度ログインしてください');
+        // トークンが無効な場合はローカルストレージをクリア
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.reload();
+      } else {
+        setMessage('❌ 売上データの保存に失敗しました');
+      }
+      console.error('Sales creation error:', error);
     } finally {
       setLoading(false);
     }
@@ -68,7 +89,7 @@ const SalesInput: React.FC<SalesInputProps> = ({ onSalesAdded }) => {
       <h2>📊 売上データ入力</h2>
       
       <form onSubmit={handleSubmit}>
-        <div className="form-row">
+        <div className="form-group">
           <label>
             日付:
             <input
@@ -79,7 +100,9 @@ const SalesInput: React.FC<SalesInputProps> = ({ onSalesAdded }) => {
               required
             />
           </label>
-          
+        </div>
+
+        <div className="form-group">
           <label>
             従業員名:
             <input
@@ -87,13 +110,13 @@ const SalesInput: React.FC<SalesInputProps> = ({ onSalesAdded }) => {
               name="employee_name"
               value={formData.employee_name}
               onChange={handleChange}
-              placeholder="名前を入力"
+              placeholder="山田太郎"
               required
             />
           </label>
         </div>
 
-        <div className="form-row">
+        <div className="form-group">
           <label>
             総売上 (円):
             <input
@@ -102,10 +125,13 @@ const SalesInput: React.FC<SalesInputProps> = ({ onSalesAdded }) => {
               value={formData.total_sales}
               onChange={handleChange}
               min="0"
+              step="100"
               required
             />
           </label>
-          
+        </div>
+
+        <div className="form-group">
           <label>
             稼働時間 (時間):
             <input
@@ -114,12 +140,13 @@ const SalesInput: React.FC<SalesInputProps> = ({ onSalesAdded }) => {
               value={formData.work_hours}
               onChange={handleChange}
               min="0"
-              max="24"
+              step="0.5"
+              required
             />
           </label>
         </div>
 
-        <div className="form-row">
+        <div className="form-group">
           <label>
             ドリンク杯数:
             <input
@@ -130,7 +157,9 @@ const SalesInput: React.FC<SalesInputProps> = ({ onSalesAdded }) => {
               min="0"
             />
           </label>
-          
+        </div>
+
+        <div className="form-group">
           <label>
             シャンパン杯数:
             <input
@@ -143,7 +172,7 @@ const SalesInput: React.FC<SalesInputProps> = ({ onSalesAdded }) => {
           </label>
         </div>
 
-        <div className="form-row">
+        <div className="form-group">
           <label>
             キャッチ数:
             <input
@@ -156,17 +185,13 @@ const SalesInput: React.FC<SalesInputProps> = ({ onSalesAdded }) => {
           </label>
         </div>
 
-        <button type="submit" disabled={loading}>
-          {loading ? '保存中...' : '💾 売上データを保存'}
+        <button type="submit" disabled={loading} className="submit-button">
+          {loading ? '保存中...' : '📝 売上データを保存'}
         </button>
       </form>
 
       {message && (
-        <div className="message" style={{ 
-          color: message.includes('✅') ? 'green' : 'red',
-          marginTop: '10px',
-          fontWeight: 'bold'
-        }}>
+        <div className={`message ${message.includes('✅') ? 'success' : 'error'}`}>
           {message}
         </div>
       )}
