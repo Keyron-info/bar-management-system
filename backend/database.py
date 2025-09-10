@@ -1,6 +1,7 @@
 from sqlalchemy import create_engine, Column, Integer, String, Date, DateTime, Boolean
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy import Column, Integer, String, DateTime, Float
 from datetime import datetime
 import os
 
@@ -43,7 +44,7 @@ class DailySales(Base):
     drink_count = Column(Integer, default=0)  # ドリンク杯数
     champagne_count = Column(Integer, default=0)  # シャンパン杯数
     catch_count = Column(Integer, default=0)  # キャッチ数
-    work_hours = Column(float, nullable=False) # 稼働時間（分）
+    work_hours = Column(Float, nullable=False) # 稼働時間（分）
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
