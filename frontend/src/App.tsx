@@ -1,9 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
 import Auth from './components/Auth';
 import SalesInput from './components/SalesInput';
 import SalesSummary from './components/SalesSummary';
 import './App.css';
+
+// 本番環境のAPI URL
+const API_BASE_URL = 'https://bar-management-system.onrender.com';
 
 interface HealthResponse {
   status: string;
@@ -44,30 +47,38 @@ function App() {
   const createAuthenticatedRequest = () => {
     if (token) {
       return axios.create({
+        baseURL: API_BASE_URL,
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
     }
-    return axios;
+    return axios.create({
+      baseURL: API_BASE_URL
+    });
   };
 
   const fetchHealth = async () => {
     try {
-      const response = await axios.get<HealthResponse>('https://bar-management-system.onrender.com/api/health');
+      const response = await axios.get<HealthResponse>(`${API_BASE_URL}/api/health`);
       setHealthData(response.data);
     } catch (err) {
       setError('APIとの通信に失敗しました');
+      console.error('Health check failed:', err);
     }
   };
 
   const fetchSales = async () => {
     try {
       const axiosInstance = createAuthenticatedRequest();
-      const response = await axiosInstance.get<SalesData[]>('https://bar-management-system.onrender.com/api/sales');
+      const response = await axiosInstance.get<SalesData[]>('/api/sales');
       setSalesData(response.data);
     } catch (err) {
-      console.error('売上データの取得に失敗しました');
+      console.error('売上データの取得に失敗しました:', err);
+      // 認証エラーの場合はログアウト
+      if (axios.isAxiosError(err) && err.response?.status === 401) {
+        handleLogout();
+      }
     }
   };
 
@@ -76,7 +87,7 @@ function App() {
     setToken(accessToken);
     setIsAuthenticated(true);
     
-    // ローカルストレージに保存（オプション）
+    // ローカルストレージに保存
     localStorage.setItem('token', accessToken);
     localStorage.setItem('user', JSON.stringify(userData));
   };
@@ -101,7 +112,7 @@ function App() {
       if (savedToken && savedUser) {
         try {
           // トークンの有効性を確認
-          const response = await axios.get('https://bar-management-system.onrender.com/api/auth/me', {
+          await axios.get(`${API_BASE_URL}/api/auth/me`, {
             headers: { 'Authorization': `Bearer ${savedToken}` }
           });
           
@@ -112,6 +123,7 @@ function App() {
           // トークンが無効な場合はクリア
           localStorage.removeItem('token');
           localStorage.removeItem('user');
+          console.error('Token validation failed:', err);
         }
       }
       
@@ -124,7 +136,7 @@ function App() {
 
   // 認証状態が変わったときに売上データを取得
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && token) {
       fetchSales();
     }
   }, [isAuthenticated, token]);
