@@ -27,13 +27,27 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:5173", 
         "http://localhost:3000",
+        "https://bar-management-system-two.vercel.app",  # 具体的なVercelドメイン
         "https://*.vercel.app",
         "https://*.netlify.app"
     ],
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
+
+# プリフライトリクエストの明示的処理
+@app.options("/{path:path}")
+async def handle_options(path: str):
+    return JSONResponse(
+        content={},
+        headers={
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+            "Access-Control-Allow-Headers": "*",
+            "Access-Control-Max-Age": "86400",
+        }
+    )
 
 # UTF-8レスポンス用ミドルウェア
 @app.middleware("http")
@@ -65,26 +79,33 @@ async def health_check():
 # ユーザー登録API
 @app.post("/api/auth/register", response_model=UserResponse)
 def register_user(user_data: UserCreate, db: Session = Depends(get_db)):
-    # メールアドレスの重複チェック
-    existing_user = db.query(User).filter(User.email == user_data.email).first()
-    if existing_user:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="このメールアドレスは既に登録されています"
+    try:
+        # メールアドレスの重複チェック
+        existing_user = db.query(User).filter(User.email == user_data.email).first()
+        if existing_user:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="このメールアドレスは既に登録されています"
+            )
+        
+        # パスワードをハッシュ化してユーザーを作成
+        hashed_password = get_password_hash(user_data.password)
+        db_user = User(
+            email=user_data.email,
+            password_hash=hashed_password,
+            name=user_data.name,
+            role=user_data.role
         )
-    
-    # パスワードをハッシュ化してユーザーを作成
-    hashed_password = get_password_hash(user_data.password)
-    db_user = User(
-        email=user_data.email,
-        password_hash=hashed_password,
-        name=user_data.name,
-        role=user_data.role
-    )
-    db.add(db_user)
-    db.commit()
-    db.refresh(db_user)
-    return db_user
+        db.add(db_user)
+        db.commit()
+        db.refresh(db_user)
+        return db_user
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"ユーザー登録に失敗しました: {str(e)}"
+        )
 
 # ログインAPI
 @app.post("/api/auth/login", response_model=Token)
@@ -118,21 +139,28 @@ def create_sales(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
-    # 新しい売上データをデータベースに保存
-    db_sales = DailySales(
-        date=sales_data.date,
-        employee_name=sales_data.employee_name,
-        total_sales=sales_data.total_sales,
-        drink_count=sales_data.drink_count,
-        champagne_count=sales_data.champagne_count,
-        catch_count=sales_data.catch_count,
-        work_hours=sales_data.work_hours,
-        created_by=current_user.id  # 作成者を記録
-    )
-    db.add(db_sales)
-    db.commit()
-    db.refresh(db_sales)
-    return db_sales
+    try:
+        # 新しい売上データをデータベースに保存
+        db_sales = DailySales(
+            date=sales_data.date,
+            employee_name=sales_data.employee_name,
+            total_sales=sales_data.total_sales,
+            drink_count=sales_data.drink_count,
+            champagne_count=sales_data.champagne_count,
+            catch_count=sales_data.catch_count,
+            work_hours=sales_data.work_hours,
+            created_by=current_user.id  # 作成者を記録
+        )
+        db.add(db_sales)
+        db.commit()
+        db.refresh(db_sales)
+        return db_sales
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"売上データの保存に失敗しました: {str(e)}"
+        )
 
 # 売上データ取得API（認証必須）
 @app.get("/api/sales", response_model=List[SalesResponse])
@@ -144,11 +172,11 @@ def get_sales(
 ):
     # 店長は全データ、従業員は自分のデータのみ表示
     if current_user.role == "manager":
-        sales = db.query(DailySales).offset(skip).limit(limit).all()
+        sales = db.query(DailySales).order_by(DailySales.date.desc()).offset(skip).limit(limit).all()
     else:
         sales = db.query(DailySales).filter(
             DailySales.employee_name == current_user.name
-        ).offset(skip).limit(limit).all()
+        ).order_by(DailySales.date.desc()).offset(skip).limit(limit).all()
     return sales
 
 from sqlalchemy import func, extract
@@ -277,6 +305,11 @@ def delete_sales(
     db.delete(sales)
     db.commit()
     return {"message": "売上データを削除しました"}
+
+# デバッグ用エンドポイント
+@app.get("/api/debug/cors")
+async def debug_cors():
+    return {"message": "CORS test successful", "status": "OK"}
 
 if __name__ == "__main__":
     # 本番環境ではPORTを環境変数から取得
