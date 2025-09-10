@@ -10,7 +10,7 @@ class SalesInput(BaseModel):
     drink_count: int = 0
     champagne_count: int = 0
     catch_count: int = 0
-    work_hours: int = 0
+    work_hours: float = 0
 
 # 売上データ応答用スキーマ
 class SalesResponse(BaseModel):
