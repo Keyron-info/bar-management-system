@@ -42,7 +42,7 @@ const Auth: React.FC<AuthProps> = ({ onAuthSuccess }) => {
         ? { email: formData.email, password: formData.password }
         : formData;
 
-      const response = await axios.post(`http://localhost:8002${endpoint}`, data);
+      const response = await axios.post(`https://bar-management-system.onrender.com${endpoint}`, data);
       
       if (isLogin) {
         // ログイン成功
