@@ -32,6 +32,7 @@ const SalesInput: React.FC<SalesInputProps> = ({ onSalesAdded }) => {
   const createAuthenticatedRequest = () => {
     const token = localStorage.getItem('token');
     return axios.create({
+      baseURL: 'https://bar-management-system.onrender.com',
       headers: token ? { 'Authorization': `Bearer ${token}` } : {}
     });
   };
@@ -40,7 +41,7 @@ const SalesInput: React.FC<SalesInputProps> = ({ onSalesAdded }) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: name === 'employee_name' ? value : Number(value)
+      [name]: name === 'employee_name' ? value : (value === '' ? 0 : parseFloat(value) || 0)
     }));
   };
 
@@ -49,9 +50,31 @@ const SalesInput: React.FC<SalesInputProps> = ({ onSalesAdded }) => {
     setLoading(true);
     setMessage('');
     
+    // データ検証
+    if (!formData.employee_name.trim()) {
+      setMessage('❌ 従業員名を入力してください');
+      setLoading(false);
+      return;
+    }
+    
+    // 送信するデータを明示的に構成
+    const submitData = {
+      date: formData.date,
+      employee_name: formData.employee_name.trim(),
+      total_sales: Number(formData.total_sales),
+      drink_count: Number(formData.drink_count),
+      champagne_count: Number(formData.champagne_count),
+      catch_count: Number(formData.catch_count),
+      work_hours: Number(formData.work_hours)
+    };
+    
+    console.log('Sending data:', submitData);
+    
     try {
       const axiosInstance = createAuthenticatedRequest();
-      await axiosInstance.post('https://bar-management-system.onrender.com/api/sales', formData);
+      const response = await axiosInstance.post('/api/sales', submitData);
+      console.log('Success response:', response.data);
+      
       setMessage('✅ 売上データを保存しました');
       
       // フォームをリセット
@@ -69,16 +92,19 @@ const SalesInput: React.FC<SalesInputProps> = ({ onSalesAdded }) => {
       onSalesAdded();
       
     } catch (error: any) {
+      console.error('Sales creation error details:', error);
+      console.error('Error response:', error.response?.data);
+      
       if (error.response?.status === 401) {
         setMessage('❌ 認証が必要です。再度ログインしてください');
-        // トークンが無効な場合はローカルストレージをクリア
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         window.location.reload();
+      } else if (error.response?.status === 422) {
+        setMessage(`❌ データ形式エラー: ${error.response?.data?.detail || '入力データを確認してください'}`);
       } else {
-        setMessage('❌ 売上データの保存に失敗しました');
+        setMessage(`❌ 売上データの保存に失敗しました (${error.response?.status || error.message})`);
       }
-      console.error('Sales creation error:', error);
     } finally {
       setLoading(false);
     }
@@ -122,7 +148,7 @@ const SalesInput: React.FC<SalesInputProps> = ({ onSalesAdded }) => {
             <input
               type="number"
               name="total_sales"
-              value={formData.total_sales}
+              value={formData.total_sales || ''}
               onChange={handleChange}
               min="0"
               step="100"
@@ -137,7 +163,7 @@ const SalesInput: React.FC<SalesInputProps> = ({ onSalesAdded }) => {
             <input
               type="number"
               name="work_hours"
-              value={formData.work_hours}
+              value={formData.work_hours || ''}
               onChange={handleChange}
               min="0"
               step="0.5"
@@ -152,7 +178,7 @@ const SalesInput: React.FC<SalesInputProps> = ({ onSalesAdded }) => {
             <input
               type="number"
               name="drink_count"
-              value={formData.drink_count}
+              value={formData.drink_count || ''}
               onChange={handleChange}
               min="0"
             />
@@ -165,7 +191,7 @@ const SalesInput: React.FC<SalesInputProps> = ({ onSalesAdded }) => {
             <input
               type="number"
               name="champagne_count"
-              value={formData.champagne_count}
+              value={formData.champagne_count || ''}
               onChange={handleChange}
               min="0"
             />
@@ -178,7 +204,7 @@ const SalesInput: React.FC<SalesInputProps> = ({ onSalesAdded }) => {
             <input
               type="number"
               name="catch_count"
-              value={formData.catch_count}
+              value={formData.catch_count || ''}
               onChange={handleChange}
               min="0"
             />
