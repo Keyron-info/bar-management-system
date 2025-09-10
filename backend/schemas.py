@@ -21,7 +21,7 @@ class SalesResponse(BaseModel):
     drink_count: int
     champagne_count: int
     catch_count: int
-    work_hours: int
+    work_hours: float
     
     class Config:
         from_attributes = True  # SQLAlchemyモデルとの連携
