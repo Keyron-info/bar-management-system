@@ -54,7 +54,7 @@ function App() {
 
   const fetchHealth = async () => {
     try {
-      const response = await axios.get<HealthResponse>('http://localhost:8002/api/health');
+      const response = await axios.get<HealthResponse>('https://bar-management-system.onrender.com/api/health');
       setHealthData(response.data);
     } catch (err) {
       setError('APIとの通信に失敗しました');
@@ -64,7 +64,7 @@ function App() {
   const fetchSales = async () => {
     try {
       const axiosInstance = createAuthenticatedRequest();
-      const response = await axiosInstance.get<SalesData[]>('http://localhost:8002/api/sales');
+      const response = await axiosInstance.get<SalesData[]>('https://bar-management-system.onrender.com/api/sales');
       setSalesData(response.data);
     } catch (err) {
       console.error('売上データの取得に失敗しました');
@@ -101,7 +101,7 @@ function App() {
       if (savedToken && savedUser) {
         try {
           // トークンの有効性を確認
-          const response = await axios.get('http://localhost:8002/api/auth/me', {
+          const response = await axios.get('https://bar-management-system.onrender.com/api/auth/me', {
             headers: { 'Authorization': `Bearer ${savedToken}` }
           });
           

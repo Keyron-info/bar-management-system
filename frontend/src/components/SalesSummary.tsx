@@ -35,7 +35,7 @@ const SalesSummary: React.FC = () => {
 
   const fetchDailySummary = async (date: string) => {
     try {
-      const response = await axios.get(`http://localhost:8002/api/sales/daily-summary?target_date=${date}`);
+      const response = await axios.get(`https://bar-management-system.onrender.com/api/sales/daily-summary?target_date=${date}`);
       setDailySummary(response.data);
     } catch (error) {
       console.error('日次集計の取得に失敗しました');
@@ -45,7 +45,7 @@ const SalesSummary: React.FC = () => {
   const fetchMonthlySummary = async () => {
     try {
       const now = new Date();
-      const response = await axios.get(`http://localhost:8002/api/sales/monthly-summary?year=${now.getFullYear()}&month=${now.getMonth() + 1}`);
+      const response = await axios.get(`https://bar-management-system.onrender.com/api/sales/monthly-summary?year=${now.getFullYear()}&month=${now.getMonth() + 1}`);
       setMonthlySummary(response.data);
     } catch (error) {
       console.error('月次集計の取得に失敗しました');
@@ -55,7 +55,7 @@ const SalesSummary: React.FC = () => {
   const fetchEmployeeRanking = async () => {
     try {
       const now = new Date();
-      const response = await axios.get(`http://localhost:8002/api/sales/employee-ranking?year=${now.getFullYear()}&month=${now.getMonth() + 1}`);
+      const response = await axios.get(`https://bar-management-system.onrender.com/api/sales/employee-ranking?year=${now.getFullYear()}&month=${now.getMonth() + 1}`);
       setEmployeeRanking(response.data);
     } catch (error) {
       console.error('従業員ランキングの取得に失敗しました');
