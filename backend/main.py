@@ -140,7 +140,7 @@ def create_sales(
     current_user: User = Depends(get_current_active_user)
 ):
     try:
-        # 新しい売上データをデータベースに保存
+        # 新しい売上データをデータベースに保存（created_byフィールドを削除）
         db_sales = DailySales(
             date=sales_data.date,
             employee_name=sales_data.employee_name,
@@ -148,8 +148,7 @@ def create_sales(
             drink_count=sales_data.drink_count,
             champagne_count=sales_data.champagne_count,
             catch_count=sales_data.catch_count,
-            work_hours=sales_data.work_hours,
-            created_by=current_user.id  # 作成者を記録
+            work_hours=sales_data.work_hours
         )
         db.add(db_sales)
         db.commit()
@@ -287,7 +286,7 @@ def get_employee_ranking(
         for r in ranking
     ]
 
-# 売上データ削除API（認証必須、作成者または店長のみ）
+# 売上データ削除API（認証必須、店長のみ）
 @app.delete("/api/sales/{sales_id}")
 def delete_sales(
     sales_id: int,
@@ -298,8 +297,8 @@ def delete_sales(
     if not sales:
         raise HTTPException(status_code=404, detail="売上データが見つかりません")
     
-    # 権限チェック：店長または作成者のみ削除可能
-    if current_user.role != "manager" and sales.created_by != current_user.id:
+    # 権限チェック：店長のみ削除可能（created_byフィールドがないため）
+    if current_user.role != "manager":
         raise HTTPException(status_code=403, detail="この操作を実行する権限がありません")
     
     db.delete(sales)
