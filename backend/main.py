@@ -25,13 +25,7 @@ app = FastAPI(title="バー管理システム API", version="1.0.0")
 # CORS設定（本番環境対応）
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173", 
-        "http://localhost:3000",
-        "https://bar-management-system-two.vercel.app",
-        "https://*.vercel.app",
-        "https://*.netlify.app"
-    ],
+    allow_origins=["*"],  # 開発段階では全てのオリジンを許可
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
