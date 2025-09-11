@@ -103,7 +103,7 @@ const SalesInputWithPhoto: React.FC<SalesInputWithPhotoProps> = ({ onSalesAdded 
         formDataToSend.append('photo', selectedFile);
       }
 
-      const response = await axios.post(
+      await axios.post(
         'https://bar-management-system.onrender.com/api/sales-with-photo',
         formDataToSend,
         {
