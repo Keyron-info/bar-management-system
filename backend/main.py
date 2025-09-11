@@ -1,20 +1,16 @@
-from fastapi import FastAPI, Depends, HTTPException, status, File, UploadFile, Form
+from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, FileResponse
-from fastapi.staticfiles import StaticFiles
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import func, extract
-from typing import List, Optional
+from typing import List
 from datetime import timedelta, datetime, date
 import uvicorn
 import os
-import shutil
-from pathlib import Path
-import uuid
 
 # 既存のインポート
 from database import get_db, create_tables, DailySales, User
-from schemas import SalesInput, SalesResponse, UserCreate, UserLogin, UserResponse, Token, PhotoUploadResponse
+from schemas import SalesInput, SalesResponse, UserCreate, UserLogin, UserResponse, Token
 from auth import (
     get_password_hash, 
     authenticate_user, 
@@ -25,13 +21,6 @@ from auth import (
 )
 
 app = FastAPI(title="バー管理システム API", version="1.0.0")
-
-# 写真保存用ディレクトリの作成
-UPLOAD_DIRECTORY = "uploads"
-Path(UPLOAD_DIRECTORY).mkdir(exist_ok=True)
-
-# 静的ファイルの提供設定
-app.mount("/uploads", StaticFiles(directory=UPLOAD_DIRECTORY), name="uploads")
 
 # CORS設定（本番環境対応）
 app.add_middleware(
@@ -144,128 +133,7 @@ def login_user(user_data: UserLogin, db: Session = Depends(get_db)):
 def get_current_user_info(current_user: User = Depends(get_current_active_user)):
     return current_user
 
-# 写真アップロードAPI
-@app.post("/api/upload-photo", response_model=PhotoUploadResponse)
-async def upload_photo(
-    file: UploadFile = File(...),
-    current_user: User = Depends(get_current_active_user)
-):
-    # ファイル形式チェック
-    allowed_types = ["image/jpeg", "image/png", "image/gif", "image/webp"]
-    if file.content_type not in allowed_types:
-        raise HTTPException(
-            status_code=400, 
-            detail="サポートされていないファイル形式です。JPEG、PNG、GIF、WebPのみ対応しています。"
-        )
-    
-    # ファイルサイズチェック（10MB制限）
-    max_size = 10 * 1024 * 1024  # 10MB
-    contents = await file.read()
-    if len(contents) > max_size:
-        raise HTTPException(
-            status_code=400,
-            detail="ファイルサイズが大きすぎます。10MB以下のファイルをアップロードしてください。"
-        )
-    
-    # ファイル名生成（ユニークID + 元のファイル名）
-    file_extension = Path(file.filename).suffix
-    unique_filename = f"{uuid.uuid4()}{file_extension}"
-    file_path = Path(UPLOAD_DIRECTORY) / unique_filename
-    
-    try:
-        # ファイル保存
-        with open(file_path, "wb") as buffer:
-            buffer.write(contents)
-        
-        return PhotoUploadResponse(
-            filename=unique_filename,
-            file_path=str(file_path),
-            message="写真のアップロードが完了しました"
-        )
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"ファイルの保存に失敗しました: {str(e)}"
-        )
-
-# 写真付き売上データ投稿API
-@app.post("/api/sales-with-photo", response_model=SalesResponse)
-async def create_sales_with_photo(
-    date: str = Form(...),
-    employee_name: str = Form(...),
-    total_sales: int = Form(...),
-    drink_count: int = Form(0),
-    champagne_count: int = Form(0),
-    catch_count: int = Form(0),
-    work_hours: float = Form(...),
-    notes: Optional[str] = Form(None),
-    photo: Optional[UploadFile] = File(None),
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
-):
-    try:
-        # 日付を変換
-        date_obj = datetime.fromisoformat(date).date()
-        
-        photo_filename = None
-        photo_path = None
-        
-        # 写真がアップロードされている場合の処理
-        if photo:
-            # ファイル形式チェック
-            allowed_types = ["image/jpeg", "image/png", "image/gif", "image/webp"]
-            if photo.content_type not in allowed_types:
-                raise HTTPException(
-                    status_code=400, 
-                    detail="サポートされていないファイル形式です。"
-                )
-            
-            # ファイル保存
-            file_extension = Path(photo.filename).suffix
-            unique_filename = f"{uuid.uuid4()}{file_extension}"
-            file_path = Path(UPLOAD_DIRECTORY) / unique_filename
-            
-            contents = await photo.read()
-            with open(file_path, "wb") as buffer:
-                buffer.write(contents)
-            
-            photo_filename = unique_filename
-            photo_path = str(file_path)
-        
-        # 売上データをデータベースに保存
-        db_sales = DailySales(
-            date=date_obj,
-            employee_name=employee_name,
-            total_sales=total_sales,
-            drink_count=drink_count,
-            champagne_count=champagne_count,
-            catch_count=catch_count,
-            work_hours=work_hours,
-            photo_filename=photo_filename,
-            photo_path=photo_path,
-            notes=notes
-        )
-        db.add(db_sales)
-        db.commit()
-        db.refresh(db_sales)
-        return db_sales
-        
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(
-            status_code=500,
-            detail=f"データの保存に失敗しました: {str(e)}"
-        )
-
-# 写真表示API
-@app.get("/api/photo/{filename}")
-async def get_photo(filename: str):
-    file_path = Path(UPLOAD_DIRECTORY) / filename
-    if not file_path.exists():
-        raise HTTPException(status_code=404, detail="画像が見つかりません")
-    return FileResponse(file_path)
-
-# 売上データ投稿API（既存）
+# 売上データ投稿API（認証必須）
 @app.post("/api/sales", response_model=SalesResponse)
 def create_sales(
     sales_data: SalesInput, 
@@ -281,8 +149,7 @@ def create_sales(
             drink_count=sales_data.drink_count,
             champagne_count=sales_data.champagne_count,
             catch_count=sales_data.catch_count,
-            work_hours=sales_data.work_hours,
-            notes=getattr(sales_data, 'notes', None)
+            work_hours=sales_data.work_hours
         )
         db.add(db_sales)
         db.commit()
