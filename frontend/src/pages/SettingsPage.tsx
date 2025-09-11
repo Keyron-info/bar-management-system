@@ -1,4 +1,12 @@
-// SettingsPage.tsx
+import React from 'react';
+
+interface User {
+  id: number;
+  email: string;
+  name: string;
+  role: string;
+}
+
 interface SettingsPageProps {
   user: User;
   onLogout: () => void;
@@ -204,4 +212,4 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user, onLogout }) => {
   );
 };
 
-export { ShiftPage, SettingsPage };
+export default SettingsPage;

@@ -1,4 +1,3 @@
-// ShiftPage.tsx
 import React from 'react';
 
 interface User {
@@ -29,7 +28,6 @@ const ShiftPage: React.FC<ShiftPageProps> = ({ user }) => {
         </p>
       </div>
 
-      {/* 開発中のお知らせ */}
       <div style={{
         backgroundColor: 'white',
         borderRadius: '12px',
@@ -61,3 +59,5 @@ const ShiftPage: React.FC<ShiftPageProps> = ({ user }) => {
     </div>
   );
 };
+
+export default ShiftPage;

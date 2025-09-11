@@ -151,7 +151,7 @@ function App() {
           {navigationItems.map((item) => (
             <button
               key={item.key}
-              onClick={() => setCurrentPage(item.key)}
+              onClick={() => setCurrentPage(item.key as PageType)}
               style={{
                 backgroundColor: currentPage === item.key ? '#34495e' : 'transparent',
                 color: 'white',
