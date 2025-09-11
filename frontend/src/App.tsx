@@ -1,28 +1,7 @@
-import { useState, useEffect } from 'react';
-import axios from 'axios';
-import Auth from './components/Auth';
-import SalesInput from './components/SalesInput';
-import SalesSummary from './components/SalesSummary';
+import React, { useState, useEffect } from 'react';
 import './App.css';
-
-// 本番環境のAPI URL
-const API_BASE_URL = 'https://bar-management-system.onrender.com';
-
-interface HealthResponse {
-  status: string;
-  message: string;
-}
-
-interface SalesData {
-  id: number;
-  date: string;
-  employee_name: string;
-  total_sales: number;
-  drink_count: number;
-  champagne_count: number;
-  catch_count: number;
-  work_hours: number;
-}
+import SalesInputWithPhoto from './components/SalesInputWithPhoto';
+import SalesDisplayWithPhoto from './components/SalesDisplayWithPhoto';
 
 interface User {
   id: number;
@@ -32,193 +11,295 @@ interface User {
 }
 
 function App() {
-  // 認証状態
   const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLogin, setIsLogin] = useState(true);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
+  const [role, setRole] = useState('staff');
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState('');
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-  // アプリケーション状態
-  const [healthData, setHealthData] = useState<HealthResponse | null>(null);
-  const [salesData, setSalesData] = useState<SalesData[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  // 認証ヘッダーを含むaxiosインスタンスを作成
-  const createAuthenticatedRequest = () => {
-    if (token) {
-      return axios.create({
-        baseURL: API_BASE_URL,
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-    }
-    return axios.create({
-      baseURL: API_BASE_URL
-    });
-  };
-
-  const fetchHealth = async () => {
-    try {
-      const response = await axios.get<HealthResponse>(`${API_BASE_URL}/api/health`);
-      setHealthData(response.data);
-    } catch (err) {
-      setError('APIとの通信に失敗しました');
-      console.error('Health check failed:', err);
-    }
-  };
-
-  const fetchSales = async () => {
-    try {
-      const axiosInstance = createAuthenticatedRequest();
-      const response = await axiosInstance.get<SalesData[]>('/api/sales');
-      setSalesData(response.data);
-    } catch (err) {
-      console.error('売上データの取得に失敗しました:', err);
-      // 認証エラーの場合はログアウト
-      if (axios.isAxiosError(err) && err.response?.status === 401) {
-        handleLogout();
+  // ページ読み込み時にトークンをチェック
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    const userData = localStorage.getItem('user');
+    
+    if (token && userData) {
+      try {
+        setUser(JSON.parse(userData));
+      } catch (error) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
       }
     }
-  };
+  }, []);
 
-  const handleAuthSuccess = (userData: User, accessToken: string) => {
-    setUser(userData);
-    setToken(accessToken);
-    setIsAuthenticated(true);
-    
-    // ローカルストレージに保存
-    localStorage.setItem('token', accessToken);
-    localStorage.setItem('user', JSON.stringify(userData));
+  const handleAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setMessage('');
+
+    try {
+      const url = isLogin 
+        ? 'https://bar-management-system.onrender.com/api/auth/login'
+        : 'https://bar-management-system.onrender.com/api/auth/register';
+      
+      const payload = isLogin 
+        ? { email, password }
+        : { email, password, name, role };
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        if (isLogin) {
+          localStorage.setItem('token', data.access_token);
+          localStorage.setItem('user', JSON.stringify(data.user));
+          setUser(data.user);
+          setMessage('');
+        } else {
+          setMessage('✅ ユーザー登録が完了しました。ログインしてください。');
+          setIsLogin(true);
+        }
+        
+        setEmail('');
+        setPassword('');
+        setName('');
+        setRole('staff');
+      } else {
+        setMessage(`❌ ${data.detail || 'エラーが発生しました'}`);
+      }
+    } catch (error) {
+      setMessage('❌ 通信エラーが発生しました');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleLogout = () => {
-    setUser(null);
-    setToken(null);
-    setIsAuthenticated(false);
-    setSalesData([]);
-    
-    // ローカルストレージをクリア
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    setUser(null);
+    setMessage('');
   };
-
-  // 初期化時にローカルストレージから認証情報を復元
-  useEffect(() => {
-    const initializeAuth = async () => {
-      const savedToken = localStorage.getItem('token');
-      const savedUser = localStorage.getItem('user');
-      
-      if (savedToken && savedUser) {
-        try {
-          // トークンの有効性を確認
-          await axios.get(`${API_BASE_URL}/api/auth/me`, {
-            headers: { 'Authorization': `Bearer ${savedToken}` }
-          });
-          
-          setUser(JSON.parse(savedUser));
-          setToken(savedToken);
-          setIsAuthenticated(true);
-        } catch (err) {
-          // トークンが無効な場合はクリア
-          localStorage.removeItem('token');
-          localStorage.removeItem('user');
-          console.error('Token validation failed:', err);
-        }
-      }
-      
-      await fetchHealth();
-      setLoading(false);
-    };
-    
-    initializeAuth();
-  }, []);
-
-  // 認証状態が変わったときに売上データを取得
-  useEffect(() => {
-    if (isAuthenticated && token) {
-      fetchSales();
-    }
-  }, [isAuthenticated, token]);
 
   const handleSalesAdded = () => {
-    fetchSales();
+    setRefreshTrigger(prev => prev + 1);
   };
 
-  if (loading) {
+  // ログインしていない場合の認証画面
+  if (!user) {
     return (
-      <div className="container">
-        <div className="card">
-          <p>読み込み中...</p>
+      <div style={{ 
+        minHeight: '100vh', 
+        backgroundColor: '#f5f5f5', 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center',
+        padding: '20px'
+      }}>
+        <div style={{ 
+          backgroundColor: 'white', 
+          padding: '40px', 
+          borderRadius: '8px', 
+          boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+          width: '100%',
+          maxWidth: '400px'
+        }}>
+          <h1 style={{ textAlign: 'center', marginBottom: '30px', color: '#333' }}>
+            🍻 バー管理システム
+          </h1>
+          
+          <div style={{ marginBottom: '20px', textAlign: 'center' }}>
+            <button
+              onClick={() => setIsLogin(true)}
+              style={{
+                padding: '10px 20px',
+                marginRight: '10px',
+                backgroundColor: isLogin ? '#007bff' : '#f8f9fa',
+                color: isLogin ? 'white' : '#333',
+                border: '1px solid #dee2e6',
+                borderRadius: '4px',
+                cursor: 'pointer'
+              }}
+            >
+              ログイン
+            </button>
+            <button
+              onClick={() => setIsLogin(false)}
+              style={{
+                padding: '10px 20px',
+                backgroundColor: !isLogin ? '#007bff' : '#f8f9fa',
+                color: !isLogin ? 'white' : '#333',
+                border: '1px solid #dee2e6',
+                borderRadius: '4px',
+                cursor: 'pointer'
+              }}
+            >
+              新規登録
+            </button>
+          </div>
+
+          <form onSubmit={handleAuth}>
+            {!isLogin && (
+              <>
+                <input
+                  type="text"
+                  placeholder="名前"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    marginBottom: '15px',
+                    border: '1px solid #ddd',
+                    borderRadius: '4px',
+                    fontSize: '16px',
+                    boxSizing: 'border-box'
+                  }}
+                />
+                <select
+                  value={role}
+                  onChange={(e) => setRole(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    marginBottom: '15px',
+                    border: '1px solid #ddd',
+                    borderRadius: '4px',
+                    fontSize: '16px',
+                    boxSizing: 'border-box'
+                  }}
+                >
+                  <option value="staff">従業員</option>
+                  <option value="manager">店長</option>
+                </select>
+              </>
+            )}
+            
+            <input
+              type="email"
+              placeholder="メールアドレス"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              style={{
+                width: '100%',
+                padding: '12px',
+                marginBottom: '15px',
+                border: '1px solid #ddd',
+                borderRadius: '4px',
+                fontSize: '16px',
+                boxSizing: 'border-box'
+              }}
+            />
+            
+            <input
+              type="password"
+              placeholder="パスワード"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              style={{
+                width: '100%',
+                padding: '12px',
+                marginBottom: '20px',
+                border: '1px solid #ddd',
+                borderRadius: '4px',
+                fontSize: '16px',
+                boxSizing: 'border-box'
+              }}
+            />
+            
+            <button
+              type="submit"
+              disabled={loading}
+              style={{
+                width: '100%',
+                padding: '12px',
+                backgroundColor: loading ? '#ccc' : '#007bff',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                fontSize: '16px',
+                cursor: loading ? 'not-allowed' : 'pointer'
+              }}
+            >
+              {loading ? '処理中...' : (isLogin ? 'ログイン' : '登録')}
+            </button>
+          </form>
+
+          {message && (
+            <div style={{
+              marginTop: '20px',
+              padding: '10px',
+              borderRadius: '4px',
+              backgroundColor: message.includes('✅') ? '#d4edda' : '#f8d7da',
+              border: `1px solid ${message.includes('✅') ? '#c3e6cb' : '#f5c6cb'}`,
+              color: message.includes('✅') ? '#155724' : '#721c24'
+            }}>
+              {message}
+            </div>
+          )}
         </div>
       </div>
     );
   }
 
-  // 未認証の場合は認証画面を表示
-  if (!isAuthenticated) {
-    return <Auth onAuthSuccess={handleAuthSuccess} />;
-  }
-
-  // 認証済みの場合はメインアプリケーションを表示
+  // ログイン後のメイン画面
   return (
-    <div className="container">
-      <div className="card">
-        <div className="header-section">
-          <h1>🍻 バー管理システム</h1>
-          <div className="user-info">
-            <span>👤 {user?.name} ({user?.role === 'manager' ? '店長' : '従業員'})</span>
-            <button onClick={handleLogout} className="logout-button">
-              ログアウト
-            </button>
-          </div>
+    <div style={{ minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
+      {/* ヘッダー */}
+      <header style={{
+        backgroundColor: '#343a40',
+        color: 'white',
+        padding: '15px 20px',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+      }}>
+        <h1 style={{ margin: 0, fontSize: '24px' }}>🍻 バー管理システム</h1>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+          <span>
+            {user.name}さん ({user.role === 'manager' ? '店長' : '従業員'})
+          </span>
+          <button
+            onClick={handleLogout}
+            style={{
+              backgroundColor: '#dc3545',
+              color: 'white',
+              border: 'none',
+              padding: '8px 16px',
+              borderRadius: '4px',
+              cursor: 'pointer'
+            }}
+          >
+            ログアウト
+          </button>
         </div>
-        
-        <div className="status-section">
-          <h2>システム状態</h2>
+      </header>
+
+      {/* メインコンテンツ */}
+      <main style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
+        <div style={{ display: 'grid', gap: '20px' }}>
+          {/* 写真付き売上入力フォーム */}
+          <SalesInputWithPhoto onSalesAdded={handleSalesAdded} />
           
-          {error && (
-            <div style={{ color: 'red' }}>
-              <p>❌ {error}</p>
-            </div>
-          )}
-          
-          {healthData && (
-            <div style={{ color: 'green' }}>
-              <p>✅ バックエンド接続: {healthData.status}</p>
-              <p>📡 {healthData.message}</p>
-            </div>
-          )}
+          {/* 売上データ表示 */}
+          <SalesDisplayWithPhoto refreshTrigger={refreshTrigger} />
         </div>
-      </div>
-
-      <SalesInput onSalesAdded={handleSalesAdded} />
-      <SalesSummary />
-
-      <div className="card">
-        <h2>📈 売上データ一覧</h2>
-        
-        {salesData.length === 0 ? (
-          <p>まだ売上データが登録されていません。</p>
-        ) : (
-          <div className="sales-list">
-            {salesData.map((sales) => (
-              <div key={sales.id} className="sales-item">
-                <div className="sales-header">
-                  {sales.date} - {sales.employee_name}
-                </div>
-                <div className="sales-details">
-                  <span>💰 売上: ¥{sales.total_sales.toLocaleString()}</span>
-                  <span>🍹 ドリンク: {sales.drink_count}杯</span>
-                  <span>🍾 シャンパン: {sales.champagne_count}杯</span>
-                  <span>👥 キャッチ: {sales.catch_count}人</span>
-                  <span>⏰ 稼働: {sales.work_hours}時間</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+      </main>
     </div>
   );
 }
