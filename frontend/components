@@ -42,7 +42,7 @@ const SalesInput: React.FC<SalesInputProps> = ({ onSalesAdded }) => {
     setMessage('');
 
     try {
-      await axios.post('http://localhost:8001/api/sales', formData);
+      await axios.post('https://bar-management-system.onrender.com/api/sales', formData);
       setMessage('✅ 売上データを保存しました');
       
       // フォームをリセット
