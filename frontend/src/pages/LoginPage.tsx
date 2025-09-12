@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Mail, Lock, User } from 'lucide-react';
 
 interface User {
   id: number;
@@ -19,6 +20,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
   const [role, setRole] = useState('staff');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,258 +72,268 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
   };
 
   return (
-    <div style={{ 
-      minHeight: '100vh', 
-      backgroundColor: '#ecf0f1', 
-      display: 'flex', 
-      justifyContent: 'center', 
+    <div style={{
+      minHeight: '100vh',
+      background: 'linear-gradient(180deg, #8B5A99 0%, #6B4C8A 50%, #5A3E7B 100%)',
+      display: 'flex',
       alignItems: 'center',
-      padding: '20px'
+      justifyContent: 'center',
+      padding: '20px',
+      fontFamily: 'system-ui, -apple-system, sans-serif'
     }}>
-      <div style={{ 
-        backgroundColor: 'white', 
-        padding: '40px', 
-        borderRadius: '12px', 
-        boxShadow: '0 10px 30px rgba(0, 0, 0, 0.1)',
+      {/* Main container */}
+      <div style={{
         width: '100%',
-        maxWidth: '420px'
+        maxWidth: '320px',
+        textAlign: 'left'
       }}>
-        {/* ロゴ・タイトル */}
-        <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-          <div style={{ 
-            fontSize: '48px', 
-            marginBottom: '10px' 
-          }}>
-            🍻
-          </div>
-          <h1 style={{ 
-            margin: 0, 
-            fontSize: '28px', 
-            color: '#2c3e50',
-            fontWeight: '600'
-          }}>
-            バー管理システム
-          </h1>
-          <p style={{ 
-            margin: '10px 0 0 0', 
-            color: '#7f8c8d',
-            fontSize: '14px'
-          }}>
-            売上・スタッフ管理を効率化
-          </p>
-        </div>
-        
-        {/* タブ切り替え */}
-        <div style={{ 
-          marginBottom: '30px', 
-          display: 'flex',
-          backgroundColor: '#f8f9fa',
-          borderRadius: '8px',
-          padding: '4px'
+        {/* Log in header */}
+        <div style={{
+          marginBottom: '50px'
         }}>
-          <button
-            onClick={() => setIsLogin(true)}
-            style={{
-              flex: 1,
-              padding: '12px',
-              backgroundColor: isLogin ? '#3498db' : 'transparent',
-              color: isLogin ? 'white' : '#7f8c8d',
-              border: 'none',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              fontSize: '14px',
-              fontWeight: '500',
-              transition: 'all 0.3s ease'
-            }}
-          >
-            ログイン
-          </button>
-          <button
-            onClick={() => setIsLogin(false)}
-            style={{
-              flex: 1,
-              padding: '12px',
-              backgroundColor: !isLogin ? '#3498db' : 'transparent',
-              color: !isLogin ? 'white' : '#7f8c8d',
-              border: 'none',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              fontSize: '14px',
-              fontWeight: '500',
-              transition: 'all 0.3s ease'
-            }}
-          >
-            新規登録
-          </button>
+          <h1 style={{
+            color: 'white',
+            fontSize: '28px',
+            fontWeight: '300',
+            margin: '0',
+            letterSpacing: '0.5px'
+          }}>
+            Log in
+          </h1>
         </div>
 
-        {/* フォーム */}
-        <form onSubmit={handleAuth}>
+        <form onSubmit={handleAuth} style={{ display: 'flex', flexDirection: 'column' }}>
+          {/* Name field for registration */}
           {!isLogin && (
-            <>
-              <div style={{ marginBottom: '20px' }}>
-                <label style={{ 
-                  display: 'block', 
-                  marginBottom: '6px', 
-                  color: '#2c3e50',
-                  fontSize: '14px',
-                  fontWeight: '500'
-                }}>
-                  名前
-                </label>
+            <div style={{ marginBottom: '30px' }}>
+              <div style={{
+                position: 'relative',
+                borderBottom: '1px solid rgba(255, 255, 255, 0.4)'
+              }}>
+                <User style={{
+                  position: 'absolute',
+                  left: '0',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  width: '20px',
+                  height: '20px',
+                  color: 'rgba(255, 255, 255, 0.7)'
+                }} />
                 <input
                   type="text"
-                  placeholder="山田太郎"
+                  placeholder="Name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  required
+                  required={!isLogin}
                   style={{
                     width: '100%',
-                    padding: '12px 16px',
-                    border: '2px solid #e1e8ed',
-                    borderRadius: '8px',
+                    padding: '18px 0 18px 35px',
+                    background: 'transparent',
+                    border: 'none',
                     fontSize: '16px',
-                    boxSizing: 'border-box',
+                    color: 'white',
                     outline: 'none',
-                    transition: 'border-color 0.3s ease'
+                    boxSizing: 'border-box'
                   }}
-                  onFocus={(e) => e.target.style.borderColor = '#3498db'}
-                  onBlur={(e) => e.target.style.borderColor = '#e1e8ed'}
                 />
               </div>
-              
-              <div style={{ marginBottom: '20px' }}>
-                <label style={{ 
-                  display: 'block', 
-                  marginBottom: '6px', 
-                  color: '#2c3e50',
-                  fontSize: '14px',
-                  fontWeight: '500'
-                }}>
-                  役職
-                </label>
-                <select
-                  value={role}
-                  onChange={(e) => setRole(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '12px 16px',
-                    border: '2px solid #e1e8ed',
-                    borderRadius: '8px',
-                    fontSize: '16px',
-                    boxSizing: 'border-box',
-                    outline: 'none',
-                    backgroundColor: 'white'
-                  }}
-                >
-                  <option value="staff">従業員</option>
-                  <option value="manager">店長</option>
-                </select>
-              </div>
-            </>
+            </div>
           )}
-          
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{ 
-              display: 'block', 
-              marginBottom: '6px', 
-              color: '#2c3e50',
-              fontSize: '14px',
-              fontWeight: '500'
-            }}>
-              メールアドレス
-            </label>
-            <input
-              type="email"
-              placeholder="example@email.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              style={{
-                width: '100%',
-                padding: '12px 16px',
-                border: '2px solid #e1e8ed',
-                borderRadius: '8px',
-                fontSize: '16px',
-                boxSizing: 'border-box',
-                outline: 'none',
-                transition: 'border-color 0.3s ease'
-              }}
-              onFocus={(e) => e.target.style.borderColor = '#3498db'}
-              onBlur={(e) => e.target.style.borderColor = '#e1e8ed'}
-            />
-          </div>
-          
+
+          {/* Email field */}
           <div style={{ marginBottom: '30px' }}>
-            <label style={{ 
-              display: 'block', 
-              marginBottom: '6px', 
-              color: '#2c3e50',
-              fontSize: '14px',
-              fontWeight: '500'
+            <div style={{
+              position: 'relative',
+              borderBottom: '1px solid rgba(255, 255, 255, 0.4)'
             }}>
-              パスワード
-            </label>
-            <input
-              type="password"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
+              <Mail style={{
+                position: 'absolute',
+                left: '0',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                width: '20px',
+                height: '20px',
+                color: 'rgba(255, 255, 255, 0.7)'
+              }} />
+              <input
+                type="email"
+                placeholder="Email adress"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                style={{
+                  width: '100%',
+                  padding: '18px 0 18px 35px',
+                  background: 'transparent',
+                  border: 'none',
+                  fontSize: '16px',
+                  color: 'white',
+                  outline: 'none',
+                  boxSizing: 'border-box'
+                }}
+              />
+            </div>
+          </div>
+
+          {/* Password field */}
+          <div style={{ marginBottom: '40px' }}>
+            <div style={{
+              position: 'relative',
+              borderBottom: '1px solid rgba(255, 255, 255, 0.4)'
+            }}>
+              <Lock style={{
+                position: 'absolute',
+                left: '0',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                width: '20px',
+                height: '20px',
+                color: 'rgba(255, 255, 255, 0.7)'
+              }} />
+              <input
+                type="password"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                style={{
+                  width: '100%',
+                  padding: '18px 0 18px 35px',
+                  background: 'transparent',
+                  border: 'none',
+                  fontSize: '16px',
+                  color: 'white',
+                  outline: 'none',
+                  boxSizing: 'border-box'
+                }}
+              />
+            </div>
+          </div>
+
+          {/* Role selection for registration */}
+          {!isLogin && (
+            <div style={{ marginBottom: '30px' }}>
+              <select
+                value={role}
+                onChange={(e) => setRole(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '15px',
+                  background: 'rgba(255, 255, 255, 0.1)',
+                  border: '1px solid rgba(255, 255, 255, 0.3)',
+                  borderRadius: '8px',
+                  fontSize: '16px',
+                  color: 'white',
+                  outline: 'none',
+                  boxSizing: 'border-box'
+                }}
+              >
+                <option value="staff" style={{ color: '#000' }}>従業員</option>
+                <option value="manager" style={{ color: '#000' }}>店長</option>
+              </select>
+            </div>
+          )}
+
+          {/* Login button */}
+          <div style={{ marginBottom: '30px' }}>
+            <button
+              type="submit"
+              disabled={loading}
               style={{
                 width: '100%',
-                padding: '12px 16px',
-                border: '2px solid #e1e8ed',
+                padding: '18px',
+                background: 'rgba(255, 255, 255, 0.2)',
+                color: '#8B5A99',
+                border: 'none',
                 borderRadius: '8px',
                 fontSize: '16px',
+                fontWeight: '500',
+                cursor: loading ? 'not-allowed' : 'pointer',
                 boxSizing: 'border-box',
-                outline: 'none',
-                transition: 'border-color 0.3s ease'
+                opacity: loading ? 0.7 : 1
               }}
-              onFocus={(e) => e.target.style.borderColor = '#3498db'}
-              onBlur={(e) => e.target.style.borderColor = '#e1e8ed'}
-            />
+            >
+              {loading ? '処理中...' : isLogin ? 'Login to your account' : 'Create account'}
+            </button>
           </div>
-          
-          <button
-            type="submit"
-            disabled={loading}
-            style={{
-              width: '100%',
-              padding: '14px',
-              backgroundColor: loading ? '#bdc3c7' : '#3498db',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              fontSize: '16px',
-              fontWeight: '600',
-              cursor: loading ? 'not-allowed' : 'pointer',
-              transition: 'background-color 0.3s ease'
-            }}
-            onMouseEnter={(e) => {
-              if (!loading) {
-                e.currentTarget.style.backgroundColor = '#2980b9';
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (!loading) {
-                e.currentTarget.style.backgroundColor = '#3498db';
-              }
-            }}
-          >
-            {loading ? '処理中...' : (isLogin ? 'ログイン' : '登録')}
-          </button>
+
+          {/* Remember me and Sign up link */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            fontSize: '14px',
+            color: 'rgba(255, 255, 255, 0.8)'
+          }}>
+            {/* Remember me checkbox */}
+            <label style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              cursor: 'pointer'
+            }}>
+              <div style={{
+                width: '16px',
+                height: '16px',
+                border: '1px solid rgba(255, 255, 255, 0.5)',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: rememberMe ? 'rgba(255, 255, 255, 0.2)' : 'transparent',
+                position: 'relative'
+              }}>
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  style={{
+                    opacity: 0,
+                    position: 'absolute',
+                    width: '16px',
+                    height: '16px',
+                    cursor: 'pointer'
+                  }}
+                />
+                {rememberMe && (
+                  <div style={{
+                    width: '8px',
+                    height: '8px',
+                    borderRadius: '50%',
+                    background: 'white'
+                  }} />
+                )}
+              </div>
+              remember me
+            </label>
+
+            {/* Sign up link */}
+            <button
+              type="button"
+              onClick={() => setIsLogin(!isLogin)}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: 'rgba(255, 255, 255, 0.8)',
+                cursor: 'pointer',
+                fontSize: '14px',
+                textDecoration: 'none'
+              }}
+            >
+              {isLogin ? 'New here? Sign in!' : 'Already have account? Login!'}
+            </button>
+          </div>
         </form>
 
-        {/* メッセージ表示 */}
+        {/* Message display */}
         {message && (
           <div style={{
-            marginTop: '20px',
-            padding: '12px 16px',
+            marginTop: '25px',
+            padding: '15px',
             borderRadius: '8px',
-            backgroundColor: message.includes('完了') ? '#d5f4e6' : '#fdeaea',
-            border: `1px solid ${message.includes('完了') ? '#27ae60' : '#e74c3c'}`,
-            color: message.includes('完了') ? '#27ae60' : '#e74c3c',
+            backgroundColor: message.includes('完了') ? 'rgba(34, 197, 94, 0.2)' : 'rgba(239, 68, 68, 0.2)',
+            border: `1px solid ${message.includes('完了') ? 'rgba(34, 197, 94, 0.5)' : 'rgba(239, 68, 68, 0.5)'}`,
+            color: 'white',
             fontSize: '14px',
             textAlign: 'center'
           }}>
@@ -329,12 +341,12 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
           </div>
         )}
 
-        {/* フッター */}
+        {/* Footer */}
         <div style={{
-          marginTop: '40px',
+          marginTop: '60px',
           textAlign: 'center',
           fontSize: '12px',
-          color: '#95a5a6'
+          color: 'rgba(255, 255, 255, 0.5)'
         }}>
           Powered by KEYRON
         </div>
