@@ -9,8 +9,11 @@ import uvicorn
 import os
 
 # 既存のインポート
-from database import get_db, create_tables, DailySales, User
-from schemas import SalesInput, SalesResponse, UserCreate, UserLogin, UserResponse, Token
+from database import get_db, create_tables, DailySales, User, DailyReport, Receipt
+from schemas import (
+    SalesInput, SalesResponse, UserCreate, UserLogin, UserResponse, Token,
+    DailyReportInput, DailyReportResponse, DailyCalculationResponse, ReceiptResponse
+)
 from auth import (
     get_password_hash, 
     authenticate_user, 
@@ -20,7 +23,7 @@ from auth import (
     ACCESS_TOKEN_EXPIRE_MINUTES
 )
 
-app = FastAPI(title="バー管理システム API", version="1.0.0")
+app = FastAPI(title="バー管理システム API", version="2.0.0")
 
 # CORS設定（本番環境対応）
 app.add_middleware(
@@ -126,6 +129,136 @@ def login_user(user_data: UserLogin, db: Session = Depends(get_db)):
 @app.get("/api/auth/me", response_model=UserResponse)
 def get_current_user_info(current_user: User = Depends(get_current_active_user)):
     return current_user
+
+# === 新しい日報API ===
+
+# 日報提出API
+@app.post("/api/daily-report", response_model=DailyReportResponse)
+def create_daily_report(
+    report_data: DailyReportInput,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    try:
+        # 日報メインデータを作成
+        db_report = DailyReport(
+            date=report_data.date,
+            employee_name=report_data.employee_name,
+            total_sales=report_data.total_sales,
+            alcohol_cost=report_data.alcohol_cost,
+            other_expenses=report_data.other_expenses,
+            card_sales=report_data.card_sales,
+            drink_count=report_data.drink_count,
+            champagne_type=report_data.champagne_type,
+            champagne_price=report_data.champagne_price,
+            work_start_time=report_data.work_start_time,
+            work_end_time=report_data.work_end_time
+        )
+        db.add(db_report)
+        db.commit()
+        db.refresh(db_report)
+        
+        # 伝票データを作成
+        for receipt_data in report_data.receipts:
+            db_receipt = Receipt(
+                daily_report_id=db_report.id,
+                customer_name=receipt_data.customer_name,
+                employee_name=receipt_data.employee_name,
+                drink_count=receipt_data.drink_count,
+                champagne_type=receipt_data.champagne_type,
+                champagne_price=receipt_data.champagne_price,
+                amount=receipt_data.amount,
+                is_card=receipt_data.is_card
+            )
+            db.add(db_receipt)
+        
+        db.commit()
+        
+        # レスポンス用にデータを再取得
+        db.refresh(db_report)
+        return db_report
+        
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"日報の保存に失敗しました: {str(e)}"
+        )
+
+# 日報一覧取得API
+@app.get("/api/daily-reports", response_model=List[DailyReportResponse])
+def get_daily_reports(
+    skip: int = 0,
+    limit: int = 100,
+    employee_name: str = None,
+    start_date: date = None,
+    end_date: date = None,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    query = db.query(DailyReport)
+    
+    # 権限に応じてフィルタリング
+    if current_user.role != "manager":
+        query = query.filter(DailyReport.employee_name == current_user.name)
+    elif employee_name:
+        query = query.filter(DailyReport.employee_name == employee_name)
+    
+    # 日付フィルタ
+    if start_date:
+        query = query.filter(DailyReport.date >= start_date)
+    if end_date:
+        query = query.filter(DailyReport.date <= end_date)
+    
+    reports = query.order_by(DailyReport.date.desc()).offset(skip).limit(limit).all()
+    return reports
+
+# 特定の日報取得API
+@app.get("/api/daily-report/{report_id}", response_model=DailyReportResponse)
+def get_daily_report(
+    report_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    report = db.query(DailyReport).filter(DailyReport.id == report_id).first()
+    if not report:
+        raise HTTPException(status_code=404, detail="日報が見つかりません")
+    
+    # 権限チェック
+    if current_user.role != "manager" and report.employee_name != current_user.name:
+        raise HTTPException(status_code=403, detail="この日報にアクセスする権限がありません")
+    
+    return report
+
+# 日報の計算結果取得API
+@app.get("/api/daily-report/{report_id}/calculations", response_model=DailyCalculationResponse)
+def get_daily_report_calculations(
+    report_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    report = db.query(DailyReport).filter(DailyReport.id == report_id).first()
+    if not report:
+        raise HTTPException(status_code=404, detail="日報が見つかりません")
+    
+    # 権限チェック
+    if current_user.role != "manager" and report.employee_name != current_user.name:
+        raise HTTPException(status_code=403, detail="この日報にアクセスする権限がありません")
+    
+    # 計算
+    total_receipt_amount = sum(receipt.amount for receipt in report.receipts)
+    total_expenses = report.alcohol_cost + report.other_expenses
+    cash_remaining = report.total_sales - report.card_sales
+    net_profit = report.total_sales - total_expenses
+    
+    return {
+        "net_profit": net_profit,
+        "cash_remaining": cash_remaining,
+        "total_expenses": total_expenses,
+        "total_receipt_amount": total_receipt_amount
+    }
+
+# === 既存の売上データAPI（後方互換性のため保持） ===
 
 # 売上データ投稿API（認証必須）
 @app.post("/api/sales", response_model=SalesResponse)
@@ -296,6 +429,25 @@ def delete_sales(
     db.delete(sales)
     db.commit()
     return {"message": "売上データを削除しました"}
+
+# 日報削除API（認証必須、店長のみ）
+@app.delete("/api/daily-report/{report_id}")
+def delete_daily_report(
+    report_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    report = db.query(DailyReport).filter(DailyReport.id == report_id).first()
+    if not report:
+        raise HTTPException(status_code=404, detail="日報が見つかりません")
+    
+    # 権限チェック：店長のみ削除可能
+    if current_user.role != "manager":
+        raise HTTPException(status_code=403, detail="この操作を実行する権限がありません")
+    
+    db.delete(report)
+    db.commit()
+    return {"message": "日報を削除しました"}
 
 # デバッグ用エンドポイント
 @app.get("/api/debug/cors")
