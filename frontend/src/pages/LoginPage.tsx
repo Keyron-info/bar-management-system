@@ -73,283 +73,356 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
 
   return (
     <div style={{
-      minHeight: '100vh',
-      background: 'linear-gradient(180deg, #8B5A99 0%, #6B4C8A 50%, #5A3E7B 100%)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '20px',
-      fontFamily: 'system-ui, -apple-system, sans-serif'
+      width: '390px',
+      height: '844px',
+      position: 'relative',
+      background: 'linear-gradient(223deg, #3A0E47 0%, #AB3AA4 47%, #521364 100%)',
+      overflow: 'hidden',
+      margin: '0 auto',
+      fontFamily: 'Narnoor, sans-serif'
     }}>
-      {/* Main container */}
+      {/* Log in header */}
       <div style={{
-        width: '100%',
-        maxWidth: '320px',
-        textAlign: 'left'
+        width: '104.47px',
+        height: '25.87px',
+        left: '26px',
+        top: '274px',
+        position: 'absolute',
+        opacity: 0.8,
+        textAlign: 'center',
+        color: 'white',
+        fontSize: '19.90px',
+        fontFamily: 'Narnoor, sans-serif',
+        fontWeight: 400,
+        wordWrap: 'break-word'
       }}>
-        {/* Log in header */}
-        <div style={{
-          marginBottom: '50px'
-        }}>
-          <h1 style={{
+        Log in
+      </div>
+
+      <form onSubmit={handleAuth}>
+        {/* Name field for registration */}
+        {!isLogin && (
+          <div style={{ position: 'relative' }}>
+            <div style={{
+              width: '23.88px',
+              height: '23.88px',
+              left: '54.85px',
+              top: '310px',
+              position: 'absolute',
+              overflow: 'hidden'
+            }}>
+              <User size={20} style={{ 
+                color: 'rgba(255, 255, 255, 0.8)',
+                position: 'absolute',
+                top: '2px',
+                left: '2px'
+              }} />
+            </div>
+            <input
+              type="text"
+              placeholder="Name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required={!isLogin}
+              style={{
+                width: '214px',
+                height: '30px',
+                left: '100.13px',
+                top: '305px',
+                position: 'absolute',
+                opacity: 0.8,
+                color: 'white',
+                fontSize: '19.90px',
+                fontFamily: 'Narnoor, sans-serif',
+                fontWeight: 400,
+                background: 'transparent',
+                border: 'none',
+                borderBottom: '1px solid rgba(255, 255, 255, 0.4)',
+                outline: 'none',
+                paddingBottom: '5px'
+              }}
+            />
+          </div>
+        )}
+
+        {/* Email field */}
+        <div style={{ position: 'relative' }}>
+          <div style={{
+            width: '214px',
+            height: '30px',
+            left: '100.13px',
+            top: isLogin ? '321.42px' : '361.42px',
+            position: 'absolute',
+            opacity: 0.8,
             color: 'white',
-            fontSize: '28px',
-            fontWeight: '300',
-            margin: '0',
-            letterSpacing: '0.5px'
+            fontSize: '19.90px',
+            fontFamily: 'Narnoor, sans-serif',
+            fontWeight: 400,
+            wordWrap: 'break-word'
           }}>
-            Log in
-          </h1>
+            Email adress
+          </div>
+          <div style={{
+            width: '23.88px',
+            height: '23.88px',
+            left: '54.85px',
+            top: isLogin ? '326.73px' : '366.73px',
+            position: 'absolute',
+            overflow: 'hidden'
+          }}>
+            <div style={{
+              width: '19.90px',
+              height: '15.92px',
+              left: '1.99px',
+              top: '3.98px',
+              position: 'absolute',
+              background: 'rgba(255, 255, 255, 0.80)'
+            }}></div>
+          </div>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            style={{
+              width: '214px',
+              height: '30px',
+              left: '100.13px',
+              top: isLogin ? '351.42px' : '391.42px',
+              position: 'absolute',
+              background: 'transparent',
+              border: 'none',
+              borderBottom: '1px solid rgba(255, 255, 255, 0.4)',
+              color: 'white',
+              fontSize: '16px',
+              fontFamily: 'Narnoor, sans-serif',
+              outline: 'none',
+              paddingBottom: '5px'
+            }}
+          />
         </div>
 
-        <form onSubmit={handleAuth} style={{ display: 'flex', flexDirection: 'column' }}>
-          {/* Name field for registration */}
-          {!isLogin && (
-            <div style={{ marginBottom: '30px' }}>
-              <div style={{
-                position: 'relative',
-                borderBottom: '1px solid rgba(255, 255, 255, 0.4)'
-              }}>
-                <User style={{
-                  position: 'absolute',
-                  left: '0',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  width: '20px',
-                  height: '20px',
-                  color: 'rgba(255, 255, 255, 0.7)'
-                }} />
-                <input
-                  type="text"
-                  placeholder="Name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  required={!isLogin}
-                  style={{
-                    width: '100%',
-                    padding: '18px 0 18px 35px',
-                    background: 'transparent',
-                    border: 'none',
-                    fontSize: '16px',
-                    color: 'white',
-                    outline: 'none',
-                    boxSizing: 'border-box'
-                  }}
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Email field */}
-          <div style={{ marginBottom: '30px' }}>
-            <div style={{
-              position: 'relative',
-              borderBottom: '1px solid rgba(255, 255, 255, 0.4)'
-            }}>
-              <Mail style={{
-                position: 'absolute',
-                left: '0',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                width: '20px',
-                height: '20px',
-                color: 'rgba(255, 255, 255, 0.7)'
-              }} />
-              <input
-                type="email"
-                placeholder="Email adress"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                style={{
-                  width: '100%',
-                  padding: '18px 0 18px 35px',
-                  background: 'transparent',
-                  border: 'none',
-                  fontSize: '16px',
-                  color: 'white',
-                  outline: 'none',
-                  boxSizing: 'border-box'
-                }}
-              />
-            </div>
+        {/* Password field */}
+        <div style={{ position: 'relative' }}>
+          <div style={{
+            width: '225px',
+            height: '26px',
+            left: '100.13px',
+            top: isLogin ? '369.42px' : '409.42px',
+            position: 'absolute',
+            opacity: 0.8,
+            color: 'white',
+            fontSize: '19.90px',
+            fontFamily: 'Narnoor, sans-serif',
+            fontWeight: 400,
+            wordWrap: 'break-word'
+          }}>
+            Password
           </div>
+          <div style={{
+            width: '18px',
+            height: '20.25px',
+            left: '58.13px',
+            top: isLogin ? '373.42px' : '413.42px',
+            position: 'absolute',
+            background: 'white'
+          }}></div>
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            style={{
+              width: '225px',
+              height: '26px',
+              left: '100.13px',
+              top: isLogin ? '399.42px' : '439.42px',
+              position: 'absolute',
+              background: 'transparent',
+              border: 'none',
+              borderBottom: '1px solid rgba(255, 255, 255, 0.4)',
+              color: 'white',
+              fontSize: '16px',
+              fontFamily: 'Narnoor, sans-serif',
+              outline: 'none',
+              paddingBottom: '5px'
+            }}
+          />
+        </div>
 
-          {/* Password field */}
-          <div style={{ marginBottom: '40px' }}>
-            <div style={{
-              position: 'relative',
-              borderBottom: '1px solid rgba(255, 255, 255, 0.4)'
-            }}>
-              <Lock style={{
-                position: 'absolute',
-                left: '0',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                width: '20px',
-                height: '20px',
-                color: 'rgba(255, 255, 255, 0.7)'
-              }} />
-              <input
-                type="password"
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                style={{
-                  width: '100%',
-                  padding: '18px 0 18px 35px',
-                  background: 'transparent',
-                  border: 'none',
-                  fontSize: '16px',
-                  color: 'white',
-                  outline: 'none',
-                  boxSizing: 'border-box'
-                }}
-              />
-            </div>
-          </div>
-
-          {/* Role selection for registration */}
-          {!isLogin && (
-            <div style={{ marginBottom: '30px' }}>
-              <select
-                value={role}
-                onChange={(e) => setRole(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '15px',
-                  background: 'rgba(255, 255, 255, 0.1)',
-                  border: '1px solid rgba(255, 255, 255, 0.3)',
-                  borderRadius: '8px',
-                  fontSize: '16px',
-                  color: 'white',
-                  outline: 'none',
-                  boxSizing: 'border-box'
-                }}
-              >
-                <option value="staff" style={{ color: '#000' }}>従業員</option>
-                <option value="manager" style={{ color: '#000' }}>店長</option>
-              </select>
-            </div>
-          )}
-
-          {/* Login button */}
-          <div style={{ marginBottom: '30px' }}>
-            <button
-              type="submit"
-              disabled={loading}
+        {/* Role selection for registration */}
+        {!isLogin && (
+          <div style={{ position: 'relative' }}>
+            <select
+              value={role}
+              onChange={(e) => setRole(e.target.value)}
               style={{
-                width: '100%',
-                padding: '18px',
-                background: 'rgba(255, 255, 255, 0.2)',
-                color: '#8B5A99',
-                border: 'none',
+                width: '214px',
+                left: '100.13px',
+                top: '479.42px',
+                position: 'absolute',
+                background: 'rgba(255, 255, 255, 0.1)',
+                border: '1px solid rgba(255, 255, 255, 0.3)',
                 borderRadius: '8px',
                 fontSize: '16px',
-                fontWeight: '500',
-                cursor: loading ? 'not-allowed' : 'pointer',
-                boxSizing: 'border-box',
-                opacity: loading ? 0.7 : 1
+                color: 'white',
+                outline: 'none',
+                padding: '10px',
+                fontFamily: 'Narnoor, sans-serif'
               }}
             >
-              {loading ? '処理中...' : isLogin ? 'Login to your account' : 'Create account'}
-            </button>
+              <option value="staff" style={{ color: '#000' }}>従業員</option>
+              <option value="manager" style={{ color: '#000' }}>店長</option>
+            </select>
           </div>
+        )}
 
-          {/* Remember me and Sign up link */}
-          <div style={{
+        {/* Login button */}
+        <button
+          type="submit"
+          disabled={loading}
+          style={{
+            width: '280px',
+            height: '45px',
+            left: '55px',
+            top: isLogin ? '440px' : '520px',
+            position: 'absolute',
+            background: 'rgba(255, 255, 255, 0.2)',
+            border: '1px solid rgba(255, 255, 255, 0.3)',
+            borderRadius: '8px',
+            color: 'white',
+            fontSize: '16px',
+            fontWeight: '500',
+            fontFamily: 'Narnoor, sans-serif',
+            cursor: loading ? 'not-allowed' : 'pointer',
+            opacity: loading ? 0.7 : 1,
+            transition: 'all 0.3s ease'
+          }}
+        >
+          {loading ? '処理中...' : isLogin ? 'Login to your account' : 'Create account'}
+        </button>
+
+        {/* Remember me and Sign up link */}
+        <div style={{
+          position: 'absolute',
+          top: isLogin ? '485.42px' : '565.42px',
+          left: '50px',
+          right: '50px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center'
+        }}>
+          {/* Remember me checkbox */}
+          <label style={{
             display: 'flex',
-            justifyContent: 'space-between',
             alignItems: 'center',
-            fontSize: '14px',
-            color: 'rgba(255, 255, 255, 0.8)'
+            gap: '8px',
+            cursor: 'pointer'
           }}>
-            {/* Remember me checkbox */}
-            <label style={{
+            <div style={{
+              width: '17px',
+              height: '17px',
+              border: '1px solid rgba(255, 255, 255, 0.5)',
+              borderRadius: '3px',
               display: 'flex',
               alignItems: 'center',
-              gap: '8px',
-              cursor: 'pointer'
+              justifyContent: 'center',
+              background: rememberMe ? 'rgba(255, 255, 255, 0.2)' : 'transparent',
+              position: 'relative'
             }}>
-              <div style={{
-                width: '16px',
-                height: '16px',
-                border: '1px solid rgba(255, 255, 255, 0.5)',
-                borderRadius: '50%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                background: rememberMe ? 'rgba(255, 255, 255, 0.2)' : 'transparent',
-                position: 'relative'
-              }}>
-                <input
-                  type="checkbox"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                  style={{
-                    opacity: 0,
-                    position: 'absolute',
-                    width: '16px',
-                    height: '16px',
-                    cursor: 'pointer'
-                  }}
-                />
-                {rememberMe && (
-                  <div style={{
-                    width: '8px',
-                    height: '8px',
-                    borderRadius: '50%',
-                    background: 'white'
-                  }} />
-                )}
-              </div>
+              <input
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                style={{
+                  opacity: 0,
+                  position: 'absolute',
+                  width: '17px',
+                  height: '17px',
+                  cursor: 'pointer'
+                }}
+              />
+              {rememberMe && (
+                <div style={{
+                  width: '13.81px',
+                  height: '13.81px',
+                  background: 'white',
+                  borderRadius: '2px'
+                }} />
+              )}
+            </div>
+            <div style={{
+              color: 'white',
+              fontSize: '12px',
+              fontFamily: 'Neuton, sans-serif',
+              fontWeight: 400
+            }}>
               remember me
-            </label>
+            </div>
+          </label>
 
-            {/* Sign up link */}
+          {/* Sign up link */}
+          <div style={{ display: 'flex', gap: '4px' }}>
+            <div style={{
+              color: 'rgba(255, 255, 255, 0.60)',
+              fontSize: '12px',
+              fontFamily: 'Neuton, sans-serif',
+              fontWeight: 400
+            }}>
+              {isLogin ? 'New here?' : 'Already have account?'}
+            </div>
             <button
               type="button"
               onClick={() => setIsLogin(!isLogin)}
               style={{
                 background: 'none',
                 border: 'none',
-                color: 'rgba(255, 255, 255, 0.8)',
+                color: 'white',
                 cursor: 'pointer',
-                fontSize: '14px',
+                fontSize: '12px',
+                fontFamily: 'Neuton, sans-serif',
+                fontWeight: 400,
                 textDecoration: 'none'
               }}
             >
-              {isLogin ? 'New here? Sign in!' : 'Already have account? Login!'}
+              {isLogin ? 'Sign in!' : 'Login!'}
             </button>
           </div>
-        </form>
-
-        {/* Message display */}
-        {message && (
-          <div style={{
-            marginTop: '25px',
-            padding: '15px',
-            borderRadius: '8px',
-            backgroundColor: message.includes('完了') ? 'rgba(34, 197, 94, 0.2)' : 'rgba(239, 68, 68, 0.2)',
-            border: `1px solid ${message.includes('完了') ? 'rgba(34, 197, 94, 0.5)' : 'rgba(239, 68, 68, 0.5)'}`,
-            color: 'white',
-            fontSize: '14px',
-            textAlign: 'center'
-          }}>
-            {message}
-          </div>
-        )}
-
-        {/* Footer */}
-        <div style={{
-          marginTop: '60px',
-          textAlign: 'center',
-          fontSize: '12px',
-          color: 'rgba(255, 255, 255, 0.5)'
-        }}>
-          Powered by KEYRON
         </div>
+      </form>
+
+      {/* Message display */}
+      {message && (
+        <div style={{
+          position: 'absolute',
+          top: isLogin ? '540px' : '620px',
+          left: '30px',
+          right: '30px',
+          padding: '15px',
+          borderRadius: '8px',
+          backgroundColor: message.includes('完了') ? 'rgba(34, 197, 94, 0.2)' : 'rgba(239, 68, 68, 0.2)',
+          border: `1px solid ${message.includes('完了') ? 'rgba(34, 197, 94, 0.5)' : 'rgba(239, 68, 68, 0.5)'}`,
+          color: 'white',
+          fontSize: '14px',
+          textAlign: 'center',
+          fontFamily: 'Neuton, sans-serif'
+        }}>
+          {message}
+        </div>
+      )}
+
+      {/* Footer */}
+      <div style={{
+        position: 'absolute',
+        bottom: '40px',
+        left: '0',
+        right: '0',
+        textAlign: 'center',
+        fontSize: '12px',
+        color: 'rgba(255, 255, 255, 0.5)',
+        fontFamily: 'Neuton, sans-serif'
+      }}>
+        Powered by KEYRON
       </div>
     </div>
   );
