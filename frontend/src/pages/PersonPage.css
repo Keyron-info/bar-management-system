@@ -1,0 +1,206 @@
+/* --- Global Styles --- */
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Sana', 'Noto Sans JP', sans-serif;
+  background-color: #FAFAFA;
+}
+
+/* --- Main Layout --- */
+.dashboard-container {
+  width: 390px;
+  height: 844px;
+  background: #FAFAFA;
+  margin: 0 auto;
+  padding: 20px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* --- Header Section --- */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.user-name {
+  color: #000;
+  font-size: 15px;
+  font-weight: 400;
+  line-height: normal;
+}
+
+.header-icons {
+  display: flex;
+  gap: 15px;
+}
+
+.icon-bell {
+  width: 26px;
+  height: 26px;
+}
+
+.icon-logout {
+  width: 13px;
+  height: 13px;
+  fill: #FFF; /* SVGのfillが指定されているため、直接設定 */
+}
+
+/* --- Monthly Goal Card --- */
+.goal-card {
+  width: 327px;
+  height: 92px;
+  background: #FFF;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 15px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.goal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.goal-title {
+  color: #000;
+  font-size: 15px;
+  font-weight: 400;
+  line-height: normal;
+}
+
+.goal-amount {
+  font-size: 24px;
+  font-weight: 700;
+  line-height: normal;
+  background: linear-gradient(90deg, #9333EA 0%, #F0E 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.progress-bar-container {
+  width: 100%;
+  height: 15px;
+  background: #D6D6D6;
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #A939A2 0%, #F0E 100%);
+}
+
+.progress-percentage {
+  color: #F0E;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: normal;
+  margin-top: 5px;
+  text-align: right;
+}
+
+/* --- Chart Section --- */
+.chart-card {
+  width: 330px;
+  height: 299px;
+  background: #FFF;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* --- Key Metrics Section --- */
+.metrics-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+
+.metrics-card-large {
+  width: 151px;
+  height: 179px;
+  background: #FFF;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.metrics-card-small {
+  width: 149px;
+  height: 51px;
+  background: #FFF;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.metrics-title {
+  color: #000;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: normal;
+}
+
+.metrics-value {
+  font-size: 24px;
+  font-weight: 700;
+  line-height: normal;
+  background: linear-gradient(90deg, #9333EA 0%, #F0E 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.metrics-value-small {
+  font-size: 20px;
+  font-weight: 700;
+  line-height: normal;
+  background: linear-gradient(90deg, #9333EA 0%, #F0E 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* --- Bottom Navigation --- */
+.bottom-nav {
+  width: 390px;
+  height: 85px;
+  background: #521364;
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+}
+
+.nav-icon {
+  width: 24px;
+  height: 24px;
+  fill: #FFF;
+}
