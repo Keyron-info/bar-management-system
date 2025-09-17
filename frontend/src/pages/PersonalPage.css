@@ -1,3 +1,4 @@
+/* レスポンシブ対応 PersonalPage CSS */
 /* --- Global Styles --- */
 body {
   margin: 0;
@@ -8,8 +9,9 @@ body {
 
 /* --- Main Layout --- */
 .dashboard-container {
-  width: 390px;
-  height: 844px;
+  width: 100%;
+  max-width: 390px;
+  min-height: 100vh;
   background: #FAFAFA;
   margin: 0 auto;
   padding: 20px;
@@ -17,6 +19,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 20px;
+  padding-bottom: 100px; /* ボトムナビゲーション分の余白 */
 }
 
 /* --- Header Section --- */
@@ -25,41 +28,52 @@ body {
   justify-content: space-between;
   align-items: center;
   padding: 10px 0;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 .user-info {
   display: flex;
   align-items: center;
   gap: 10px;
+  flex: 1;
+  min-width: 0;
 }
 
 .user-name {
   color: #000;
-  font-size: 15px;
+  font-size: clamp(14px, 3.5vw, 15px);
   font-weight: 400;
   line-height: normal;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .header-icons {
   display: flex;
   gap: 15px;
+  flex-shrink: 0;
 }
 
 .icon-bell {
   width: 26px;
   height: 26px;
+  min-width: 26px;
 }
 
 .icon-logout {
   width: 13px;
   height: 13px;
-  fill: #FFF; /* SVGのfillが指定されているため、直接設定 */
+  min-width: 13px;
+  fill: #FFF;
 }
 
 /* --- Monthly Goal Card --- */
 .goal-card {
-  width: 327px;
-  height: 92px;
+  width: 100%;
+  max-width: 327px;
+  min-height: 92px;
   background: #FFF;
   border-radius: 8px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
@@ -68,6 +82,7 @@ body {
   display: flex;
   flex-direction: column;
   justify-content: center;
+  margin: 0 auto;
 }
 
 .goal-header {
@@ -75,17 +90,19 @@ body {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 10px;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 .goal-title {
   color: #000;
-  font-size: 15px;
+  font-size: clamp(14px, 3.5vw, 15px);
   font-weight: 400;
   line-height: normal;
 }
 
 .goal-amount {
-  font-size: 24px;
+  font-size: clamp(20px, 5vw, 24px);
   font-weight: 700;
   line-height: normal;
   background: linear-gradient(90deg, #9333EA 0%, #F0E 100%);
@@ -105,11 +122,12 @@ body {
 .progress-bar-fill {
   height: 100%;
   background: linear-gradient(90deg, #A939A2 0%, #F0E 100%);
+  transition: width 0.3s ease;
 }
 
 .progress-percentage {
   color: #F0E;
-  font-size: 10px;
+  font-size: clamp(9px, 2.5vw, 10px);
   font-weight: 700;
   line-height: normal;
   margin-top: 5px;
@@ -118,11 +136,16 @@ body {
 
 /* --- Chart Section --- */
 .chart-card {
-  width: 330px;
-  height: 299px;
+  width: 100%;
+  max-width: 330px;
+  height: auto;
+  min-height: 299px;
   background: #FFF;
   border-radius: 8px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  margin: 0 auto;
+  padding: 15px;
+  box-sizing: border-box;
 }
 
 /* --- Key Metrics Section --- */
@@ -130,11 +153,16 @@ body {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 15px;
+  width: 100%;
+  max-width: 330px;
+  margin: 0 auto;
 }
 
 .metrics-card-large {
-  width: 151px;
-  height: 179px;
+  width: 100%;
+  max-width: 151px;
+  height: auto;
+  min-height: 179px;
   background: #FFF;
   border-radius: 8px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
@@ -143,11 +171,14 @@ body {
   flex-direction: column;
   justify-content: center;
   align-items: center;
+  box-sizing: border-box;
 }
 
 .metrics-card-small {
-  width: 149px;
-  height: 51px;
+  width: 100%;
+  max-width: 149px;
+  height: auto;
+  min-height: 51px;
   background: #FFF;
   border-radius: 8px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
@@ -156,51 +187,198 @@ body {
   flex-direction: column;
   justify-content: center;
   align-items: center;
+  box-sizing: border-box;
 }
 
 .metrics-title {
   color: #000;
-  font-size: 14px;
+  font-size: clamp(12px, 3vw, 14px);
   font-weight: 400;
   line-height: normal;
+  text-align: center;
+  margin-bottom: 5px;
 }
 
 .metrics-value {
-  font-size: 24px;
+  font-size: clamp(20px, 5vw, 24px);
   font-weight: 700;
   line-height: normal;
   background: linear-gradient(90deg, #9333EA 0%, #F0E 100%);
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  text-align: center;
 }
 
 .metrics-value-small {
-  font-size: 20px;
+  font-size: clamp(18px, 4.5vw, 20px);
   font-weight: 700;
   line-height: normal;
   background: linear-gradient(90deg, #9333EA 0%, #F0E 100%);
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  text-align: center;
 }
 
 /* --- Bottom Navigation --- */
 .bottom-nav {
-  width: 390px;
+  width: 100%;
+  max-width: 390px;
   height: 85px;
   background: #521364;
-  position: absolute;
+  position: fixed;
   bottom: 0;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
   justify-content: space-around;
   align-items: center;
+  z-index: 1000;
+  padding: 0 20px;
+  box-sizing: border-box;
 }
 
 .nav-icon {
   width: 24px;
   height: 24px;
   fill: #FFF;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.nav-icon:hover {
+  transform: scale(1.1);
+}
+
+/* タブレット向け調整 */
+@media screen and (min-width: 391px) and (max-width: 768px) {
+  .dashboard-container {
+    max-width: 600px;
+    padding: 30px;
+    gap: 25px;
+  }
+  
+  .goal-card,
+  .chart-card,
+  .metrics-container {
+    max-width: 500px;
+  }
+  
+  .metrics-container {
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  
+  .bottom-nav {
+    max-width: 600px;
+  }
+}
+
+/* デスクトップ向け調整 */
+@media screen and (min-width: 769px) {
+  .dashboard-container {
+    max-width: 800px;
+    padding: 40px;
+    gap: 30px;
+  }
+  
+  .goal-card,
+  .chart-card {
+    max-width: 600px;
+  }
+  
+  .metrics-container {
+    max-width: 600px;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 25px;
+  }
+  
+  .metrics-card-large,
+  .metrics-card-small {
+    max-width: none;
+  }
+  
+  .bottom-nav {
+    max-width: 800px;
+    padding: 0 40px;
+  }
+}
+
+/* 大画面対応 */
+@media screen and (min-width: 1024px) {
+  .dashboard-container {
+    max-width: 1000px;
+    padding: 50px;
+  }
+  
+  .metrics-container {
+    grid-template-columns: repeat(4, 1fr);
+    max-width: 800px;
+  }
+  
+  .bottom-nav {
+    max-width: 1000px;
+  }
+}
+
+/* 縦向きスマートフォン対応 */
+@media screen and (max-width: 320px) {
+  .dashboard-container {
+    padding: 15px;
+    gap: 15px;
+  }
+  
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+  
+  .header-icons {
+    align-self: flex-end;
+  }
+  
+  .metrics-container {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  
+  .goal-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+/* 横向きスマートフォン対応 */
+@media screen and (max-height: 500px) and (orientation: landscape) {
+  .dashboard-container {
+    padding: 15px;
+    gap: 15px;
+    padding-bottom: 100px;
+  }
+  
+  .metrics-container {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  
+  .chart-card {
+    min-height: 200px;
+  }
+}
+
+/* プリント対応 */
+@media print {
+  .bottom-nav {
+    display: none;
+  }
+  
+  .dashboard-container {
+    padding-bottom: 20px;
+  }
+  
+  .icon-logout,
+  .icon-bell {
+    display: none;
+  }
 }

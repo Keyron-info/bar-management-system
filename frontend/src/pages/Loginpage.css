@@ -43,6 +43,7 @@ body {
   color: rgba(255, 255, 255, 0.8);
   width: 20px;
   height: 20px;
+  z-index: 1;
 }
 
 .form-input {
@@ -55,10 +56,15 @@ body {
   font-size: 16px;
   font-family: 'Narnoor', sans-serif;
   outline: none;
+  box-sizing: border-box;
 }
 
 .form-input::placeholder {
   color: rgba(255, 255, 255, 0.8);
+}
+
+.form-input:focus {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.8);
 }
 
 .form-input-label {
@@ -78,6 +84,9 @@ body {
   cursor: pointer;
   transition: all 0.3s ease;
   margin-top: 40px;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .auth-button:hover {
