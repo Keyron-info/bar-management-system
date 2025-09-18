@@ -8,33 +8,36 @@ body {
 
 /* --- Main Container --- */
 .login-page-container {
-  width: 100%;
-  max-width: 390px;
-  height: 100vh;
-  margin: 0 auto;
+  width: 100vw;
+  min-height: 100vh;
+  margin: 0;
   padding: 10px;
   background: linear-gradient(44deg, #541466 0%, #C544BE 50%, #64167B 100%);
-  overflow: hidden;
+  background-attachment: fixed;
+  background-size: cover;
+  background-repeat: no-repeat;
+  overflow-x: hidden;
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
-  align-items: flex-start;
-  gap: 10px;
+  justify-content: center;
+  align-items: center;
   font-family: 'Narnoor', Helvetica, sans-serif;
   box-sizing: border-box;
+  position: relative;
 }
 
 /* --- Form Container --- */
 .login-form-box {
-  align-self: stretch;
-  flex: 1 1 0;
-  padding-top: 3px;
-  padding-bottom: 3px;
+  width: 100%;
+  max-width: 390px;
+  flex: 1;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   gap: 23px;
+  padding: 20px;
+  box-sizing: border-box;
 }
 
 .login-form {
@@ -264,25 +267,32 @@ body {
 
 /* --- Footer --- */
 .page-footer {
-  position: absolute;
-  bottom: 40px;
-  left: 0;
-  right: 0;
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
   text-align: center;
   font-size: 12px;
   color: rgba(255, 255, 255, 0.5);
   font-family: 'Neuton', Helvetica, sans-serif;
-  padding: 0 20px;
+  white-space: nowrap;
+  z-index: 10;
 }
 
 /* --- Responsive Design --- */
-@media screen and (max-width: 320px) {
+@media screen and (max-width: 480px) {
   .login-page-container {
-    padding: 5px;
+    padding: 15px;
+  }
+  
+  .login-form-box {
+    padding: 15px;
+    max-width: 100%;
   }
   
   .login-form {
-    max-width: 250px;
+    max-width: 100%;
+    width: 100%;
   }
   
   .auth-links {
@@ -292,10 +302,14 @@ body {
   }
 }
 
-@media screen and (min-width: 391px) {
+@media screen and (min-width: 481px) and (max-width: 768px) {
   .login-page-container {
-    max-width: 500px;
-    padding: 20px;
+    padding: 30px;
+  }
+  
+  .login-form-box {
+    max-width: 450px;
+    padding: 30px;
   }
   
   .login-form {
@@ -303,22 +317,37 @@ body {
   }
 }
 
-@media screen and (max-height: 600px) and (orientation: landscape) {
+@media screen and (min-width: 769px) {
   .login-page-container {
-    height: auto;
-    min-height: 100vh;
-    padding: 10px;
+    padding: 40px;
   }
   
   .login-form-box {
-    padding-top: 10px;
-    padding-bottom: 10px;
-    gap: 15px;
+    max-width: 500px;
+    padding: 40px;
+  }
+  
+  .login-form {
+    max-width: 400px;
+  }
+}
+
+@media screen and (max-height: 600px) and (orientation: landscape) {
+  .login-page-container {
+    min-height: 100vh;
+    justify-content: flex-start;
+    padding-top: 20px;
+    padding-bottom: 80px;
+  }
+  
+  .login-form-box {
+    justify-content: flex-start;
+    padding: 20px;
   }
   
   .page-footer {
-    position: static;
-    margin-top: 20px;
+    position: fixed;
+    bottom: 10px;
   }
 }
 
