@@ -1,37 +1,67 @@
+/* Figmaデザイン完全対応 Loginpage.css */
+
+/* --- Reset & Base --- */
 body {
   margin: 0;
   padding: 0;
 }
 
+/* --- Main Container --- */
 .login-page-container {
-  width: 390px;
-  height: 844px;
-  position: relative;
-  background: linear-gradient(191deg, #3A0E47 2.49%, #AB3AA4 48.43%, #521364 100%);
-  overflow: hidden;
-  font-family: 'Narnoor', sans-serif;
+  width: 100%;
+  max-width: 390px;
+  height: 100vh;
   margin: 0 auto;
+  padding: 10px;
+  background: linear-gradient(44deg, #541466 0%, #C544BE 50%, #64167B 100%);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: 10px;
+  font-family: 'Narnoor', Helvetica, sans-serif;
+  box-sizing: border-box;
 }
 
+/* --- Form Container --- */
 .login-form-box {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 320px;
-  /* Figmaのレイアウトに合わせて調整 */
+  align-self: stretch;
+  flex: 1 1 0;
+  padding-top: 3px;
+  padding-bottom: 3px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 23px;
 }
 
+.login-form {
+  width: 100%;
+  max-width: 280px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: 25px;
+}
+
+/* --- Header --- */
 .form-header {
-  color: #FFF;
-  font-size: 19.898px;
+  opacity: 0.80;
+  color: white;
+  font-size: 19.90px;
+  font-family: 'Narnoor', Helvetica, sans-serif;
   font-weight: 400;
-  opacity: 0.8;
-  margin-bottom: 30px;
+  word-wrap: break-word;
+  margin-bottom: 10px;
 }
 
+/* --- Input Groups --- */
 .form-input-group {
   position: relative;
+  width: 100%;
   margin-bottom: 25px;
 }
 
@@ -48,31 +78,50 @@ body {
 
 .form-input {
   width: 100%;
-  padding: 5px 0 5px 30px;
+  padding: 10px 0 10px 30px;
   background: transparent;
   border: none;
   border-bottom: 1px solid rgba(255, 255, 255, 0.4);
   color: white;
   font-size: 16px;
-  font-family: 'Narnoor', sans-serif;
+  font-family: 'Narnoor', Helvetica, sans-serif;
   outline: none;
   box-sizing: border-box;
+  transition: border-color 0.3s ease;
 }
 
 .form-input::placeholder {
   color: rgba(255, 255, 255, 0.8);
+  opacity: 0.8;
 }
 
 .form-input:focus {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.8);
+  border-bottom-color: rgba(255, 255, 255, 0.8);
 }
 
-.form-input-label {
-  display: none; /* inputにplaceholderを使うため非表示 */
+/* --- Select for Role --- */
+.form-select {
+  width: 100%;
+  padding: 10px 0 10px 30px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.4);
+  color: white;
+  font-size: 16px;
+  font-family: 'Narnoor', Helvetica, sans-serif;
+  outline: none;
+  box-sizing: border-box;
+  cursor: pointer;
 }
 
+.form-select option {
+  color: black;
+  background: white;
+}
+
+/* --- Auth Button --- */
 .auth-button {
-  width: 280px;
+  width: 100%;
   height: 45px;
   background: rgba(255, 255, 255, 0.2);
   border: 1px solid rgba(255, 255, 255, 0.3);
@@ -80,17 +129,15 @@ body {
   color: white;
   font-size: 16px;
   font-weight: 500;
-  font-family: 'Narnoor', sans-serif;
+  font-family: 'Narnoor', Helvetica, sans-serif;
   cursor: pointer;
   transition: all 0.3s ease;
-  margin-top: 40px;
-  display: block;
-  margin-left: auto;
-  margin-right: auto;
+  margin-top: 20px;
 }
 
-.auth-button:hover {
+.auth-button:hover:not(:disabled) {
   background: rgba(255, 255, 255, 0.4);
+  transform: translateY(-1px);
 }
 
 .auth-button:disabled {
@@ -98,48 +145,100 @@ body {
   opacity: 0.7;
 }
 
+/* --- Auth Links Container --- */
 .auth-links {
+  width: 100%;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
   margin-top: 15px;
 }
 
-.auth-link-text {
-  font-size: 12px;
-  font-family: 'Neuton', sans-serif;
-  font-weight: 400;
-}
-
-.auth-link {
-  color: white;
-  text-decoration: none;
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 12px;
-  font-family: 'Neuton', sans-serif;
-  font-weight: 400;
-}
-
-.auth-link:hover {
-  text-decoration: underline;
-}
-
+/* --- Remember Me Section --- */
 .remember-me-container {
   display: flex;
   align-items: center;
   gap: 8px;
   cursor: pointer;
+  flex-shrink: 0;
+}
+
+.remember-me-checkbox {
+  width: 17px;
+  height: 17px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: background-color 0.2s ease;
+}
+
+.remember-me-checkbox.checked {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.remember-me-checkbox input {
+  opacity: 0;
+  position: absolute;
+  width: 17px;
+  height: 17px;
+  cursor: pointer;
+}
+
+.remember-me-checkmark {
+  width: 13.81px;
+  height: 13.81px;
+  background: white;
+  border-radius: 2px;
+  display: none;
+}
+
+.remember-me-checkbox.checked .remember-me-checkmark {
+  display: block;
 }
 
 .remember-me-text {
   color: white;
   font-size: 12px;
-  font-family: 'Neuton', sans-serif;
+  font-family: 'Neuton', Helvetica, sans-serif;
   font-weight: 400;
 }
 
+/* --- Auth Link Section --- */
+.auth-link-section {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.auth-link-text {
+  color: rgba(255, 255, 255, 0.60);
+  font-size: 12px;
+  font-family: 'Neuton', Helvetica, sans-serif;
+  font-weight: 400;
+}
+
+.auth-link {
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  text-decoration: underline;
+  font-size: 12px;
+  font-family: 'Neuton', Helvetica, sans-serif;
+  font-weight: 400;
+  transition: opacity 0.2s ease;
+}
+
+.auth-link:hover {
+  opacity: 0.8;
+}
+
+/* --- Message Box --- */
 .message-box {
   margin-top: 25px;
   padding: 15px;
@@ -147,19 +246,23 @@ body {
   color: white;
   font-size: 14px;
   text-align: center;
-  font-family: 'Neuton', sans-serif;
+  font-family: 'Neuton', Helvetica, sans-serif;
+  max-width: 280px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .message-box.success {
-  background-color: rgba(34, 197, 94, 0.2);
+  background: rgba(34, 197, 94, 0.2);
   border: 1px solid rgba(34, 197, 94, 0.5);
 }
 
 .message-box.error {
-  background-color: rgba(239, 68, 68, 0.2);
+  background: rgba(239, 68, 68, 0.2);
   border: 1px solid rgba(239, 68, 68, 0.5);
 }
 
+/* --- Footer --- */
 .page-footer {
   position: absolute;
   bottom: 40px;
@@ -168,5 +271,88 @@ body {
   text-align: center;
   font-size: 12px;
   color: rgba(255, 255, 255, 0.5);
-  font-family: 'Neuton', sans-serif;
+  font-family: 'Neuton', Helvetica, sans-serif;
+  padding: 0 20px;
+}
+
+/* --- Responsive Design --- */
+@media screen and (max-width: 320px) {
+  .login-page-container {
+    padding: 5px;
+  }
+  
+  .login-form {
+    max-width: 250px;
+  }
+  
+  .auth-links {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+}
+
+@media screen and (min-width: 391px) {
+  .login-page-container {
+    max-width: 500px;
+    padding: 20px;
+  }
+  
+  .login-form {
+    max-width: 350px;
+  }
+}
+
+@media screen and (max-height: 600px) and (orientation: landscape) {
+  .login-page-container {
+    height: auto;
+    min-height: 100vh;
+    padding: 10px;
+  }
+  
+  .login-form-box {
+    padding-top: 10px;
+    padding-bottom: 10px;
+    gap: 15px;
+  }
+  
+  .page-footer {
+    position: static;
+    margin-top: 20px;
+  }
+}
+
+/* --- Focus States for Accessibility --- */
+.form-input:focus,
+.auth-button:focus,
+.auth-link:focus,
+.remember-me-checkbox:focus-within {
+  outline: 2px solid rgba(255, 255, 255, 0.5);
+  outline-offset: 2px;
+}
+
+/* --- Loading State --- */
+.auth-button.loading {
+  position: relative;
+  overflow: hidden;
+}
+
+.auth-button.loading::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  animation: loading-shine 1.5s infinite;
+}
+
+@keyframes loading-shine {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
 }

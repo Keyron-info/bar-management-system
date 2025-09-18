@@ -49,8 +49,10 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
 
       if (response.ok) {
         if (isLogin) {
-          localStorage.setItem('token', data.access_token);
-          localStorage.setItem('user', JSON.stringify(data.user));
+          if (rememberMe) {
+            localStorage.setItem('token', data.access_token);
+            localStorage.setItem('user', JSON.stringify(data.user));
+          }
           onLogin(data.user);
           setMessage('');
         } else {
@@ -75,20 +77,23 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
   return (
     <div className="login-page-container">
       <div className="login-form-box">
-        <div className="form-header">
-          Log in
-        </div>
+        <form onSubmit={handleAuth} className="login-form">
+          {/* Header */}
+          <div className="form-header">
+            {isLogin ? 'Log in' : 'Create account'}
+          </div>
 
-        <form onSubmit={handleAuth}>
           {/* Name field for registration */}
           {!isLogin && (
             <div className="form-input-group">
-              <User size={20} className="form-icon" />
+              <div className="form-icon">
+                <User size={20} />
+              </div>
               <input
                 type="text"
-                placeholder="Name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
+                placeholder="Full name"
                 required={!isLogin}
                 className="form-input"
               />
@@ -97,12 +102,14 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
 
           {/* Email field */}
           <div className="form-input-group">
-            <Mail size={20} className="form-icon" />
+            <div className="form-icon">
+              <Mail size={20} />
+            </div>
             <input
               type="email"
-              placeholder="Email address"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              placeholder="Email address"
               required
               className="form-input"
             />
@@ -110,12 +117,14 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
 
           {/* Password field */}
           <div className="form-input-group">
-            <Lock size={20} className="form-icon" />
+            <div className="form-icon">
+              <Lock size={20} />
+            </div>
             <input
               type="password"
-              placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              placeholder="Password"
               required
               className="form-input"
             />
@@ -124,75 +133,49 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
           {/* Role selection for registration */}
           {!isLogin && (
             <div className="form-input-group">
+              <div className="form-icon">
+                <User size={20} />
+              </div>
               <select
                 value={role}
                 onChange={(e) => setRole(e.target.value)}
-                className="form-input"
-                style={{
-                  background: 'rgba(255, 255, 255, 0.1)',
-                  border: '1px solid rgba(255, 255, 255, 0.3)',
-                  borderRadius: '8px',
-                  padding: '10px',
-                  paddingLeft: '30px'
-                }}
+                className="form-select"
               >
-                <option value="staff" style={{ color: '#000' }}>従業員</option>
-                <option value="manager" style={{ color: '#000' }}>店長</option>
+                <option value="staff">スタッフ</option>
+                <option value="manager">マネージャー</option>
               </select>
             </div>
           )}
 
-          {/* Login button */}
+          {/* Login Button */}
           <button
             type="submit"
             disabled={loading}
-            className="auth-button"
+            className={`auth-button ${loading ? 'loading' : ''}`}
           >
-            {loading ? '処理中...' : isLogin ? 'Login to your account' : 'Create account'}
+            {loading ? 'Processing...' : (isLogin ? 'Login to your account' : 'Create account')}
           </button>
 
-          {/* Remember me and Sign up link */}
+          {/* Remember me and Sign up links */}
           <div className="auth-links">
             {/* Remember me checkbox */}
-            <label className="remember-me-container">
-              <div style={{
-                width: '17px',
-                height: '17px',
-                border: '1px solid rgba(255, 255, 255, 0.5)',
-                borderRadius: '3px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                background: rememberMe ? 'rgba(255, 255, 255, 0.2)' : 'transparent',
-                position: 'relative'
-              }}>
-                <input
-                  type="checkbox"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                  style={{
-                    opacity: 0,
-                    position: 'absolute',
-                    width: '17px',
-                    height: '17px',
-                    cursor: 'pointer'
-                  }}
-                />
-                {rememberMe && (
-                  <div style={{
-                    width: '13.81px',
-                    height: '13.81px',
-                    background: 'white',
-                    borderRadius: '2px'
-                  }} />
-                )}
-              </div>
-              <span className="remember-me-text">remember me</span>
-            </label>
+            {isLogin && (
+              <label className="remember-me-container">
+                <div className={`remember-me-checkbox ${rememberMe ? 'checked' : ''}`}>
+                  <input
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                  />
+                  <div className="remember-me-checkmark"></div>
+                </div>
+                <span className="remember-me-text">remember me</span>
+              </label>
+            )}
 
             {/* Sign up link */}
-            <div style={{ display: 'flex', gap: '4px' }}>
-              <span className="auth-link-text" style={{ color: 'rgba(255, 255, 255, 0.60)' }}>
+            <div className="auth-link-section">
+              <span className="auth-link-text">
                 {isLogin ? 'New here?' : 'Already have account?'}
               </span>
               <button
