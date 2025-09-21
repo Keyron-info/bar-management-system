@@ -1,384 +1,405 @@
-/* レスポンシブ対応 PersonalPage CSS */
-/* --- Global Styles --- */
-body {
-  margin: 0;
-  padding: 0;
-  font-family: 'Sana', 'Noto Sans JP', sans-serif;
-  background-color: #FAFAFA;
-}
+/* Personal Page - Figma Design Implementation */
 
-/* --- Main Layout --- */
-.dashboard-container {
-  width: 100%;
-  max-width: 390px;
-  min-height: 100vh;
+.personal-page-container {
+  width: 390px;
+  height: 844px;
   background: #FAFAFA;
-  margin: 0 auto;
-  padding: 20px;
-  box-sizing: border-box;
-  display: flex;
+  overflow: hidden;
   flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
   gap: 20px;
-  padding-bottom: 100px; /* ボトムナビゲーション分の余白 */
+  display: inline-flex;
+  margin: 0 auto;
+  font-family: 'Noto Sans JP', sans-serif;
 }
 
-/* --- Header Section --- */
-.header {
-  display: flex;
+/* Header Section */
+.page-header {
+  align-self: stretch;
+  padding-top: 55px;
+  padding-bottom: 10px;
+  padding-left: 30px;
+  padding-right: 30px;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 0;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.user-info {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex: 1;
-  min-width: 0;
+  display: inline-flex;
 }
 
 .user-name {
-  color: #000;
-  font-size: clamp(14px, 3.5vw, 15px);
+  color: black;
+  font-size: 15px;
+  font-family: 'Noto Sans JP', sans-serif;
   font-weight: 400;
-  line-height: normal;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  word-wrap: break-word;
 }
 
 .header-icons {
+  justify-content: flex-start;
+  align-items: center;
+  gap: 10px;
   display: flex;
-  gap: 15px;
-  flex-shrink: 0;
 }
 
-.icon-bell {
+.bell-icon {
   width: 26px;
   height: 26px;
-  min-width: 26px;
+  position: relative;
+  overflow: hidden;
 }
 
-.icon-logout {
+.bell-icon-inner {
+  width: 19.50px;
+  height: 21.12px;
+  left: 3px;
+  top: 2px;
+  position: absolute;
+  background: black;
+}
+
+.profile-icon {
+  width: 26px;
+  height: 26px;
+  background: linear-gradient(221deg, #FF00EE 0%, #AD3AA5 100%, #7B109F 100%);
+  border-radius: 9999px;
+}
+
+.logout-icon {
   width: 13px;
-  height: 13px;
-  min-width: 13px;
-  fill: #FFF;
+  height: 9.63px;
+  background: white;
 }
 
-/* --- Monthly Goal Card --- */
+/* Goal Card */
 .goal-card {
-  width: 100%;
-  max-width: 327px;
-  min-height: 92px;
-  background: #FFF;
-  border-radius: 8px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  padding: 15px;
-  box-sizing: border-box;
-  display: flex;
+  align-self: stretch;
+  padding-left: 30px;
+  padding-right: 30px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  background: white;
   flex-direction: column;
   justify-content: center;
-  margin: 0 auto;
+  align-items: center;
+  gap: 8px;
+  display: flex;
 }
 
 .goal-header {
-  display: flex;
+  align-self: stretch;
+  height: 24px;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 10px;
-  flex-wrap: wrap;
-  gap: 10px;
+  display: inline-flex;
 }
 
 .goal-title {
-  color: #000;
-  font-size: clamp(14px, 3.5vw, 15px);
+  color: black;
+  font-size: 15px;
+  font-family: 'Noto Sans JP', sans-serif;
   font-weight: 400;
-  line-height: normal;
+  word-wrap: break-word;
+}
+
+.goal-icon {
+  width: 24px;
+  height: 24px;
+  position: relative;
+  overflow: hidden;
+}
+
+.goal-icon-inner {
+  width: 19.62px;
+  height: 19.62px;
+  left: 2.19px;
+  top: 2.19px;
+  position: absolute;
+  background: linear-gradient(180deg, #FF00EE 0%, #9333EA 100%);
 }
 
 .goal-amount {
-  font-size: clamp(20px, 5vw, 24px);
+  align-self: stretch;
+  height: 28px;
+  color: #9333EA;
+  font-size: 24px;
+  font-family: 'Noto Sans JP', sans-serif;
   font-weight: 700;
-  line-height: normal;
-  background: linear-gradient(90deg, #9333EA 0%, #F0E 100%);
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  word-wrap: break-word;
 }
 
-.progress-bar-container {
-  width: 100%;
+.progress-section {
+  align-self: stretch;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: 10px;
+  display: flex;
+}
+
+.progress-bar-bg {
+  width: 326.56px;
   height: 15px;
   background: #D6D6D6;
-  border-radius: 9999px;
+  border-radius: 7.5px;
+  position: relative;
   overflow: hidden;
 }
 
 .progress-bar-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #A939A2 0%, #F0E 100%);
+  height: 15px;
+  background: #A939A2;
+  border-radius: 7.5px;
   transition: width 0.3s ease;
 }
 
 .progress-percentage {
-  color: #F0E;
-  font-size: clamp(9px, 2.5vw, 10px);
+  width: 28.65px;
+  height: 14px;
+  color: #FF00EE;
+  font-size: 10px;
+  font-family: 'Noto Sans JP', sans-serif;
   font-weight: 700;
-  line-height: normal;
-  margin-top: 5px;
-  text-align: right;
+  word-wrap: break-word;
 }
 
-/* --- Chart Section --- */
-.chart-card {
-  width: 100%;
-  max-width: 330px;
-  height: auto;
-  min-height: 299px;
-  background: #FFF;
-  border-radius: 8px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  margin: 0 auto;
-  padding: 15px;
-  box-sizing: border-box;
-}
-
-/* --- Key Metrics Section --- */
-.metrics-container {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 15px;
-  width: 100%;
-  max-width: 330px;
-  margin: 0 auto;
-}
-
-.metrics-card-large {
-  width: 100%;
-  max-width: 151px;
-  height: auto;
-  min-height: 179px;
-  background: #FFF;
-  border-radius: 8px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  padding: 15px;
-  display: flex;
+/* Performance Section */
+.performance-section {
+  align-self: stretch;
+  height: 273px;
+  padding-left: 20px;
+  padding-right: 20px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  background: #FAFAFA;
   flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  box-sizing: border-box;
-}
-
-.metrics-card-small {
-  width: 100%;
-  max-width: 149px;
-  height: auto;
-  min-height: 51px;
-  background: #FFF;
-  border-radius: 8px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  padding: 10px;
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: 10px;
   display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  box-sizing: border-box;
 }
 
-.metrics-title {
-  color: #000;
-  font-size: clamp(12px, 3vw, 14px);
+.performance-card {
+  align-self: stretch;
+  height: 253px;
+  padding-left: 30px;
+  padding-right: 30px;
+  padding-top: 20px;
+  padding-bottom: 20px;
+  background: white;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: 10px;
+  display: flex;
+}
+
+.performance-header {
+  align-self: stretch;
+  height: 24px;
+  justify-content: space-between;
+  align-items: center;
+  display: inline-flex;
+}
+
+.performance-title {
+  color: black;
+  font-size: 15px;
+  font-family: 'Noto Sans JP', sans-serif;
   font-weight: 400;
-  line-height: normal;
-  text-align: center;
-  margin-bottom: 5px;
+  word-wrap: break-word;
 }
 
-.metrics-value {
-  font-size: clamp(20px, 5vw, 24px);
-  font-weight: 700;
-  line-height: normal;
-  background: linear-gradient(90deg, #9333EA 0%, #F0E 100%);
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  text-align: center;
+.performance-icon {
+  width: 24px;
+  height: 24px;
+  position: relative;
+  overflow: hidden;
 }
 
-.metrics-value-small {
-  font-size: clamp(18px, 4.5vw, 20px);
-  font-weight: 700;
-  line-height: normal;
-  background: linear-gradient(90deg, #9333EA 0%, #F0E 100%);
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  text-align: center;
+.performance-icon-inner {
+  width: 19.62px;
+  height: 19.62px;
+  left: 2.19px;
+  top: 2.19px;
+  position: absolute;
+  background: linear-gradient(180deg, #FF00EE 0%, #9333EA 100%);
 }
 
-/* --- Bottom Navigation --- */
-.bottom-nav {
-  width: 100%;
-  max-width: 390px;
-  height: 85px;
-  background: #521364;
-  position: fixed;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  justify-content: space-around;
+/* Metrics Section */
+.metrics-section {
+  align-self: stretch;
+  flex: 1 1 0;
+  padding-left: 20px;
+  padding-right: 20px;
+  justify-content: center;
   align-items: center;
-  z-index: 1000;
-  padding: 0 20px;
-  box-sizing: border-box;
+  gap: 12px;
+  display: inline-flex;
+}
+
+.total-sales-card {
+  flex: 1 1 0;
+  height: 220px;
+  padding-left: 20px;
+  padding-right: 20px;
+  padding-top: 60px;
+  padding-bottom: 60px;
+  background: white;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  display: inline-flex;
+}
+
+.small-metrics-column {
+  flex: 1 1 0;
+  height: 220px;
+  padding-left: 20px;
+  padding-right: 20px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 17px;
+  display: inline-flex;
+}
+
+.small-metric-card {
+  align-self: stretch;
+  flex: 1 1 0;
+  min-height: 60px;
+  padding-left: 20px;
+  padding-right: 20px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  background: white;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  display: flex;
+}
+
+.metric-content {
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  display: flex;
+}
+
+.metric-title {
+  width: 64px;
+  height: 16px;
+  text-align: center;
+  color: black;
+  font-size: 14px;
+  font-family: 'Noto Sans JP', sans-serif;
+  font-weight: 400;
+  word-wrap: break-word;
+}
+
+.metric-value-large {
+  width: 103px;
+  height: 24.06px;
+  text-align: center;
+  color: #9333EA;
+  font-size: 24px;
+  font-family: 'Noto Sans JP', sans-serif;
+  font-weight: 700;
+  word-wrap: break-word;
+}
+
+.metric-value-small {
+  align-self: stretch;
+  height: 25px;
+  text-align: center;
+  color: #9333EA;
+  font-size: 20px;
+  font-family: 'Noto Sans JP', sans-serif;
+  font-weight: 700;
+  word-wrap: break-word;
+}
+
+/* Bottom Navigation */
+.bottom-navigation {
+  align-self: stretch;
+  min-width: 360px;
+  padding-left: 30px;
+  padding-right: 30px;
+  padding-top: 20px;
+  padding-bottom: 20px;
+  background: linear-gradient(90deg, #7B109F 0%, #FF00EE 100%);
+  justify-content: space-between;
+  align-items: flex-start;
+  display: inline-flex;
 }
 
 .nav-icon {
-  width: 24px;
-  height: 24px;
-  fill: #FFF;
-  cursor: pointer;
-  transition: transform 0.2s ease;
+  width: 19.62px;
+  height: 19.62px;
+  background: white;
 }
 
-.nav-icon:hover {
-  transform: scale(1.1);
+/* Loading State */
+.loading-container {
+  text-align: center;
+  padding: 40px;
+  color: #666;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  font-family: 'Noto Sans JP', sans-serif;
 }
 
-/* タブレット向け調整 */
-@media screen and (min-width: 391px) and (max-width: 768px) {
-  .dashboard-container {
-    max-width: 600px;
-    padding: 30px;
-    gap: 25px;
+/* Responsive Design */
+@media (max-width: 480px) {
+  .personal-page-container {
+    width: 100vw;
+    max-width: 480px;
   }
   
+  .page-header,
   .goal-card,
-  .chart-card,
-  .metrics-container {
-    max-width: 500px;
+  .performance-section,
+  .metrics-section {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+}
+
+@media (min-width: 481px) and (max-width: 768px) {
+  .personal-page-container {
+    width: 100vw;
+    max-width: 768px;
   }
   
-  .metrics-container {
-    grid-template-columns: 1fr 1fr;
+  .metrics-section {
+    flex-direction: column;
     gap: 20px;
   }
   
-  .bottom-nav {
-    max-width: 600px;
+  .total-sales-card,
+  .small-metrics-column {
+    width: 100%;
+    height: auto;
   }
 }
 
-/* デスクトップ向け調整 */
-@media screen and (min-width: 769px) {
-  .dashboard-container {
-    max-width: 800px;
-    padding: 40px;
-    gap: 30px;
+@media (min-width: 769px) {
+  .personal-page-container {
+    width: 100vw;
+    max-width: 1200px;
   }
   
+  .metrics-section {
+    justify-content: space-around;
+    padding-left: 40px;
+    padding-right: 40px;
+  }
+  
+  .page-header,
   .goal-card,
-  .chart-card {
-    max-width: 600px;
-  }
-  
-  .metrics-container {
-    max-width: 600px;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 25px;
-  }
-  
-  .metrics-card-large,
-  .metrics-card-small {
-    max-width: none;
-  }
-  
-  .bottom-nav {
-    max-width: 800px;
-    padding: 0 40px;
-  }
-}
-
-/* 大画面対応 */
-@media screen and (min-width: 1024px) {
-  .dashboard-container {
-    max-width: 1000px;
-    padding: 50px;
-  }
-  
-  .metrics-container {
-    grid-template-columns: repeat(4, 1fr);
-    max-width: 800px;
-  }
-  
-  .bottom-nav {
-    max-width: 1000px;
-  }
-}
-
-/* 縦向きスマートフォン対応 */
-@media screen and (max-width: 320px) {
-  .dashboard-container {
-    padding: 15px;
-    gap: 15px;
-  }
-  
-  .header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 15px;
-  }
-  
-  .header-icons {
-    align-self: flex-end;
-  }
-  
-  .metrics-container {
-    grid-template-columns: 1fr;
-    gap: 10px;
-  }
-  
-  .goal-header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-}
-
-/* 横向きスマートフォン対応 */
-@media screen and (max-height: 500px) and (orientation: landscape) {
-  .dashboard-container {
-    padding: 15px;
-    gap: 15px;
-    padding-bottom: 100px;
-  }
-  
-  .metrics-container {
-    grid-template-columns: repeat(4, 1fr);
-  }
-  
-  .chart-card {
-    min-height: 200px;
-  }
-}
-
-/* プリント対応 */
-@media print {
-  .bottom-nav {
-    display: none;
-  }
-  
-  .dashboard-container {
-    padding-bottom: 20px;
-  }
-  
-  .icon-logout,
-  .icon-bell {
-    display: none;
+  .performance-section {
+    padding-left: 40px;
+    padding-right: 40px;
   }
 }
