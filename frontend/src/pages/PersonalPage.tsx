@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Bell, LogOut } from 'lucide-react';
 import axios from 'axios';
 import './PersonalPage.css';
 
@@ -87,95 +88,80 @@ const PersonalPage: React.FC<PersonalPageProps> = ({ user }) => {
 
   if (loading) {
     return (
-      <div className="personal-page-container">
-        <div className="loading-container">
-          データを読み込んでいます...
-        </div>
+      <div className="personal-page-loading">
+        <div className="loading-text">データを読み込んでいます...</div>
       </div>
     );
   }
 
   return (
-    <div className="personal-page-container">
-      {/* Header Section */}
-      <div className="page-header">
-        <div className="user-name">{user.name}さん（{user.role === 'manager' ? '店長' : '店員'}）</div>
-        <div className="header-icons">
-          <div className="bell-icon">
-            <div className="bell-icon-inner" />
-          </div>
-          <div className="profile-icon" />
-          <div className="logout-icon" />
+    <div className="personal-page">
+      {/* Header */}
+      <div className="personal-header">
+        <div className="header-user">
+          <span className="user-display-name">
+            {user.name}さん（{user.role === 'manager' ? '店長' : '店員'}）
+          </span>
+        </div>
+        <div className="header-actions">
+          <Bell size={24} className="header-icon" />
+          <div className="profile-circle" />
+          <LogOut size={20} className="header-icon" />
         </div>
       </div>
 
-      {/* Monthly Goal Card */}
-      <div className="goal-card">
+      {/* Goal Card */}
+      <div className="goal-section">
         <div className="goal-header">
-          <div className="goal-title">今月の目標</div>
-          <div className="goal-icon">
-            <div className="goal-icon-inner" />
-          </div>
+          <span className="goal-label">今月の目標</span>
+          <div className="goal-icon-circle" />
         </div>
         <div className="goal-amount">{monthlyGoal.toLocaleString()}円</div>
-        <div className="progress-section">
-          <div className="progress-bar-bg">
+        <div className="progress-container">
+          <div className="progress-bar">
             <div 
-              className="progress-bar-fill" 
+              className="progress-fill" 
               style={{ width: `${Math.min(achievementRate, 100)}%` }}
             />
           </div>
-          <div className="progress-percentage">{Math.round(achievementRate)}%</div>
+          <div className="progress-text">{Math.round(achievementRate)}%</div>
         </div>
       </div>
 
-      {/* Monthly Performance Card */}
+      {/* Performance Card */}
       <div className="performance-section">
-        <div className="performance-card">
-          <div className="performance-header">
-            <div className="performance-title">今月の成績</div>
-            <div className="performance-icon">
-              <div className="performance-icon-inner" />
-            </div>
-          </div>
+        <div className="performance-header">
+          <span className="performance-label">今月の成績</span>
+          <div className="performance-icon-circle" />
+        </div>
+        <div className="performance-content">
+          {/* チャートエリア（プレースホルダー） */}
         </div>
       </div>
 
-      {/* Metrics Section */}
-      <div className="metrics-section">
-        <div className="total-sales-card">
+      {/* Metrics Cards */}
+      <div className="metrics-grid">
+        <div className="metric-card large">
           <div className="metric-title">総売上</div>
-          <div className="metric-value-large">{currentSales.toLocaleString()}円</div>
+          <div className="metric-value large">{currentSales.toLocaleString()}円</div>
         </div>
-        <div className="small-metrics-column">
-          <div className="small-metric-card">
-            <div className="metric-content">
-              <div className="metric-title">ドリンク杯数</div>
-              <div className="metric-value-small">{totalDrinks}杯</div>
-            </div>
+        
+        <div className="metrics-column">
+          <div className="metric-card small">
+            <div className="metric-title">ドリンク杯数</div>
+            <div className="metric-value small">{totalDrinks}杯</div>
           </div>
-          <div className="small-metric-card">
-            <div className="metric-content">
-              <div className="metric-title">キャッチ数</div>
-              <div className="metric-value-small">{totalCatch}杯</div>
-            </div>
+          
+          <div className="metric-card small">
+            <div className="metric-title">キャッチ数</div>
+            <div className="metric-value small">{totalCatch}杯</div>
           </div>
-          <div className="small-metric-card">
-            <div className="metric-content">
-              <div className="metric-title">出勤日数</div>
-              <div className="metric-value-small">{workDays}日</div>
-            </div>
+          
+          <div className="metric-card small">
+            <div className="metric-title">出勤日数</div>
+            <div className="metric-value small">{workDays}日</div>
           </div>
         </div>
-      </div>
-
-      {/* Bottom Navigation */}
-      <div className="bottom-navigation">
-        <div className="nav-icon" />
-        <div className="nav-icon" />
-        <div className="nav-icon" />
-        <div className="nav-icon" />
-        <div className="nav-icon" />
       </div>
     </div>
   );
