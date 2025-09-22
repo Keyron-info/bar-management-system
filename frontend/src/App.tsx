@@ -9,6 +9,10 @@ import DailyReportPage from './pages/DailyReportPage';
 import ShiftPage from './pages/ShiftPage';
 import SettingsPage from './pages/SettingsPage';
 
+// 共通コンポーネントのインポート
+import CommonHeader from './components/CommonHeader';
+import CommonFooter from './components/CommonFooter';
+
 interface User {
   id: number;
   email: string;
@@ -48,16 +52,8 @@ function App() {
 
   if (loading) {
     return (
-      <div style={{ 
-        minHeight: '100vh', 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center',
-        backgroundColor: '#f5f5f5'
-      }}>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: '18px', color: '#666' }}>読み込み中...</div>
-        </div>
+      <div className="app-loading">
+        <div className="loading-spinner">読み込み中...</div>
       </div>
     );
   }
@@ -67,19 +63,8 @@ function App() {
     return <LoginPage onLogin={setUser} />;
   }
 
-  // ここでuserがnullでないことが保証される
-  const navigationItems = [
-    { key: 'personal', label: '個人ページ', icon: '👤' },
-    ...(user.role === 'manager' ? 
-      [{ key: 'store' as PageType, label: '店舗ページ', icon: '🏪' }] : []),
-    { key: 'daily-report', label: '日報ページ', icon: '📝' },
-    { key: 'shift', label: 'シフト調整', icon: '📅' },
-    { key: 'settings', label: '設定', icon: '⚙️' },
-  ];
-
   // 現在のページコンポーネントを取得
   const getCurrentPageComponent = () => {
-    // userはnullでないことが保証されているので、非null アサーション演算子を使用
     switch (currentPage) {
       case 'personal':
         return <PersonalPage user={user!} />;
@@ -97,100 +82,23 @@ function App() {
   };
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
-      {/* ヘッダー */}
-      <header style={{
-        backgroundColor: '#2c3e50',
-        color: 'white',
-        padding: '0',
-        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-        position: 'sticky',
-        top: 0,
-        zIndex: 1000
-      }}>
-        {/* トップバー */}
-        <div style={{
-          padding: '12px 20px',
-          borderBottom: '1px solid #34495e',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center'
-        }}>
-          <h1 style={{ 
-            margin: 0, 
-            fontSize: '20px',
-            fontWeight: 'bold'
-          }}>
-            🍻 バー管理システム
-          </h1>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-            <span style={{ fontSize: '14px' }}>
-              {user.name}さん ({user.role === 'manager' ? '店長' : '従業員'})
-            </span>
-            <button
-              onClick={handleLogout}
-              style={{
-                backgroundColor: '#e74c3c',
-                color: 'white',
-                border: 'none',
-                padding: '6px 12px',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: '12px'
-              }}
-            >
-              ログアウト
-            </button>
-          </div>
-        </div>
-
-        {/* ナビゲーションメニュー */}
-        <nav style={{
-          display: 'flex',
-          padding: '0 20px',
-          gap: '0'
-        }}>
-          {navigationItems.map((item) => (
-            <button
-              key={item.key}
-              onClick={() => setCurrentPage(item.key as PageType)}
-              style={{
-                backgroundColor: currentPage === item.key ? '#34495e' : 'transparent',
-                color: 'white',
-                border: 'none',
-                padding: '12px 20px',
-                cursor: 'pointer',
-                fontSize: '14px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                borderRadius: '0',
-                borderBottom: currentPage === item.key ? 
-                  '3px solid #3498db' : '3px solid transparent',
-                transition: 'all 0.2s ease'
-              }}
-              onMouseEnter={(e) => {
-                if (currentPage !== item.key) {
-                  e.currentTarget.style.backgroundColor = '#34495e';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (currentPage !== item.key) {
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                }
-              }}
-            >
-              <span>{item.icon}</span>
-              {item.label}
-            </button>
-          ))}
-        </nav>
-      </header>
-
+    <div className="app-container">
+      {/* 共通ヘッダー */}
+      <CommonHeader user={user} onLogout={handleLogout} />
+      
       {/* メインコンテンツ */}
-      <main style={{ padding: '20px' }}>
-        {getCurrentPageComponent()}
+      <main className="main-content">
+        <div className="page-container">
+          {getCurrentPageComponent()}
+        </div>
       </main>
+      
+      {/* 共通フッター */}
+      <CommonFooter 
+        currentPage={currentPage} 
+        onPageChange={setCurrentPage}
+        userRole={user.role}
+      />
     </div>
   );
 }

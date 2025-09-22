@@ -1,4 +1,4 @@
-/* CommonHeader - Mobile First Design */
+/* CommonHeader.css - Mobile First Header Implementation */
 
 .common-header {
   position: fixed;
@@ -27,7 +27,7 @@
 .user-name {
   color: #333;
   font-size: 15px;
-  font-family: 'Noto Sans JP', sans-serif;
+  font-family: 'Noto Sans JP', 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
   font-weight: 400;
 }
 
