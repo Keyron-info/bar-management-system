@@ -146,20 +146,6 @@ const PersonalPage: React.FC<PersonalPageProps> = ({ user }) => {
 
   return (
     <div className="personal-page">
-      {/* Header */}
-      <div className="personal-header">
-        <div className="header-user">
-          <span className="user-display-name">
-            {user.name}さん（{user.role === 'manager' ? '店長' : '店員'}）
-          </span>
-        </div>
-        <div className="header-actions">
-          <Bell size={24} className="header-icon" />
-          <div className="profile-circle" />
-          <LogOut size={20} className="header-icon" />
-        </div>
-      </div>
-
       {/* Goal Card */}
       <div className="goal-section">
         <div className="goal-header">
@@ -187,19 +173,19 @@ const PersonalPage: React.FC<PersonalPageProps> = ({ user }) => {
         </div>
         <div className="chart-controls">
           <button 
-            className={chartType === 'sales' ? 'active' : ''}
+            className={`chart-btn ${chartType === 'sales' ? 'active' : ''}`}
             onClick={() => setChartType('sales')}
           >
             売上
           </button>
           <button 
-            className={chartType === 'drinks' ? 'active' : ''}
+            className={`chart-btn ${chartType === 'drinks' ? 'active' : ''}`}
             onClick={() => setChartType('drinks')}
           >
             ドリンク
           </button>
           <button 
-            className={chartType === 'catch' ? 'active' : ''}
+            className={`chart-btn ${chartType === 'catch' ? 'active' : ''}`}
             onClick={() => setChartType('catch')}
           >
             キャッチ
@@ -315,26 +301,11 @@ const PersonalPage: React.FC<PersonalPageProps> = ({ user }) => {
 
       {/* Bottom Navigation */}
       <div className="bottom-navigation">
-        <div className="nav-item active">
-          <div className="nav-icon personal"></div>
-          <span>個人</span>
-        </div>
-        <div className="nav-item">
-          <div className="nav-icon store"></div>
-          <span>店舗</span>
-        </div>
-        <div className="nav-item">
-          <div className="nav-icon report"></div>
-          <span>日報</span>
-        </div>
-        <div className="nav-item">
-          <div className="nav-icon shift"></div>
-          <span>シフト</span>
-        </div>
-        <div className="nav-item">
-          <div className="nav-icon settings"></div>
-          <span>設定</span>
-        </div>
+        <div className="nav-icon-item"></div>
+        <div className="nav-icon-item"></div>
+        <div className="nav-icon-item"></div>
+        <div className="nav-icon-item"></div>
+        <div className="nav-icon-item"></div>
       </div>
     </div>
   );

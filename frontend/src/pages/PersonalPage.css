@@ -3,7 +3,7 @@
 .personal-page {
   max-width: 600px;
   margin: 0 auto;
-  padding: 20px;
+  padding: 20px 20px 100px 20px; /* bottom padding for fixed navigation */
   background: #FAFAFA;
   min-height: 100vh;
   font-family: 'Noto Sans JP', 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
@@ -23,40 +23,6 @@
 .loading-text {
   color: #666;
   font-size: 16px;
-}
-
-/* Header Section */
-.personal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-  padding: 10px 0;
-}
-
-.user-display-name {
-  color: #333;
-  font-size: 15px;
-  font-weight: 400;
-}
-
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.header-icon {
-  color: #333;
-  cursor: pointer;
-}
-
-.profile-circle {
-  width: 26px;
-  height: 26px;
-  background: linear-gradient(221deg, #FF00EE 0%, #AD3AA5 50%, #7B109F 100%);
-  border-radius: 50%;
-  cursor: pointer;
 }
 
 /* Goal Section */
@@ -86,6 +52,21 @@
   height: 24px;
   background: linear-gradient(180deg, #FF00EE 0%, #9333EA 100%);
   border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.goal-settings-icon {
+  width: 24px;
+  height: 24px;
+  background: linear-gradient(180deg, #FF00EE 0%, #9333EA 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
 }
 
 .goal-amount {
