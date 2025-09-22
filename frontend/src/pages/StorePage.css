@@ -1,0 +1,419 @@
+/* StorePage - Clean Store Management Layout */
+
+.store-page {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 20px;
+  background: #FAFAFA;
+  min-height: 100vh;
+  font-family: 'Noto Sans JP', 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
+}
+
+.store-page-loading {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 40px;
+  text-align: center;
+  min-height: 50vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loading-text {
+  color: #666;
+  font-size: 16px;
+}
+
+/* Header Section */
+.store-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding: 10px 0;
+}
+
+.user-display-name {
+  color: #333;
+  font-size: 15px;
+  font-weight: 400;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-icon {
+  color: #333;
+  cursor: pointer;
+}
+
+.profile-circle {
+  width: 26px;
+  height: 26px;
+  background: linear-gradient(221deg, #FF00EE 0%, #AD3AA5 50%, #7B109F 100%);
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+/* Goal Section */
+.goal-section {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.goal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.goal-label {
+  color: #333;
+  font-size: 15px;
+  font-weight: 400;
+}
+
+.goal-icon-circle {
+  width: 24px;
+  height: 24px;
+  background: linear-gradient(180deg, #FF00EE 0%, #9333EA 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.goal-amount {
+  color: #9333EA;
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+
+.progress-container {
+  margin-bottom: 8px;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 15px;
+  background: #D6D6D6;
+  border-radius: 7.5px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #A939A2 0%, #FF00EE 100%);
+  border-radius: 7.5px;
+  transition: width 0.3s ease;
+}
+
+.progress-text {
+  color: #FF00EE;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: right;
+}
+
+/* Performance Section */
+.performance-section {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.performance-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.performance-label {
+  color: #333;
+  font-size: 15px;
+  font-weight: 400;
+}
+
+.period-selector {
+  display: flex;
+  gap: 8px;
+}
+
+.period-selector button {
+  padding: 6px 12px;
+  border: 1px solid #9333EA;
+  background: transparent;
+  color: #9333EA;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s;
+}
+
+.period-selector button.active {
+  background: #9333EA;
+  color: white;
+}
+
+.store-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.summary-item {
+  text-align: center;
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.summary-label {
+  color: #666;
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+
+.summary-value {
+  color: #9333EA;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.summary-value.small-text {
+  font-size: 14px;
+  color: #333;
+}
+
+/* Sales Chart Section */
+.sales-chart-container {
+  margin-top: 16px;
+}
+
+.chart-area {
+  height: 200px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chart-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.mock-chart {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.chart-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  height: 120px;
+  margin-bottom: 16px;
+}
+
+.chart-bar {
+  width: 40px;
+  background: linear-gradient(to top, #9333EA, #FF00EE);
+  border-radius: 4px 4px 0 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.chart-bar span {
+  position: absolute;
+  bottom: -20px;
+  font-size: 10px;
+  color: #666;
+  white-space: nowrap;
+}
+
+.chart-legend {
+  color: #666;
+  font-size: 12px;
+  text-align: center;
+}
+
+.chart-icon-circle {
+  width: 24px;
+  height: 24px;
+  background: linear-gradient(180deg, #FF00EE 0%, #9333EA 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Individual Performance Section */
+.individual-performance-section {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.individual-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.individual-label {
+  color: #333;
+  font-size: 15px;
+  font-weight: 400;
+}
+
+.individual-icon-circle {
+  width: 24px;
+  height: 24px;
+  background: linear-gradient(180deg, #FF00EE 0%, #9333EA 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.individual-performance-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.individual-card {
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 16px;
+  border: 1px solid #e9ecef;
+}
+
+.individual-name {
+  color: #333;
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+.individual-metrics {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.individual-metric {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.metric-label {
+  color: #666;
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+
+.metric-number {
+  color: #9333EA;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+/* Responsive Design */
+@media (max-width: 480px) {
+  .store-page {
+    padding: 16px;
+  }
+  
+  .individual-performance-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  
+  .chart-bars {
+    gap: 8px;
+  }
+  
+  .chart-bar {
+    width: 30px;
+  }
+  
+  .individual-metrics {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  
+  .goal-section,
+  .performance-section,
+  .individual-performance-section {
+    padding: 16px;
+  }
+}
+
+@media (min-width: 481px) and (max-width: 768px) {
+  .store-page {
+    padding: 20px;
+  }
+  
+  .individual-performance-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 769px) {
+  .store-page {
+    max-width: 800px;
+    padding: 30px;
+  }
+  
+  .individual-performance-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  .chart-bars {
+    gap: 20px;
+  }
+  
+  .chart-bar {
+    width: 50px;
+  }
+  
+  .goal-section,
+  .performance-section,
+  .individual-performance-section {
+    padding: 25px;
+  }
+}

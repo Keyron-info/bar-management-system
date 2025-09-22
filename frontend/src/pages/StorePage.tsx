@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { Bell, LogOut, Users, TrendingUp } from 'lucide-react';
 import axios from 'axios';
+import './StorePage.css';
 
 interface User {
   id: number;
@@ -12,251 +14,209 @@ interface StorePageProps {
   user: User;
 }
 
-interface EmployeeRanking {
-  employee_name: string;
-  total_sales: number;
-  total_drinks: number;
-  total_champagne: number;
-  total_catch: number;
-  total_hours: number;
+interface EmployeeData {
+  id: number;
+  name: string;
+  totalSales: number;
+  drinkCount: number;
+  catchCount: number;
+  workHours: number;
+  workDays: number;
+}
+
+interface StoreSummary {
+  totalRevenue: number;
+  totalEmployees: number;
+  averagePerEmployee: number;
+  topPerformer: string;
 }
 
 const StorePage: React.FC<StorePageProps> = ({ user }) => {
-  const [employeeRanking, setEmployeeRanking] = useState<EmployeeRanking[]>([]);
+  const [employeeData, setEmployeeData] = useState<EmployeeData[]>([]);
+  const [storeSummary, setStoreSummary] = useState<StoreSummary | null>(null);
+  const [storeGoal, setStoreGoal] = useState<number>(2000000); // 店舗目標
   const [loading, setLoading] = useState(true);
-  const [storeGoal, setStoreGoal] = useState<number>(2000000); // デフォルト目標200万円
+  const [selectedPeriod, setSelectedPeriod] = useState<'month' | 'week'>('month');
 
   useEffect(() => {
-    if (user.role === 'manager') {
-      fetchStoreData();
-    }
-  }, [user.role]);
+    fetchStoreData();
+  }, [selectedPeriod]);
 
   const fetchStoreData = async () => {
     try {
       const token = localStorage.getItem('token');
       if (!token) return;
 
-      const response = await axios.get(
-        'https://bar-management-system.onrender.com/api/sales/employee-ranking',
+      // 模擬データ（実際にはAPIから取得）
+      const mockEmployeeData: EmployeeData[] = [
         {
-          headers: { 'Authorization': `Bearer ${token}` },
-        }
-      );
+          id: 1,
+          name: '田中 花子',
+          totalSales: 450000,
+          drinkCount: 85,
+          catchCount: 23,
+          workHours: 120,
+          workDays: 15
+        },
+        {
+          id: 2,
+          name: '佐藤 太郎',
+          totalSales: 380000,
+          drinkCount: 72,
+          catchCount: 19,
+          workHours: 110,
+          workDays: 14
+        },
+        {
+          id: 3,
+          name: '鈴木 美咲',
+          totalSales: 520000,
+          drinkCount: 95,
+          catchCount: 28,
+          workHours: 125,
+          workDays: 16
+        },
+        {
+          id: 4,
+          name: '高橋 健太',
+          totalSales: 320000,
+          drinkCount: 58,
+          catchCount: 15,
+          workHours: 95,
+          workDays: 12
+        },
+      ];
 
-      setEmployeeRanking(response.data);
+      const totalRevenue = mockEmployeeData.reduce((sum, emp) => sum + emp.totalSales, 0);
+      const topPerformer = mockEmployeeData.reduce((top, current) => 
+        current.totalSales > top.totalSales ? current : top
+      ).name;
+
+      setEmployeeData(mockEmployeeData);
+      setStoreSummary({
+        totalRevenue,
+        totalEmployees: mockEmployeeData.length,
+        averagePerEmployee: totalRevenue / mockEmployeeData.length,
+        topPerformer
+      });
+
     } catch (error) {
-      console.error('データ取得エラー:', error);
+      console.error('店舗データ取得エラー:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  // 店舗全体の売上合計
-  const totalStoreSales = employeeRanking.reduce((sum, emp) => sum + emp.total_sales, 0);
-  const achievementRate = (totalStoreSales / storeGoal) * 100;
-
-  if (user.role !== 'manager') {
-    return (
-      <div style={{ textAlign: 'center', padding: '40px' }}>
-        <div style={{ fontSize: '18px', color: '#e74c3c' }}>店長のみアクセス可能です</div>
-      </div>
-    );
-  }
+  const achievementRate = storeSummary 
+    ? (storeSummary.totalRevenue / storeGoal) * 100 
+    : 0;
 
   if (loading) {
     return (
-      <div style={{ textAlign: 'center', padding: '40px' }}>
-        <div style={{ fontSize: '18px', color: '#666' }}>データを読み込んでいます...</div>
+      <div className="store-page-loading">
+        <div className="loading-text">店舗データを読み込んでいます...</div>
       </div>
     );
   }
 
   return (
-    <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
-      {/* ページヘッダー */}
-      <div style={{ marginBottom: '30px' }}>
-        <h1 style={{ 
-          fontSize: '28px', 
-          color: '#2c3e50', 
-          margin: '0 0 10px 0',
-          fontWeight: '600'
-        }}>
-          店舗管理ページ
-        </h1>
-        <p style={{ color: '#7f8c8d', margin: 0 }}>
-          店舗全体の売上状況と従業員の成績を確認できます
-        </p>
+    <div className="store-page">
+      {/* Header */}
+      <div className="store-header">
+        <div className="header-user">
+          <span className="user-display-name">
+            {user.name}さん（{user.role === 'manager' ? '店長' : '店員'}）
+          </span>
+        </div>
+        <div className="header-actions">
+          <Bell size={24} className="header-icon" />
+          <div className="profile-circle" />
+          <LogOut size={20} className="header-icon" />
+        </div>
       </div>
 
-      {/* 店舗全体の目標と達成状況 */}
-      <div style={{
-        backgroundColor: 'white',
-        borderRadius: '12px',
-        padding: '25px',
-        marginBottom: '25px',
-        boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
-        border: '1px solid #e1e8ed'
-      }}>
-        <h2 style={{ 
-          fontSize: '20px', 
-          color: '#2c3e50', 
-          margin: '0 0 20px 0',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '10px'
-        }}>
-          店舗全体の売上状況
-        </h2>
-
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px' }}>
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: '14px', color: '#7f8c8d', marginBottom: '5px' }}>今月の目標</div>
-            <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#2c3e50' }}>
-              {storeGoal.toLocaleString()}円
-            </div>
-          </div>
-
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: '14px', color: '#7f8c8d', marginBottom: '5px' }}>現在の売上</div>
-            <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#3498db' }}>
-              {totalStoreSales.toLocaleString()}円
-            </div>
-          </div>
-
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: '14px', color: '#7f8c8d', marginBottom: '5px' }}>達成率</div>
-            <div style={{ 
-              fontSize: '24px', 
-              fontWeight: 'bold', 
-              color: achievementRate >= 100 ? '#27ae60' : achievementRate >= 80 ? '#f39c12' : '#e74c3c'
-            }}>
-              {achievementRate.toFixed(1)}%
-            </div>
-          </div>
-
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: '14px', color: '#7f8c8d', marginBottom: '5px' }}>従業員数</div>
-            <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#9b59b6' }}>
-              {employeeRanking.length}人
-            </div>
+      {/* Store Goal Card */}
+      <div className="goal-section">
+        <div className="goal-header">
+          <span className="goal-label">今月の目標</span>
+          <div className="goal-icon-circle">
+            <TrendingUp size={16} color="white" />
           </div>
         </div>
+        <div className="goal-amount">{storeGoal.toLocaleString()}円</div>
+        <div className="progress-container">
+          <div className="progress-bar">
+            <div 
+              className="progress-fill" 
+              style={{ width: `${Math.min(achievementRate, 100)}%` }}
+            />
+          </div>
+          <div className="progress-text">{Math.round(achievementRate)}%</div>
+        </div>
+      </div>
 
-        {/* 進捗バー */}
-        <div style={{ marginTop: '20px' }}>
-          <div style={{
-            backgroundColor: '#ecf0f1',
-            borderRadius: '10px',
-            height: '20px',
-            overflow: 'hidden'
-          }}>
-            <div style={{
-              backgroundColor: achievementRate >= 100 ? '#27ae60' : achievementRate >= 80 ? '#f39c12' : '#3498db',
-              height: '100%',
-              width: `${Math.min(100, achievementRate)}%`,
-              transition: 'width 0.3s ease',
-              borderRadius: '10px'
-            }} />
+      {/* Store Sales Chart */}
+      <div className="performance-section">
+        <div className="performance-header">
+          <span className="performance-label">今月の成績</span>
+          <div className="chart-icon-circle">
+            <TrendingUp size={16} color="white" />
+          </div>
+        </div>
+        
+        <div className="sales-chart-container">
+          <div className="chart-area">
+            <div className="chart-placeholder">
+              <div className="mock-chart">
+                <div className="chart-bars">
+                  <div className="chart-bar" style={{height: '60%'}}><span>1週目</span></div>
+                  <div className="chart-bar" style={{height: '80%'}}><span>2週目</span></div>
+                  <div className="chart-bar" style={{height: '45%'}}><span>3週目</span></div>
+                  <div className="chart-bar" style={{height: '90%'}}><span>4週目</span></div>
+                </div>
+                <div className="chart-legend">
+                  <span>週別売上推移</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* 従業員ランキング */}
-      <div style={{
-        backgroundColor: 'white',
-        borderRadius: '12px',
-        padding: '25px',
-        boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
-        border: '1px solid #e1e8ed'
-      }}>
-        <h2 style={{ 
-          fontSize: '20px', 
-          color: '#2c3e50', 
-          margin: '0 0 20px 0',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '10px'
-        }}>
-          従業員売上ランキング
-        </h2>
-
-        {employeeRanking.length === 0 ? (
-          <div style={{ 
-            textAlign: 'center', 
-            padding: '40px', 
-            color: '#7f8c8d',
-            backgroundColor: '#f8f9fa',
-            borderRadius: '8px'
-          }}>
-            今月の売上データがありません
+      {/* Individual Performance by Store */}
+      <div className="individual-performance-section">
+        <div className="individual-header">
+          <span className="individual-label">今月の成績</span>
+          <div className="individual-icon-circle">
+            <Users size={16} color="white" />
           </div>
-        ) : (
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr style={{ backgroundColor: '#f8f9fa' }}>
-                  <th style={{ padding: '15px 12px', textAlign: 'left', borderBottom: '2px solid #e1e8ed' }}>順位</th>
-                  <th style={{ padding: '15px 12px', textAlign: 'left', borderBottom: '2px solid #e1e8ed' }}>従業員名</th>
-                  <th style={{ padding: '15px 12px', textAlign: 'right', borderBottom: '2px solid #e1e8ed' }}>売上</th>
-                  <th style={{ padding: '15px 12px', textAlign: 'right', borderBottom: '2px solid #e1e8ed' }}>ドリンク</th>
-                  <th style={{ padding: '15px 12px', textAlign: 'right', borderBottom: '2px solid #e1e8ed' }}>シャンパン</th>
-                  <th style={{ padding: '15px 12px', textAlign: 'right', borderBottom: '2px solid #e1e8ed' }}>キャッチ</th>
-                  <th style={{ padding: '15px 12px', textAlign: 'right', borderBottom: '2px solid #e1e8ed' }}>稼働時間</th>
-                </tr>
-              </thead>
-              <tbody>
-                {employeeRanking.map((employee, index) => (
-                  <tr key={employee.employee_name} style={{ 
-                    borderBottom: '1px solid #f1f1f1',
-                    backgroundColor: index < 3 ? '#f8f9fa' : 'transparent'
-                  }}>
-                    <td style={{ padding: '15px 12px' }}>
-                      <div style={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        gap: '8px' 
-                      }}>
-                        <span style={{
-                          backgroundColor: index === 0 ? '#f1c40f' : index === 1 ? '#95a5a6' : index === 2 ? '#cd7f32' : '#ecf0f1',
-                          color: index < 3 ? 'white' : '#7f8c8d',
-                          borderRadius: '50%',
-                          width: '24px',
-                          height: '24px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: '12px',
-                          fontWeight: 'bold'
-                        }}>
-                          {index + 1}
-                        </span>
-                      </div>
-                    </td>
-                    <td style={{ padding: '15px 12px', fontWeight: '600', color: '#2c3e50' }}>
-                      {employee.employee_name}
-                    </td>
-                    <td style={{ padding: '15px 12px', textAlign: 'right', fontWeight: 'bold', color: '#2c3e50' }}>
-                      {employee.total_sales.toLocaleString()}円
-                    </td>
-                    <td style={{ padding: '15px 12px', textAlign: 'right' }}>
-                      {employee.total_drinks}杯
-                    </td>
-                    <td style={{ padding: '15px 12px', textAlign: 'right' }}>
-                      {employee.total_champagne}本
-                    </td>
-                    <td style={{ padding: '15px 12px', textAlign: 'right' }}>
-                      {employee.total_catch}人
-                    </td>
-                    <td style={{ padding: '15px 12px', textAlign: 'right' }}>
-                      {employee.total_hours}時間
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+        </div>
+        
+        <div className="individual-performance-grid">
+          {employeeData.map((employee) => (
+            <div key={employee.id} className="individual-card">
+              <div className="individual-name">{employee.name}</div>
+              <div className="individual-metrics">
+                <div className="individual-metric">
+                  <span className="metric-label">ドリンク杯数</span>
+                  <span className="metric-number">{employee.drinkCount}杯</span>
+                </div>
+                <div className="individual-metric">
+                  <span className="metric-label">キャッチ数</span>
+                  <span className="metric-number">{employee.catchCount}回</span>
+                </div>
+                <div className="individual-metric">
+                  <span className="metric-label">売上</span>
+                  <span className="metric-number">{Math.round(employee.totalSales / 1000)}K円</span>
+                </div>
+                <div className="individual-metric">
+                  <span className="metric-label">出勤日数</span>
+                  <span className="metric-number">{employee.workDays}日</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
