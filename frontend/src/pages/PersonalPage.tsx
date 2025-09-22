@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Bell, LogOut, Settings, X } from 'lucide-react';
+import { Settings, X } from 'lucide-react';
 import axios from 'axios';
 import './PersonalPage.css';
 
@@ -12,6 +12,7 @@ interface User {
 
 interface PersonalPageProps {
   user: User;
+  onPageChange?: (page: string) => void;
 }
 
 interface SalesData {
@@ -40,7 +41,7 @@ interface GoalSettings {
   catch: number;
 }
 
-const PersonalPage: React.FC<PersonalPageProps> = ({ user }) => {
+const PersonalPage: React.FC<PersonalPageProps> = ({ user, onPageChange }) => {
   const [salesData, setSalesData] = useState<SalesData[]>([]);
   const [monthlySummary, setMonthlySummary] = useState<MonthlySummary | null>(null);
   const [goalSettings, setGoalSettings] = useState<GoalSettings>({
@@ -145,167 +146,182 @@ const PersonalPage: React.FC<PersonalPageProps> = ({ user }) => {
   }
 
   return (
-    <div className="personal-page">
-      {/* Goal Card */}
-      <div className="goal-section">
-        <div className="goal-header">
-          <span className="goal-label">今月の目標</span>
-          <div className="goal-settings-icon" onClick={() => setShowGoalSettings(true)}>
-            <Settings size={16} color="white" />
+    <div className="personal-page-container">
+      <div className="personal-page">
+        {/* User Header */}
+        <div className="user-header">
+          <span className="user-name">{user.name}さん（{user.role === 'manager' ? '店長' : '店員'}）</span>
+          <div className="header-icons">
+            <div className="bell-icon"></div>
+            <div className="profile-icon"></div>
+            <div className="logout-icon"></div>
           </div>
         </div>
-        <div className="goal-amount">{goalSettings.sales.toLocaleString()}円</div>
-        <div className="progress-container">
-          <div className="progress-bar">
-            <div 
-              className="progress-fill" 
-              style={{ width: `${Math.min(achievementRate, 100)}%` }}
-            />
-          </div>
-          <div className="progress-text">{Math.round(achievementRate)}%</div>
-        </div>
-      </div>
 
-      {/* Performance Card */}
-      <div className="performance-section">
-        <div className="performance-header">
-          <span className="performance-label">今月の成績</span>
-        </div>
-        <div className="chart-controls">
-          <button 
-            className={`chart-btn ${chartType === 'sales' ? 'active' : ''}`}
-            onClick={() => setChartType('sales')}
-          >
-            売上
-          </button>
-          <button 
-            className={`chart-btn ${chartType === 'drinks' ? 'active' : ''}`}
-            onClick={() => setChartType('drinks')}
-          >
-            ドリンク
-          </button>
-          <button 
-            className={`chart-btn ${chartType === 'catch' ? 'active' : ''}`}
-            onClick={() => setChartType('catch')}
-          >
-            キャッチ
-          </button>
-        </div>
-        <div className="chart-area">
-          <div className="chart-bars">
-            {chartData.map((day, index) => {
-              const value = chartType === 'sales' ? day.sales : 
-                           chartType === 'drinks' ? day.drinks : day.catch;
-              const height = maxValue > 0 ? (value / maxValue) * 100 : 0;
-              
-              return (
-                <div key={index} className="chart-bar-container">
-                  <div 
-                    className="chart-bar" 
-                    style={{ height: `${height}%` }}
-                    title={`${day.dayLabel}: ${value}${chartType === 'sales' ? '円' : chartType === 'drinks' ? '杯' : '回'}`}
-                  />
-                  <span className="chart-label">{day.dayLabel}</span>
-                </div>
-              );
-            })}
+        {/* Goal Card */}
+        <div className="goal-section">
+          <div className="goal-header">
+            <span className="goal-label">今月の目標</span>
+            <div className="goal-settings-icon" onClick={() => setShowGoalSettings(true)}>
+              <Settings size={16} color="white" />
+            </div>
+          </div>
+          <div className="goal-amount">{goalSettings.sales.toLocaleString()}円</div>
+          <div className="progress-container">
+            <div className="progress-bar">
+              <div 
+                className="progress-fill" 
+                style={{ width: `${Math.min(achievementRate, 100)}%` }}
+              />
+            </div>
+            <div className="progress-text">{Math.round(achievementRate)}%</div>
           </div>
         </div>
-      </div>
 
-      {/* Metrics Cards */}
-      <div className="metrics-grid">
-        <div className="metric-card large">
-          <div className="metric-title">総売上</div>
-          <div className="metric-value large">{currentSales.toLocaleString()}円</div>
+        {/* Performance Card */}
+        <div className="performance-section">
+          <div className="performance-header">
+            <span className="performance-label">今月の成績</span>
+            <div className="performance-settings-icon">
+              <Settings size={16} color="white" />
+            </div>
+          </div>
+          <div className="chart-controls">
+            <button 
+              className={`chart-btn ${chartType === 'sales' ? 'active' : ''}`}
+              onClick={() => setChartType('sales')}
+            >
+              売上
+            </button>
+            <button 
+              className={`chart-btn ${chartType === 'drinks' ? 'active' : ''}`}
+              onClick={() => setChartType('drinks')}
+            >
+              ドリンク
+            </button>
+            <button 
+              className={`chart-btn ${chartType === 'catch' ? 'active' : ''}`}
+              onClick={() => setChartType('catch')}
+            >
+              キャッチ
+            </button>
+          </div>
+          <div className="chart-area">
+            <div className="chart-bars">
+              {chartData.map((day, index) => {
+                const value = chartType === 'sales' ? day.sales : 
+                             chartType === 'drinks' ? day.drinks : day.catch;
+                const height = maxValue > 0 ? (value / maxValue) * 100 : 0;
+                
+                return (
+                  <div key={index} className="chart-bar-container">
+                    <div 
+                      className="chart-bar" 
+                      style={{ height: `${height}%` }}
+                      title={`${day.dayLabel}: ${value}${chartType === 'sales' ? '円' : chartType === 'drinks' ? '杯' : '回'}`}
+                    />
+                    <span className="chart-label">{day.dayLabel}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </div>
-        
-        <div className="metrics-column">
-          <div className="metric-card small">
-            <div className="metric-title">ドリンク杯数</div>
-            <div className="metric-value small">{totalDrinks}杯</div>
+
+        {/* Metrics Cards */}
+        <div className="metrics-grid">
+          <div className="metric-card large">
+            <div className="metric-title">総売上</div>
+            <div className="metric-value large">{currentSales.toLocaleString()}円</div>
           </div>
           
-          <div className="metric-card small">
-            <div className="metric-title">キャッチ数</div>
-            <div className="metric-value small">{totalCatch}杯</div>
-          </div>
-          
-          <div className="metric-card small">
-            <div className="metric-title">出勤日数</div>
-            <div className="metric-value small">{workDays}日</div>
-          </div>
-        </div>
-      </div>
-
-      {/* Goal Settings Modal */}
-      {showGoalSettings && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h3>目標設定</h3>
-              <button onClick={() => setShowGoalSettings(false)} className="close-btn">
-                <X size={20} />
-              </button>
+          <div className="metrics-column">
+            <div className="metric-card small">
+              <div className="metric-title">ドリンク杯数</div>
+              <div className="metric-value small">{totalDrinks}杯</div>
             </div>
             
-            <div className="goal-form">
-              <div className="form-group">
-                <label>売上目標</label>
-                <input
-                  type="number"
-                  value={goalSettings.sales}
-                  onChange={(e) => setGoalSettings(prev => ({
-                    ...prev,
-                    sales: Number(e.target.value)
-                  }))}
-                  className="form-input"
-                />
-              </div>
-
-              <div className="form-group">
-                <label>ドリンク目標</label>
-                <input
-                  type="number"
-                  value={goalSettings.drinks}
-                  onChange={(e) => setGoalSettings(prev => ({
-                    ...prev,
-                    drinks: Number(e.target.value)
-                  }))}
-                  className="form-input"
-                />
-              </div>
-
-              <div className="form-group">
-                <label>キャッチ目標</label>
-                <input
-                  type="number"
-                  value={goalSettings.catch}
-                  onChange={(e) => setGoalSettings(prev => ({
-                    ...prev,
-                    catch: Number(e.target.value)
-                  }))}
-                  className="form-input"
-                />
-              </div>
+            <div className="metric-card small">
+              <div className="metric-title">キャッチ数</div>
+              <div className="metric-value small">{totalCatch}杯</div>
             </div>
-
-            <div className="modal-actions">
-              <button onClick={updateGoalSettings} className="save-btn">
-                保存
-              </button>
+            
+            <div className="metric-card small">
+              <div className="metric-title">出勤日数</div>
+              <div className="metric-value small">{workDays}日</div>
             </div>
           </div>
         </div>
-      )}
+
+        {/* Goal Settings Modal */}
+        {showGoalSettings && (
+          <div className="modal-overlay">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h3>目標設定</h3>
+                <button onClick={() => setShowGoalSettings(false)} className="close-btn">
+                  <X size={20} />
+                </button>
+              </div>
+              
+              <div className="goal-form">
+                <div className="form-group">
+                  <label>売上目標</label>
+                  <input
+                    type="number"
+                    value={goalSettings.sales}
+                    onChange={(e) => setGoalSettings(prev => ({
+                      ...prev,
+                      sales: Number(e.target.value)
+                    }))}
+                    className="form-input"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>ドリンク目標</label>
+                  <input
+                    type="number"
+                    value={goalSettings.drinks}
+                    onChange={(e) => setGoalSettings(prev => ({
+                      ...prev,
+                      drinks: Number(e.target.value)
+                    }))}
+                    className="form-input"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>キャッチ目標</label>
+                  <input
+                    type="number"
+                    value={goalSettings.catch}
+                    onChange={(e) => setGoalSettings(prev => ({
+                      ...prev,
+                      catch: Number(e.target.value)
+                    }))}
+                    className="form-input"
+                  />
+                </div>
+              </div>
+
+              <div className="modal-actions">
+                <button onClick={updateGoalSettings} className="save-btn">
+                  保存
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Bottom Navigation */}
       <div className="bottom-navigation">
-        <div className="nav-icon-item"></div>
-        <div className="nav-icon-item"></div>
-        <div className="nav-icon-item"></div>
-        <div className="nav-icon-item"></div>
-        <div className="nav-icon-item"></div>
+        <div className="nav-icon-item" onClick={() => onPageChange?.('personal')}></div>
+        <div className="nav-icon-item" onClick={() => onPageChange?.('store')}></div>
+        <div className="nav-icon-item" onClick={() => onPageChange?.('daily-report')}></div>
+        <div className="nav-icon-item" onClick={() => onPageChange?.('shift')}></div>
+        <div className="nav-icon-item" onClick={() => onPageChange?.('settings')}></div>
       </div>
     </div>
   );
