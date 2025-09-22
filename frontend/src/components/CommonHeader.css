@@ -1,0 +1,118 @@
+/* CommonHeader - Mobile First Design */
+
+.common-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: #FAFAFA;
+  z-index: 100;
+  border-bottom: 1px solid #e9ecef;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.header-content {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 55px 30px 10px 30px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.user-info {
+  flex: 1;
+}
+
+.user-name {
+  color: #333;
+  font-size: 15px;
+  font-family: 'Noto Sans JP', sans-serif;
+  font-weight: 400;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.notification-icon {
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #333;
+  transition: color 0.2s;
+}
+
+.notification-icon:hover {
+  color: #9333EA;
+}
+
+.profile-avatar {
+  width: 26px;
+  height: 26px;
+  background: linear-gradient(221deg, #FF00EE 0%, #AD3AA5 100%, #7B109F 100%);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.profile-avatar:hover {
+  transform: scale(1.05);
+}
+
+.logout-icon {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #666;
+  transition: color 0.2s;
+}
+
+.logout-icon:hover {
+  color: #e74c3c;
+}
+
+/* Responsive Design */
+@media (max-width: 480px) {
+  .header-content {
+    padding: 55px 20px 10px 20px;
+  }
+  
+  .user-name {
+    font-size: 14px;
+  }
+  
+  .header-actions {
+    gap: 8px;
+  }
+  
+  .notification-icon,
+  .profile-avatar,
+  .logout-icon {
+    width: 22px;
+    height: 22px;
+  }
+}
+
+@media (min-width: 769px) {
+  .header-content {
+    max-width: 800px;
+    padding: 55px 40px 15px 40px;
+  }
+  
+  .user-name {
+    font-size: 16px;
+  }
+  
+  .header-actions {
+    gap: 16px;
+  }
+}

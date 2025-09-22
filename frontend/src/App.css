@@ -1,61 +1,218 @@
-/* 基本設定 */
-#root {
-  max-width: 1280px;
+/* App.css - Mobile First Header/Footer System */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Noto Sans JP', 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
+  background-color: #FAFAFA;
+  overflow-x: hidden;
+}
+
+/* App Container */
+.app-container {
+  width: 100vw;
+  min-height: 100vh;
+  background: #FAFAFA;
+  position: relative;
+}
+
+/* Loading State */
+.app-loading {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #FAFAFA;
+}
+
+.loading-spinner {
+  color: #666;
+  font-size: 16px;
+  font-family: 'Noto Sans JP', sans-serif;
+}
+
+/* Common Header */
+.common-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: #FAFAFA;
+  z-index: 100;
+  border-bottom: 1px solid #e9ecef;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.header-content {
+  max-width: 600px;
   margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
-}
-
-/* バー管理システム用スタイル */
-.container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
-
-.card {
-  background: white;
-  border-radius: 12px;
-  padding: 24px;
-  margin-bottom: 24px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  border: 1px solid #e5e7eb;
-}
-
-/* ヘッダーセクション */
-.header-section {
+  padding: 55px 30px 10px 30px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 16px;
 }
 
 .user-info {
+  flex: 1;
+}
+
+.user-name {
+  color: #333;
+  font-size: 15px;
+  font-family: 'Noto Sans JP', sans-serif;
+  font-weight: 400;
+}
+
+.header-actions {
   display: flex;
   align-items: center;
-  gap: 16px;
-  font-weight: 500;
-  color: #374151;
+  gap: 12px;
 }
 
-.logout-button {
-  background: #ef4444;
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 6px;
+.notification-icon {
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
-  font-size: 14px;
-  transition: background-color 0.2s;
+  color: #333;
+  transition: color 0.2s;
 }
 
-.logout-button:hover {
-  background: #dc2626;
+.notification-icon:hover {
+  color: #9333EA;
 }
 
-/* 認証コンテナ */
+.profile-avatar {
+  width: 26px;
+  height: 26px;
+  background: linear-gradient(221deg, #FF00EE 0%, #AD3AA5 100%, #7B109F 100%);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.profile-avatar:hover {
+  transform: scale(1.05);
+}
+
+.logout-icon {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #666;
+  transition: color 0.2s;
+}
+
+.logout-icon:hover {
+  color: #e74c3c;
+}
+
+/* Main Content */
+.main-content {
+  padding-top: 85px;
+  padding-bottom: 85px;
+  min-height: 100vh;
+  width: 100%;
+  overflow-y: auto;
+}
+
+/* Common Footer - Exact Figma Implementation */
+.common-footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  align-self: stretch;
+  min-width: 360px;
+  padding-left: 30px;
+  padding-right: 30px;
+  padding-top: 20px;
+  padding-bottom: 20px;
+  background: linear-gradient(90deg, #7B109F 0%, #FF00EE 100%);
+  justify-content: space-between;
+  align-items: flex-start;
+  display: inline-flex;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+  z-index: 100;
+}
+
+.footer-nav-item {
+  cursor: pointer;
+  transition: transform 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.footer-nav-item:hover {
+  transform: scale(1.1);
+}
+
+.footer-nav-item.active {
+  transform: scale(1.15);
+}
+
+/* Exact Figma Icon Sizes */
+.nav-icon-1 {
+  width: 19.62px;
+  height: 19.62px;
+  background: white;
+}
+
+.nav-icon-2 {
+  width: 18.75px;
+  height: 18.75px;
+  background: white;
+}
+
+.nav-icon-3 {
+  width: 19.52px;
+  height: 18.77px;
+  background: white;
+}
+
+.nav-icon-4 {
+  width: 19.50px;
+  height: 18px;
+  background: white;
+}
+
+.nav-icon-5 {
+  width: 18px;
+  height: 19.50px;
+  background: white;
+}
+
+/* Active State */
+.footer-nav-item.active .nav-icon-1,
+.footer-nav-item.active .nav-icon-2,
+.footer-nav-item.active .nav-icon-3,
+.footer-nav-item.active .nav-icon-4,
+.footer-nav-item.active .nav-icon-5 {
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 2px 8px rgba(255, 255, 255, 0.3);
+}
+
+/* Page Container for Content */
+.page-container {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 20px 30px;
+  background: #FAFAFA;
+  min-height: calc(100vh - 170px);
+}
+
+/* 既存の認証関連スタイル（互換性維持） */
 .auth-container {
   min-height: 100vh;
   display: flex;
@@ -82,7 +239,6 @@
   font-weight: 600;
 }
 
-/* フォームスタイル */
 .form-group {
   margin-bottom: 20px;
 }
@@ -175,74 +331,106 @@
   border: 1px solid #f87171;
 }
 
-/* 売上データ表示 */
-.sales-list {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.sales-item {
-  background: #f9fafb;
-  padding: 16px;
-  border-radius: 8px;
-  border: 1px solid #e5e7eb;
-}
-
-.sales-header {
-  font-weight: 600;
-  color: #1f2937;
-  margin-bottom: 8px;
-  font-size: 16px;
-}
-
-.sales-details {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  font-size: 14px;
-  color: #6b7280;
-}
-
-.sales-details span {
-  background: white;
-  padding: 4px 8px;
-  border-radius: 4px;
-  border: 1px solid #e5e7eb;
-}
-
-/* ステータスセクション */
-.status-section {
-  text-align: left;
-}
-
-.status-section h2 {
-  color: #1f2937;
-  font-size: 18px;
-  margin-bottom: 12px;
-}
-
-/* レスポンシブデザイン */
-@media (max-width: 768px) {
-  .container {
-    padding: 16px;
+/* Responsive Design */
+@media (max-width: 480px) {
+  .header-content {
+    padding: 55px 20px 10px 20px;
   }
   
-  .header-section {
-    flex-direction: column;
-    align-items: stretch;
+  .user-name {
+    font-size: 14px;
   }
   
-  .user-info {
-    justify-content: space-between;
+  .header-actions {
+    gap: 8px;
   }
   
-  .auth-card {
-    padding: 24px;
+  .notification-icon,
+  .profile-avatar,
+  .logout-icon {
+    width: 22px;
+    height: 22px;
   }
   
-  .sales-details {
-    flex-direction: column;
+  .main-content {
+    padding-top: 75px;
+    padding-bottom: 75px;
+  }
+  
+  .page-container {
+    padding: 16px 20px;
+  }
+  
+  .common-footer {
+    padding-left: 20px;
+    padding-right: 20px;
+    padding-top: 15px;
+    padding-bottom: 15px;
+  }
+  
+  /* Slightly smaller icons on very small screens */
+  .nav-icon-1 {
+    width: 17px;
+    height: 17px;
+  }
+  
+  .nav-icon-2 {
+    width: 16px;
+    height: 16px;
+  }
+  
+  .nav-icon-3 {
+    width: 17px;
+    height: 16px;
+  }
+  
+  .nav-icon-4 {
+    width: 17px;
+    height: 15px;
+  }
+  
+  .nav-icon-5 {
+    width: 15px;
+    height: 17px;
+  }
+}
+
+@media (min-width: 481px) and (max-width: 768px) {
+  .page-container {
+    padding: 20px 25px;
+  }
+}
+
+@media (min-width: 769px) {
+  .header-content {
+    max-width: 800px;
+    padding: 55px 40px 15px 40px;
+  }
+  
+  .user-name {
+    font-size: 16px;
+  }
+  
+  .header-actions {
+    gap: 16px;
+  }
+  
+  .page-container {
+    max-width: 800px;
+    padding: 30px 40px;
+  }
+  
+  .main-content {
+    padding-top: 95px;
+    padding-bottom: 85px;
+  }
+  
+  .common-footer {
+    max-width: 800px;
+    margin: 0 auto;
+    left: 50%;
+    transform: translateX(-50%);
+    border-radius: 20px 20px 0 0;
   }
 }
 
@@ -279,5 +467,4 @@
 
 .read-the-docs {
   color: #888;
-}/* Force redeploy */
-/* Updated Thu Sep 11 00:16:10 JST 2025 */
+}

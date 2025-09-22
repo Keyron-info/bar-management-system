@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, User, Plus, X } from 'lucide-react';
+import { Calendar, User, Plus, X, Settings } from 'lucide-react';
 import './DailyReportPage.css';
 
 interface User {
@@ -11,13 +11,15 @@ interface User {
 
 interface DailyReportPageProps {
   user: User;
+  onPageChange?: (page: string) => void;
 }
 
 interface ReceiptItem {
   id: string;
-  customerName: string;
   totalAmount: number;
+  isCardPayment: boolean;
   drinks: DrinkItem[];
+  champagnes: ChampagneItem[];
 }
 
 interface DrinkItem {
@@ -26,10 +28,9 @@ interface DrinkItem {
   amount: number;
 }
 
-interface PersonalResult {
-  employeeName: string;
-  totalDrinks: number;
-  totalSales: number;
+interface ChampagneItem {
+  name: string;
+  amount: number;
 }
 
 interface ExpenseItem {
@@ -38,7 +39,11 @@ interface ExpenseItem {
   description: string;
 }
 
-const DailyReportPage: React.FC<DailyReportPageProps> = ({ user }) => {
+interface CashSettings {
+  startingCash: number;
+}
+
+const DailyReportPage: React.FC<DailyReportPageProps> = ({ user, onPageChange }) => {
   const [selectedDate, setSelectedDate] = useState<string>(
     new Date().toISOString().split('T')[0]
   );
@@ -48,12 +53,20 @@ const DailyReportPage: React.FC<DailyReportPageProps> = ({ user }) => {
   const [otherExpenses, setOtherExpenses] = useState<ExpenseItem[]>([]);
   const [showReceiptForm, setShowReceiptForm] = useState(false);
   const [showExpenseForm, setShowExpenseForm] = useState(false);
+  const [showCashSettings, setShowCashSettings] = useState(false);
+  const [cashSettings, setCashSettings] = useState<CashSettings>({ startingCash: 50000 });
 
   // New receipt form state
-  const [newReceipt, setNewReceipt] = useState({
-    customerName: '',
+  const [newReceipt, setNewReceipt] = useState<{
+    totalAmount: number;
+    isCardPayment: boolean;
+    drinks: DrinkItem[];
+    champagnes: ChampagneItem[];
+  }>({
     totalAmount: 0,
-    drinks: [{ employeeName: user.name, drinkCount: 0, amount: 0 }]
+    isCardPayment: false,
+    drinks: [{ employeeName: user.name, drinkCount: 0, amount: 0 }],
+    champagnes: []
   });
 
   // New expense form state
@@ -65,29 +78,19 @@ const DailyReportPage: React.FC<DailyReportPageProps> = ({ user }) => {
 
   // Calculate totals
   const totalSales = receipts.reduce((sum, receipt) => sum + receipt.totalAmount, 0);
-  const cardSales = receipts.reduce((sum, receipt) => 
-    sum + receipt.drinks.reduce((drinkSum, drink) => drinkSum + drink.amount, 0), 0
-  );
+  const cardSales = receipts
+    .filter(receipt => receipt.isCardPayment)
+    .reduce((sum, receipt) => sum + receipt.totalAmount, 0);
+  const cashSales = totalSales - cardSales;
   
-  const personalResults: PersonalResult[] = receipts.reduce((results: PersonalResult[], receipt) => {
-    receipt.drinks.forEach(drink => {
-      const existing = results.find(r => r.employeeName === drink.employeeName);
-      if (existing) {
-        existing.totalDrinks += drink.drinkCount;
-        existing.totalSales += drink.amount;
-      } else {
-        results.push({
-          employeeName: drink.employeeName,
-          totalDrinks: drink.drinkCount,
-          totalSales: drink.amount
-        });
-      }
-    });
-    return results;
-  }, []);
-
   const totalOtherExpenses = otherExpenses.reduce((sum, expense) => sum + expense.amount, 0);
-  const remainingAmount = totalSales - alcoholExpense - totalOtherExpenses;
+  const totalExpenses = alcoholExpense + totalOtherExpenses;
+  
+  // 現金残金 = スタート現金 + 現金売上 - 経費
+  const cashRemaining = cashSettings.startingCash + cashSales - totalExpenses;
+  
+  // 純利益 = 総売上 - 経費
+  const netProfit = totalSales - totalExpenses;
 
   const addDrinkToReceipt = () => {
     setNewReceipt(prev => ({
@@ -112,6 +115,29 @@ const DailyReportPage: React.FC<DailyReportPageProps> = ({ user }) => {
     }));
   };
 
+  const addChampagneToReceipt = () => {
+    setNewReceipt(prev => ({
+      ...prev,
+      champagnes: [...prev.champagnes, { name: '', amount: 0 }]
+    }));
+  };
+
+  const removeChampagneFromReceipt = (index: number) => {
+    setNewReceipt(prev => ({
+      ...prev,
+      champagnes: prev.champagnes.filter((_, i) => i !== index)
+    }));
+  };
+
+  const updateChampagne = (index: number, field: keyof ChampagneItem, value: string | number) => {
+    setNewReceipt(prev => ({
+      ...prev,
+      champagnes: prev.champagnes.map((champagne, i) => 
+        i === index ? { ...champagne, [field]: value } : champagne
+      )
+    }));
+  };
+
   const submitReceipt = () => {
     const receipt: ReceiptItem = {
       id: Date.now().toString(),
@@ -119,9 +145,10 @@ const DailyReportPage: React.FC<DailyReportPageProps> = ({ user }) => {
     };
     setReceipts(prev => [...prev, receipt]);
     setNewReceipt({
-      customerName: '',
       totalAmount: 0,
-      drinks: [{ employeeName: user.name, drinkCount: 0, amount: 0 }]
+      isCardPayment: false,
+      drinks: [{ employeeName: user.name, drinkCount: 0, amount: 0 }],
+      champagnes: []
     });
     setShowReceiptForm(false);
   };
@@ -134,16 +161,21 @@ const DailyReportPage: React.FC<DailyReportPageProps> = ({ user }) => {
     }
   };
 
+  const updateCashSettings = () => {
+    setShowCashSettings(false);
+  };
+
   const submitDailyReport = () => {
     const reportData = {
       date: selectedDate,
       employee: selectedEmployee,
       totalSales,
       cardSales,
+      cashSales,
       alcoholExpense,
       otherExpenses,
-      personalResults,
-      remainingAmount
+      cashRemaining,
+      netProfit
     };
     
     console.log('日報データ:', reportData);
@@ -152,20 +184,6 @@ const DailyReportPage: React.FC<DailyReportPageProps> = ({ user }) => {
 
   return (
     <div className="daily-report-page">
-      {/* Header */}
-      <div className="report-header">
-        <div className="header-user">
-          <span className="user-display-name">
-            {user.name}さん（{user.role === 'manager' ? '店長' : '店員'}）
-          </span>
-        </div>
-        <div className="header-actions">
-          <div className="bell-icon" />
-          <div className="profile-circle" />
-          <div className="logout-icon" />
-        </div>
-      </div>
-
       {/* Date and Employee Selection */}
       <div className="selection-section">
         <div className="selection-item">
@@ -203,6 +221,11 @@ const DailyReportPage: React.FC<DailyReportPageProps> = ({ user }) => {
           </div>
           
           <div className="summary-card small">
+            <div className="summary-title">現金売上</div>
+            <div className="summary-value small">{cashSales.toLocaleString()}円</div>
+          </div>
+          
+          <div className="summary-card small">
             <div className="summary-title">酒代</div>
             <input
               type="number"
@@ -211,17 +234,6 @@ const DailyReportPage: React.FC<DailyReportPageProps> = ({ user }) => {
               className="expense-input"
               placeholder="0"
             />
-          </div>
-          
-          <div className="summary-card small">
-            <div className="summary-title">その他経費</div>
-            <div className="summary-value small">{totalOtherExpenses.toLocaleString()}円</div>
-            <button 
-              onClick={() => setShowExpenseForm(true)}
-              className="add-expense-btn"
-            >
-              +
-            </button>
           </div>
         </div>
       </div>
@@ -236,8 +248,22 @@ const DailyReportPage: React.FC<DailyReportPageProps> = ({ user }) => {
       {/* Calculation Result */}
       <div className="action-section">
         <div className="result-card">
-          <div className="result-title">計算結果</div>
-          <div className="result-value">残り: {remainingAmount.toLocaleString()}円</div>
+          <div className="result-header">
+            <div className="result-title">計算結果</div>
+            <div className="result-settings-icon" onClick={() => setShowCashSettings(true)}>
+              <Settings size={16} color="white" />
+            </div>
+          </div>
+          <div className="result-content">
+            <div className="result-item">
+              <span className="result-label">現金残金:</span>
+              <span className="result-value">{cashRemaining.toLocaleString()}円</span>
+            </div>
+            <div className="result-item">
+              <span className="result-label">純利益:</span>
+              <span className="result-value">{netProfit.toLocaleString()}円</span>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -246,20 +272,6 @@ const DailyReportPage: React.FC<DailyReportPageProps> = ({ user }) => {
         <button onClick={submitDailyReport} className="submit-btn">
           <span>日報提出</span>
         </button>
-      </div>
-
-      {/* Personal Results */}
-      <div className="action-section">
-        <div className="personal-results">
-          <div className="result-title">個人結果</div>
-          {personalResults.map((result, index) => (
-            <div key={index} className="personal-item">
-              <span className="person-name">{result.employeeName}</span>
-              <span className="person-drinks">{result.totalDrinks}杯</span>
-              <span className="person-sales">{result.totalSales.toLocaleString()}円</span>
-            </div>
-          ))}
-        </div>
       </div>
 
       {/* Receipt Form Modal */}
@@ -284,6 +296,20 @@ const DailyReportPage: React.FC<DailyReportPageProps> = ({ user }) => {
                 }))}
                 className="form-input"
               />
+            </div>
+
+            <div className="form-group">
+              <label className="checkbox-container">
+                <input
+                  type="checkbox"
+                  checked={newReceipt.isCardPayment}
+                  onChange={(e) => setNewReceipt(prev => ({
+                    ...prev,
+                    isCardPayment: e.target.checked
+                  }))}
+                />
+                <span className="checkbox-label">カード会計</span>
+              </label>
             </div>
 
             <div className="drinks-section">
@@ -327,6 +353,38 @@ const DailyReportPage: React.FC<DailyReportPageProps> = ({ user }) => {
               </button>
             </div>
 
+            <div className="champagne-section">
+              <label>シャンパン詳細</label>
+              {newReceipt.champagnes.map((champagne, index) => (
+                <div key={index} className="champagne-item">
+                  <input
+                    type="text"
+                    placeholder="シャンパン名"
+                    value={champagne.name}
+                    onChange={(e) => updateChampagne(index, 'name', e.target.value)}
+                    className="form-input small"
+                  />
+                  <input
+                    type="number"
+                    placeholder="金額"
+                    value={champagne.amount}
+                    onChange={(e) => updateChampagne(index, 'amount', Number(e.target.value))}
+                    className="form-input small"
+                  />
+                  <button 
+                    onClick={() => removeChampagneFromReceipt(index)}
+                    className="remove-btn"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+              ))}
+              
+              <button onClick={addChampagneToReceipt} className="add-champagne-btn">
+                <Plus size={16} /> シャンパン追加
+              </button>
+            </div>
+
             <div className="modal-actions">
               <button onClick={submitReceipt} className="submit-receipt-btn">
                 伝票追加
@@ -336,61 +394,33 @@ const DailyReportPage: React.FC<DailyReportPageProps> = ({ user }) => {
         </div>
       )}
 
-      {/* Expense Form Modal */}
-      {showExpenseForm && (
+      {/* Cash Settings Modal */}
+      {showCashSettings && (
         <div className="modal-overlay">
           <div className="modal-content">
             <div className="modal-header">
-              <h3>経費追加</h3>
-              <button onClick={() => setShowExpenseForm(false)} className="close-btn">
+              <h3>レジ設定</h3>
+              <button onClick={() => setShowCashSettings(false)} className="close-btn">
                 <X size={20} />
               </button>
             </div>
             
             <div className="form-group">
-              <label>経費種類</label>
-              <input
-                type="text"
-                value={newExpense.type}
-                onChange={(e) => setNewExpense(prev => ({
-                  ...prev,
-                  type: e.target.value
-                }))}
-                className="form-input"
-                placeholder="例: 食材費、光熱費など"
-              />
-            </div>
-
-            <div className="form-group">
-              <label>金額</label>
+              <label>スタート時のレジ金</label>
               <input
                 type="number"
-                value={newExpense.amount}
-                onChange={(e) => setNewExpense(prev => ({
-                  ...prev,
-                  amount: Number(e.target.value)
-                }))}
+                value={cashSettings.startingCash}
+                onChange={(e) => setCashSettings({
+                  startingCash: Number(e.target.value)
+                })}
                 className="form-input"
-              />
-            </div>
-
-            <div className="form-group">
-              <label>詳細（任意）</label>
-              <input
-                type="text"
-                value={newExpense.description}
-                onChange={(e) => setNewExpense(prev => ({
-                  ...prev,
-                  description: e.target.value
-                }))}
-                className="form-input"
-                placeholder="詳細説明"
+                placeholder="50000"
               />
             </div>
 
             <div className="modal-actions">
-              <button onClick={addExpense} className="submit-receipt-btn">
-                経費追加
+              <button onClick={updateCashSettings} className="save-btn">
+                保存
               </button>
             </div>
           </div>

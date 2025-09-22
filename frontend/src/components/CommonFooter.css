@@ -1,0 +1,123 @@
+/* CommonFooter - Figma Exact Implementation */
+
+.common-footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  align-self: stretch;
+  min-width: 360px;
+  padding-left: 30px;
+  padding-right: 30px;
+  padding-top: 20px;
+  padding-bottom: 20px;
+  background: linear-gradient(90deg, #7B109F 0%, #FF00EE 100%);
+  justify-content: space-between;
+  align-items: flex-start;
+  display: inline-flex;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+  z-index: 100;
+}
+
+.footer-nav-item {
+  cursor: pointer;
+  transition: transform 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.footer-nav-item:hover {
+  transform: scale(1.1);
+}
+
+.footer-nav-item.active {
+  transform: scale(1.15);
+}
+
+/* Exact Figma Icon Sizes */
+.nav-icon-1 {
+  width: 19.62px;
+  height: 19.62px;
+  background: white;
+}
+
+.nav-icon-2 {
+  width: 18.75px;
+  height: 18.75px;
+  background: white;
+}
+
+.nav-icon-3 {
+  width: 19.52px;
+  height: 18.77px;
+  background: white;
+}
+
+.nav-icon-4 {
+  width: 19.50px;
+  height: 18px;
+  background: white;
+}
+
+.nav-icon-5 {
+  width: 18px;
+  height: 19.50px;
+  background: white;
+}
+
+/* Active State */
+.footer-nav-item.active .nav-icon-1,
+.footer-nav-item.active .nav-icon-2,
+.footer-nav-item.active .nav-icon-3,
+.footer-nav-item.active .nav-icon-4,
+.footer-nav-item.active .nav-icon-5 {
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 2px 8px rgba(255, 255, 255, 0.3);
+}
+
+/* Responsive Design */
+@media (max-width: 480px) {
+  .common-footer {
+    padding-left: 20px;
+    padding-right: 20px;
+    padding-top: 15px;
+    padding-bottom: 15px;
+  }
+  
+  /* Slightly smaller icons on very small screens */
+  .nav-icon-1 {
+    width: 17px;
+    height: 17px;
+  }
+  
+  .nav-icon-2 {
+    width: 16px;
+    height: 16px;
+  }
+  
+  .nav-icon-3 {
+    width: 17px;
+    height: 16px;
+  }
+  
+  .nav-icon-4 {
+    width: 17px;
+    height: 15px;
+  }
+  
+  .nav-icon-5 {
+    width: 15px;
+    height: 17px;
+  }
+}
+
+@media (min-width: 769px) {
+  .common-footer {
+    max-width: 800px;
+    margin: 0 auto;
+    left: 50%;
+    transform: translateX(-50%);
+    border-radius: 20px 20px 0 0;
+  }
+}

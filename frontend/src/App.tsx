@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Bell, LogOut } from 'lucide-react';
 import './App.css';
 
 // ページコンポーネントのインポート
@@ -46,18 +47,37 @@ function App() {
     setCurrentPage('personal');
   };
 
+  const handlePageChange = (page: string) => {
+    setCurrentPage(page as PageType);
+  };
+
+  // 現在のページコンポーネントを取得
+  const getCurrentPageComponent = () => {
+    const pageProps = { 
+      user, 
+      onPageChange: handlePageChange 
+    };
+    
+    switch (currentPage) {
+      case 'personal':
+        return <PersonalPage {...pageProps} />;
+      case 'store':
+        return <StorePage {...pageProps} />;
+      case 'daily-report':
+        return <DailyReportPage {...pageProps} />;
+      case 'shift':
+        return <ShiftPage {...pageProps} />;
+      case 'settings':
+        return <SettingsPage {...pageProps} onLogout={handleLogout} />;
+      default:
+        return <PersonalPage {...pageProps} />;
+    }
+  };
+
   if (loading) {
     return (
-      <div style={{ 
-        minHeight: '100vh', 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center',
-        backgroundColor: '#f5f5f5'
-      }}>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: '18px', color: '#666' }}>読み込み中...</div>
-        </div>
+      <div className="app-loading">
+        <div className="loading-spinner">読み込み中...</div>
       </div>
     );
   }
@@ -67,142 +87,66 @@ function App() {
     return <LoginPage onLogin={setUser} />;
   }
 
-  // ナビゲーションメニューの定義
-  const navigationItems = [
-    { key: 'personal', label: '個人ページ', icon: '👤' },
-    ...(user.role === 'manager' ? [{ key: 'store' as PageType, label: '店舗ページ', icon: '🏪' }] : []),
-    { key: 'daily-report', label: '日報ページ', icon: '📝' },
-    { key: 'shift', label: 'シフト調整', icon: '📅' },
-    { key: 'settings', label: '設定', icon: '⚙️' },
-  ];
-
-  // 現在のページコンポーネントを取得
-  const getCurrentPageComponent = () => {
-    switch (currentPage) {
-      case 'personal':
-        return <PersonalPage user={user} />;
-      case 'store':
-        return <StorePage user={user} />;
-      case 'daily-report':
-        return <DailyReportPage user={user} />;
-      case 'shift':
-        return <ShiftPage user={user} />;
-      case 'settings':
-        return <SettingsPage user={user} onLogout={handleLogout} />;
-      default:
-        return <PersonalPage user={user} />;
-    }
-  };
-
+  // メインアプリケーション（ヘッダー + ページ + フッター）
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
-      {/* ヘッダー */}
-      <header style={{
-        backgroundColor: '#2c3e50',
-        color: 'white',
-        padding: '0',
-        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-        position: 'sticky',
-        top: 0,
-        zIndex: 1000
-      }}>
-        {/* トップバー */}
-        <div style={{
-          padding: '12px 20px',
-          borderBottom: '1px solid #34495e',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center'
-        }}>
-          <h1 style={{ 
-            margin: 0, 
-            fontSize: '20px',
-            fontWeight: 'bold'
-          }}>
-            🍻 バー管理システム
-          </h1>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-            <span style={{ fontSize: '14px' }}>
-              {user.name}さん ({user.role === 'manager' ? '店長' : '従業員'})
+    <div className="app-container">
+      {/* 共通ヘッダー */}
+      <header className="common-header">
+        <div className="header-content">
+          <div className="user-info">
+            <span className="user-name">
+              {user.name}さん（{user.role === 'manager' ? '店長' : '店員'}）
             </span>
-            <button
-              onClick={handleLogout}
-              style={{
-                backgroundColor: '#e74c3c',
-                color: 'white',
-                border: 'none',
-                padding: '6px 12px',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: '12px'
-              }}
-            >
-              ログアウト
-            </button>
+          </div>
+          <div className="header-actions">
+            <div className="notification-icon">
+              <Bell size={20} />
+            </div>
+            <div className="profile-avatar"></div>
+            <div className="logout-icon" onClick={handleLogout}>
+              <LogOut size={16} />
+            </div>
           </div>
         </div>
-
-        {/* ナビゲーションメニュー */}
-        <nav style={{
-          display: 'flex',
-          padding: '0 20px',
-          gap: '0'
-        }}>
-          {navigationItems.map((item) => (
-            <button
-              key={item.key}
-              onClick={() => setCurrentPage(item.key as PageType)}
-              style={{
-                backgroundColor: currentPage === item.key ? '#34495e' : 'transparent',
-                color: 'white',
-                border: 'none',
-                padding: '12px 20px',
-                cursor: 'pointer',
-                fontSize: '14px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                borderRadius: '0',
-                borderBottom: currentPage === item.key ? '3px solid #3498db' : '3px solid transparent',
-                transition: 'all 0.3s ease'
-              }}
-              onMouseEnter={(e) => {
-                if (currentPage !== item.key) {
-                  e.currentTarget.style.backgroundColor = '#34495e';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (currentPage !== item.key) {
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                }
-              }}
-            >
-              <span>{item.icon}</span>
-              <span>{item.label}</span>
-            </button>
-          ))}
-        </nav>
       </header>
-
+      
       {/* メインコンテンツ */}
-      <main style={{ 
-        padding: '20px',
-        maxWidth: '1200px',
-        margin: '0 auto',
-        minHeight: 'calc(100vh - 120px)'
-      }}>
+      <main className="main-content">
         {getCurrentPageComponent()}
       </main>
-
-      {/* フッター */}
-      <footer style={{
-        backgroundColor: '#2c3e50',
-        color: 'white',
-        textAlign: 'center',
-        padding: '15px',
-        fontSize: '12px'
-      }}>
-        <div>Powered by KEYRON</div>
+      
+      {/* 共通フッター */}
+      <footer className="common-footer">
+        <div 
+          className={`footer-nav-item ${currentPage === 'personal' ? 'active' : ''}`}
+          onClick={() => handlePageChange('personal')}
+        >
+          <div className="nav-icon nav-icon-1"></div>
+        </div>
+        <div 
+          className={`footer-nav-item ${currentPage === 'store' ? 'active' : ''}`}
+          onClick={() => handlePageChange('store')}
+        >
+          <div className="nav-icon nav-icon-2"></div>
+        </div>
+        <div 
+          className={`footer-nav-item ${currentPage === 'daily-report' ? 'active' : ''}`}
+          onClick={() => handlePageChange('daily-report')}
+        >
+          <div className="nav-icon nav-icon-3"></div>
+        </div>
+        <div 
+          className={`footer-nav-item ${currentPage === 'shift' ? 'active' : ''}`}
+          onClick={() => handlePageChange('shift')}
+        >
+          <div className="nav-icon nav-icon-4"></div>
+        </div>
+        <div 
+          className={`footer-nav-item ${currentPage === 'settings' ? 'active' : ''}`}
+          onClick={() => handlePageChange('settings')}
+        >
+          <div className="nav-icon nav-icon-5"></div>
+        </div>
       </footer>
     </div>
   );

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Bell, LogOut, Users, TrendingUp } from 'lucide-react';
+import { Users, TrendingUp } from 'lucide-react';
 import axios from 'axios';
 import './StorePage.css';
 
@@ -12,6 +12,7 @@ interface User {
 
 interface StorePageProps {
   user: User;
+  onPageChange?: (page: string) => void;
 }
 
 interface EmployeeData {
@@ -31,7 +32,7 @@ interface StoreSummary {
   topPerformer: string;
 }
 
-const StorePage: React.FC<StorePageProps> = ({ user }) => {
+const StorePage: React.FC<StorePageProps> = ({ user, onPageChange }) => {
   const [employeeData, setEmployeeData] = useState<EmployeeData[]>([]);
   const [storeSummary, setStoreSummary] = useState<StoreSummary | null>(null);
   const [storeGoal, setStoreGoal] = useState<number>(2000000); // 店舗目標
@@ -121,20 +122,6 @@ const StorePage: React.FC<StorePageProps> = ({ user }) => {
 
   return (
     <div className="store-page">
-      {/* Header */}
-      <div className="store-header">
-        <div className="header-user">
-          <span className="user-display-name">
-            {user.name}さん（{user.role === 'manager' ? '店長' : '店員'}）
-          </span>
-        </div>
-        <div className="header-actions">
-          <Bell size={24} className="header-icon" />
-          <div className="profile-circle" />
-          <LogOut size={20} className="header-icon" />
-        </div>
-      </div>
-
       {/* Store Goal Card */}
       <div className="goal-section">
         <div className="goal-header">

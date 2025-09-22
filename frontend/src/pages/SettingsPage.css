@@ -1,16 +1,39 @@
-/* SettingsPage - Clean Settings Layout */
+/* PersonalPage - Fixed Layout */
 
-.settings-page {
+.personal-page-container {
+  width: 100vw;
+  min-height: 100vh;
+  background: #FAFAFA;
+  position: relative;
+}
+
+.personal-page {
   max-width: 600px;
   margin: 0 auto;
-  padding: 20px;
+  padding: 55px 30px 100px 30px;
   background: #FAFAFA;
   min-height: 100vh;
   font-family: 'Noto Sans JP', 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
 }
 
-/* Header Section */
-.settings-header {
+.personal-page-loading {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 40px;
+  text-align: center;
+  min-height: 50vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loading-text {
+  color: #666;
+  font-size: 16px;
+}
+
+/* User Header */
+.user-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -18,363 +41,272 @@
   padding: 10px 0;
 }
 
-.user-display-name {
+.user-name {
+  color: black;
+  font-size: 15px;
+  font-family: 'Noto Sans JP', sans-serif;
+  font-weight: 400;
+}
+
+.header-icons {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.bell-icon {
+  width: 26px;
+  height: 26px;
+  background: black;
+  cursor: pointer;
+}
+
+.profile-icon {
+  width: 26px;
+  height: 26px;
+  background: linear-gradient(221deg, #FF00EE 0%, #AD3AA5 100%, #7B109F 100%);
+  border-radius: 9999px;
+  cursor: pointer;
+}
+
+.logout-icon {
+  width: 13px;
+  height: 9.63px;
+  background: white;
+  cursor: pointer;
+}
+
+/* Goal Section */
+.goal-section {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.goal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.goal-label {
   color: #333;
   font-size: 15px;
   font-weight: 400;
 }
 
-.header-actions {
+.goal-icon-circle {
+  width: 24px;
+  height: 24px;
+  background: linear-gradient(180deg, #FF00EE 0%, #9333EA 100%);
+  border-radius: 50%;
   display: flex;
   align-items: center;
-  gap: 12px;
-}
-
-.header-icon {
-  color: #333;
+  justify-content: center;
   cursor: pointer;
 }
 
-.profile-circle {
-  width: 26px;
-  height: 26px;
-  background: linear-gradient(221deg, #FF00EE 0%, #AD3AA5 50%, #7B109F 100%);
+.goal-settings-icon {
+  width: 24px;
+  height: 24px;
+  background: linear-gradient(180deg, #FF00EE 0%, #9333EA 100%);
   border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
 }
 
-/* Settings Sections */
-.settings-section {
+.goal-amount {
+  color: #9333EA;
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+
+.progress-container {
+  margin-bottom: 8px;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 15px;
+  background: #D6D6D6;
+  border-radius: 7.5px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #A939A2 0%, #FF00EE 100%);
+  border-radius: 7.5px;
+  transition: width 0.3s ease;
+}
+
+.progress-text {
+  color: #FF00EE;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: right;
+}
+
+/* Performance Section */
+.performance-section {
   background: white;
   border-radius: 12px;
   padding: 20px;
   margin-bottom: 20px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  min-height: 200px;
 }
 
-.section-header {
+.performance-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.performance-label {
+  color: #333;
+  font-size: 15px;
+  font-weight: 400;
+}
+
+.performance-icon-circle {
+  width: 24px;
+  height: 24px;
+  background: linear-gradient(180deg, #FF00EE 0%, #9333EA 100%);
+  border-radius: 50%;
+}
+
+.performance-content {
+  height: 150px;
   display: flex;
   align-items: center;
-  gap: 12px;
+  justify-content: center;
+  color: #999;
+  font-size: 14px;
+  border: 2px dashed #e0e0e0;
+  border-radius: 8px;
+}
+
+.performance-content::before {
+  content: "グラフエリア（実装予定）";
+}
+
+/* Metrics Grid */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
   margin-bottom: 20px;
 }
 
-.section-icon {
-  color: #9333EA;
+.metric-card {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
 }
 
-.section-label {
-  color: #333;
-  font-size: 16px;
-  font-weight: 500;
+.metric-card.large {
+  min-height: 120px;
 }
 
-.settings-content {
+.metrics-column {
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 
-/* Info Items */
-.info-item {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+.metric-card.small {
+  min-height: 80px;
+  padding: 15px;
 }
 
-.info-item label {
-  color: #666;
-  font-size: 13px;
-  font-weight: 500;
-}
-
-.info-value {
-  color: #333;
-  font-size: 15px;
-  padding: 10px 12px;
-  background: #f8f9fa;
-  border: 1px solid #e9ecef;
-  border-radius: 6px;
-}
-
-/* Toggle Items */
-.toggle-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 0;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.toggle-item:last-child {
-  border-bottom: none;
-}
-
-.toggle-info {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  flex: 1;
-}
-
-.toggle-label {
-  color: #333;
-  font-size: 15px;
-  font-weight: 500;
-}
-
-.toggle-description {
-  color: #666;
-  font-size: 13px;
-}
-
-/* Toggle Switch */
-.toggle-switch {
-  position: relative;
-  display: inline-block;
-  width: 50px;
-  height: 24px;
-}
-
-.toggle-switch input {
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-
-.slider {
-  position: absolute;
-  cursor: pointer;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: #ccc;
-  transition: .4s;
-  border-radius: 24px;
-}
-
-.slider:before {
-  position: absolute;
-  content: "";
-  height: 18px;
-  width: 18px;
-  left: 3px;
-  bottom: 3px;
-  background-color: white;
-  transition: .4s;
-  border-radius: 50%;
-}
-
-input:checked + .slider {
-  background-color: #9333EA;
-}
-
-input:checked + .slider:before {
-  transform: translateX(26px);
-}
-
-/* Preference Items */
-.preference-item {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.preference-item label {
-  color: #666;
-  font-size: 13px;
-  font-weight: 500;
-}
-
-.preference-select {
-  padding: 10px 12px;
-  border: 1px solid #e9ecef;
-  border-radius: 6px;
-  background: white;
+.metric-title {
   color: #333;
   font-size: 14px;
-  outline: none;
-  cursor: pointer;
+  font-weight: 400;
+  margin-bottom: 8px;
 }
 
-.preference-select:focus {
-  border-color: #9333EA;
+.metric-value {
+  font-weight: 700;
+  background: linear-gradient(90deg, #9333EA 0%, #FF00EE 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  line-height: 1.2;
 }
 
-/* Manager Items */
-.manager-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 16px;
-  background: #f8f9fa;
-  border-radius: 8px;
+.metric-value.large {
+  font-size: 24px;
 }
 
-.manager-item svg {
-  color: #9333EA;
-  flex-shrink: 0;
-}
-
-.manager-info {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  flex: 1;
-}
-
-.manager-label {
-  color: #333;
-  font-size: 15px;
-  font-weight: 500;
-}
-
-.manager-description {
-  color: #666;
-  font-size: 13px;
-}
-
-.manager-btn {
-  background: #9333EA;
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 6px;
-  font-size: 13px;
-  cursor: pointer;
-  flex-shrink: 0;
-  transition: all 0.2s;
-}
-
-.manager-btn:hover {
-  background: #7c2d92;
-}
-
-/* Action Buttons */
-.section-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-top: 20px;
-  padding-top: 16px;
-  border-top: 1px solid #f0f0f0;
-}
-
-.action-btn {
-  padding: 10px 16px;
-  border-radius: 6px;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.action-btn.secondary {
-  background: #f8f9fa;
-  color: #666;
-  border: 1px solid #e9ecef;
-}
-
-.action-btn.secondary:hover {
-  background: #e9ecef;
-}
-
-/* Logout Section */
-.logout-section {
-  background: white;
-  border-radius: 12px;
-  padding: 20px;
-  margin-bottom: 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  display: flex;
-  justify-content: center;
-}
-
-.logout-btn {
-  background: linear-gradient(90deg, #dc2626, #ef4444);
-  color: white;
-  border: none;
-  padding: 12px 24px;
-  border-radius: 8px;
-  font-size: 16px;
-  font-weight: 500;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  transition: all 0.2s;
-}
-
-.logout-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+.metric-value.small {
+  font-size: 20px;
 }
 
 /* Responsive Design */
 @media (max-width: 480px) {
-  .settings-page {
+  .personal-page {
     padding: 16px;
   }
   
-  .settings-section {
+  .metrics-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  
+  .metrics-column {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  
+  .metric-card {
     padding: 16px;
   }
   
-  .section-actions {
-    flex-direction: column;
-  }
-  
-  .action-btn {
-    width: 100%;
-    justify-content: center;
-  }
-  
-  .manager-item {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
-  }
-  
-  .manager-btn {
-    align-self: stretch;
-    text-align: center;
-  }
-  
-  .toggle-item {
-    align-items: flex-start;
-    gap: 12px;
-  }
-  
-  .toggle-switch {
-    margin-top: 4px;
+  .goal-section,
+  .performance-section {
+    padding: 16px;
   }
 }
 
 @media (min-width: 481px) and (max-width: 768px) {
-  .settings-page {
+  .personal-page {
     padding: 20px;
   }
   
-  .section-actions {
-    justify-content: flex-start;
+  .metrics-grid {
+    gap: 16px;
   }
 }
 
 @media (min-width: 769px) {
-  .settings-page {
+  .personal-page {
     max-width: 800px;
     padding: 30px;
   }
   
-  .settings-section {
+  .metrics-grid {
+    gap: 20px;
+  }
+  
+  .goal-section,
+  .performance-section {
     padding: 25px;
-  }
-  
-  .section-actions {
-    justify-content: flex-end;
-  }
-  
-  .manager-item {
-    padding: 20px;
   }
 }
