@@ -1,312 +1,263 @@
-/* PersonalPage - Fixed Layout */
+/* SettingsPage.css */
 
-.personal-page-container {
-  width: 100vw;
-  min-height: 100vh;
-  background: #FAFAFA;
-  position: relative;
-}
-
-.personal-page {
+.settings-page {
   max-width: 600px;
   margin: 0 auto;
-  padding: 55px 30px 100px 30px;
   background: #FAFAFA;
   min-height: 100vh;
-  font-family: 'Noto Sans JP', 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
+  font-family: 'Noto Sans JP', sans-serif;
 }
 
-.personal-page-loading {
-  max-width: 600px;
-  margin: 0 auto;
-  padding: 40px;
+/* プロフィールセクション */
+.profile-section {
+  background: linear-gradient(135deg, #9333EA 0%, #FF00EE 100%);
+  padding: 30px 20px;
   text-align: center;
-  min-height: 50vh;
+  border-radius: 0 0 20px 20px;
+  margin-bottom: 20px;
+}
+
+.profile-avatar-large {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 20px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
+  overflow: hidden;
 }
 
-.loading-text {
-  color: #666;
+.avatar-gradient {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(221deg, #FF00EE 0%, #AD3AA5 100%, #7B109F 100%);
+  opacity: 0.8;
+}
+
+.profile-info {
+  color: white;
+}
+
+.profile-name {
+  font-size: 24px;
+  font-weight: 600;
+  margin: 0 0 5px 0;
+}
+
+.profile-role {
   font-size: 16px;
+  margin: 0 0 8px 0;
+  opacity: 0.9;
 }
 
-/* User Header */
-.user-header {
+.profile-email {
+  font-size: 14px;
+  margin: 0;
+  opacity: 0.8;
+}
+
+/* 設定グループ */
+.settings-groups {
+  padding: 0 20px;
+}
+
+.settings-group {
+  margin-bottom: 25px;
+}
+
+.group-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 12px 0;
+  padding-left: 5px;
+}
+
+.settings-items {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.settings-item {
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-  padding: 10px 0;
+  padding: 16px 20px;
+  border-bottom: 1px solid #f0f0f0;
+  transition: background-color 0.2s ease;
 }
 
-.user-name {
-  color: black;
-  font-size: 15px;
-  font-family: 'Noto Sans JP', sans-serif;
-  font-weight: 400;
+.settings-item:last-child {
+  border-bottom: none;
 }
 
-.header-icons {
+.settings-item.clickable {
+  cursor: pointer;
+}
+
+.settings-item.clickable:hover {
+  background-color: #f8f9fa;
+}
+
+.settings-item.readonly {
+  opacity: 0.7;
+}
+
+.item-left {
   display: flex;
   align-items: center;
+  flex: 1;
+}
+
+.item-icon {
+  width: 40px;
+  height: 40px;
+  background: #f8f9fa;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 15px;
+}
+
+.item-content {
+  flex: 1;
+}
+
+.item-label {
+  font-size: 16px;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 2px;
+}
+
+.item-value {
+  font-size: 14px;
+  color: #666;
+}
+
+.item-right {
+  display: flex;
+  align-items: center;
+}
+
+/* トグルスイッチ */
+.toggle-switch {
+  width: 50px;
+  height: 28px;
+  background: #e0e0e0;
+  border-radius: 14px;
+  position: relative;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.toggle-switch.active {
+  background: linear-gradient(90deg, #9333EA 0%, #FF00EE 100%);
+}
+
+.toggle-handle {
+  width: 24px;
+  height: 24px;
+  background: white;
+  border-radius: 50%;
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  transition: transform 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.toggle-switch.active .toggle-handle {
+  transform: translateX(22px);
+}
+
+/* アプリ情報 */
+.app-info {
+  background: white;
+  margin: 20px;
+  padding: 20px;
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.app-name {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 5px;
+}
+
+.version {
+  font-size: 14px;
+  color: #666;
+}
+
+/* ログアウトセクション */
+.logout-section {
+  padding: 20px;
+  margin-top: 30px;
+}
+
+.logout-button {
+  width: 100%;
+  background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+  color: white;
+  border: none;
+  padding: 16px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   gap: 10px;
 }
 
-.bell-icon {
-  width: 26px;
-  height: 26px;
-  background: black;
-  cursor: pointer;
+.logout-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(231, 76, 60, 0.3);
 }
 
-.profile-icon {
-  width: 26px;
-  height: 26px;
-  background: linear-gradient(221deg, #FF00EE 0%, #AD3AA5 100%, #7B109F 100%);
-  border-radius: 9999px;
-  cursor: pointer;
+.logout-button:active {
+  transform: translateY(0);
 }
 
-.logout-icon {
-  width: 13px;
-  height: 9.63px;
-  background: white;
-  cursor: pointer;
-}
-
-/* Goal Section */
-.goal-section {
-  background: white;
-  border-radius: 12px;
-  padding: 20px;
-  margin-bottom: 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-}
-
-.goal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-}
-
-.goal-label {
-  color: #333;
-  font-size: 15px;
-  font-weight: 400;
-}
-
-.goal-icon-circle {
-  width: 24px;
-  height: 24px;
-  background: linear-gradient(180deg, #FF00EE 0%, #9333EA 100%);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-}
-
-.goal-settings-icon {
-  width: 24px;
-  height: 24px;
-  background: linear-gradient(180deg, #FF00EE 0%, #9333EA 100%);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-}
-
-.goal-amount {
-  color: #9333EA;
-  font-size: 24px;
-  font-weight: 700;
-  margin-bottom: 16px;
-}
-
-.progress-container {
-  margin-bottom: 8px;
-}
-
-.progress-bar {
-  width: 100%;
-  height: 15px;
-  background: #D6D6D6;
-  border-radius: 7.5px;
-  overflow: hidden;
-  margin-bottom: 8px;
-}
-
-.progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #A939A2 0%, #FF00EE 100%);
-  border-radius: 7.5px;
-  transition: width 0.3s ease;
-}
-
-.progress-text {
-  color: #FF00EE;
-  font-size: 12px;
-  font-weight: 700;
-  text-align: right;
-}
-
-/* Performance Section */
-.performance-section {
-  background: white;
-  border-radius: 12px;
-  padding: 20px;
-  margin-bottom: 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  min-height: 200px;
-}
-
-.performance-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-}
-
-.performance-label {
-  color: #333;
-  font-size: 15px;
-  font-weight: 400;
-}
-
-.performance-icon-circle {
-  width: 24px;
-  height: 24px;
-  background: linear-gradient(180deg, #FF00EE 0%, #9333EA 100%);
-  border-radius: 50%;
-}
-
-.performance-content {
-  height: 150px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #999;
-  font-size: 14px;
-  border: 2px dashed #e0e0e0;
-  border-radius: 8px;
-}
-
-.performance-content::before {
-  content: "グラフエリア（実装予定）";
-}
-
-/* Metrics Grid */
-.metrics-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  margin-bottom: 20px;
-}
-
-.metric-card {
-  background: white;
-  border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-}
-
-.metric-card.large {
-  min-height: 120px;
-}
-
-.metrics-column {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.metric-card.small {
-  min-height: 80px;
-  padding: 15px;
-}
-
-.metric-title {
-  color: #333;
-  font-size: 14px;
-  font-weight: 400;
-  margin-bottom: 8px;
-}
-
-.metric-value {
-  font-weight: 700;
-  background: linear-gradient(90deg, #9333EA 0%, #FF00EE 100%);
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  line-height: 1.2;
-}
-
-.metric-value.large {
-  font-size: 24px;
-}
-
-.metric-value.small {
-  font-size: 20px;
-}
-
-/* Responsive Design */
+/* レスポンシブデザイン */
 @media (max-width: 480px) {
-  .personal-page {
-    padding: 16px;
+  .profile-section {
+    padding: 25px 15px;
   }
   
-  .metrics-grid {
-    grid-template-columns: 1fr;
-    gap: 12px;
+  .settings-groups {
+    padding: 0 15px;
   }
   
-  .metrics-column {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 12px;
+  .app-info,
+  .logout-section {
+    margin: 20px 15px;
   }
   
-  .metric-card {
-    padding: 16px;
+  .settings-item {
+    padding: 14px 16px;
   }
   
-  .goal-section,
-  .performance-section {
-    padding: 16px;
-  }
-}
-
-@media (min-width: 481px) and (max-width: 768px) {
-  .personal-page {
-    padding: 20px;
+  .item-label {
+    font-size: 15px;
   }
   
-  .metrics-grid {
-    gap: 16px;
-  }
-}
-
-@media (min-width: 769px) {
-  .personal-page {
-    max-width: 800px;
-    padding: 30px;
-  }
-  
-  .metrics-grid {
-    gap: 20px;
-  }
-  
-  .goal-section,
-  .performance-section {
-    padding: 25px;
+  .item-value {
+    font-size: 13px;
   }
 }
