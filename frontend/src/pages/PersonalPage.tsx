@@ -169,7 +169,7 @@ const PersonalPage: React.FC<PersonalPageProps> = ({ user, onPageChange }) => {
               onClick={() => setShowGoalSettings(true)}
               aria-label="目標設定"
             >
-              <Settings size={16} color="white" />
+              <Settings size={16} color="#9333EA" />
             </button>
           </div>
           <div className="goal-amount">{goalSettings.sales.toLocaleString()}円</div>

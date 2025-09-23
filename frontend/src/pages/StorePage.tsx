@@ -117,8 +117,8 @@ const StorePage: React.FC<StorePageProps> = ({ user }) => {
   }
 
   return (
-    <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '20px' }}>
-      {/* 店舗全体の目標と達成状況 */}
+    <div style={{ maxWidth: '600px', margin: '0 auto', padding: '20px', background: '#FAFAFA', minHeight: '100vh' }}>
+      {/* 今月の目標セクション - 画像参考 */}
       <div style={{
         backgroundColor: 'white',
         borderRadius: '12px',
@@ -131,67 +131,109 @@ const StorePage: React.FC<StorePageProps> = ({ user }) => {
           display: 'flex', 
           justifyContent: 'space-between', 
           alignItems: 'center',
-          marginBottom: '20px' 
+          marginBottom: '15px' 
         }}>
-          <h2 style={{ 
-            fontSize: '18px', 
-            color: '#2c3e50', 
-            margin: 0,
-            fontWeight: '600'
+          <div style={{ 
+            fontSize: '16px', 
+            color: '#333', 
+            fontWeight: '500'
           }}>
             今月の目標
-          </h2>
+          </div>
           <button 
-            onClick={() => setShowGoalSettings(true)}
+            onClick={() => setShowTargetSettings(true)}
             style={{
-              background: 'linear-gradient(135deg, #9333EA, #FF00EE)',
+              background: 'white',
               border: 'none',
               borderRadius: '8px',
               padding: '8px',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center'
+              justifyContent: 'center',
+              boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
             }}
           >
-            <Settings size={16} color="white" />
+            <Settings size={16} color="#9333EA" />
           </button>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px' }}>
-          <div style={{ textAlign: 'center', padding: '15px', backgroundColor: '#f8f9fa', borderRadius: '8px' }}>
-            <div style={{ color: '#7f8c8d', fontSize: '14px', marginBottom: '8px' }}>月間目標</div>
-            <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#9333EA' }}>
-              {storeGoalSettings.totalMonthlyTarget.toLocaleString()}円
-            </div>
+        <div style={{ 
+          fontSize: '20px', 
+          fontWeight: '700', 
+          color: '#9333EA',
+          marginBottom: '15px' 
+        }}>
+          {monthlyTarget.toLocaleString()}円
+        </div>
+
+        {/* 達成率の横バー */}
+        <div style={{ marginBottom: '20px' }}>
+          <div style={{
+            width: '100%',
+            height: '8px',
+            backgroundColor: '#f0f0f0',
+            borderRadius: '4px',
+            overflow: 'hidden'
+          }}>
+            <div style={{
+              width: `${Math.min(achievementRate, 100)}%`,
+              height: '100%',
+              background: 'linear-gradient(90deg, #9333EA 0%, #FF00EE 100%)',
+              transition: 'width 0.3s ease'
+            }} />
           </div>
-          
-          <div style={{ textAlign: 'center', padding: '15px', backgroundColor: '#f8f9fa', borderRadius: '8px' }}>
-            <div style={{ color: '#7f8c8d', fontSize: '14px', marginBottom: '8px' }}>平日目標/日</div>
-            <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#3498db' }}>
-              {storeGoalSettings.weekdayTarget.toLocaleString()}円
-            </div>
-          </div>
-          
-          <div style={{ textAlign: 'center', padding: '15px', backgroundColor: '#f8f9fa', borderRadius: '8px' }}>
-            <div style={{ color: '#7f8c8d', fontSize: '14px', marginBottom: '8px' }}>週末目標/日</div>
-            <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#e67e22' }}>
-              {storeGoalSettings.weekendTarget.toLocaleString()}円
-            </div>
-          </div>
-          
-          <div style={{ textAlign: 'center', padding: '15px', backgroundColor: '#f8f9fa', borderRadius: '8px' }}>
-            <div style={{ color: '#7f8c8d', fontSize: '14px', marginBottom: '8px' }}>達成率</div>
-            <div style={{ fontSize: '20px', fontWeight: 'bold', color: achievementRate >= 100 ? '#27ae60' : '#e74c3c' }}>
-              {Math.round(achievementRate)}%
-            </div>
+          <div style={{ 
+            fontSize: '14px', 
+            color: '#666', 
+            marginTop: '5px',
+            textAlign: 'right'
+          }}>
+            {Math.round(achievementRate)}%
           </div>
         </div>
 
-        <div style={{ marginTop: '20px', textAlign: 'center' }}>
-          <div style={{ color: '#7f8c8d', fontSize: '14px', marginBottom: '8px' }}>現在の売上</div>
-          <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#2c3e50' }}>
-            {totalStoreSales.toLocaleString()}円
+        {/* 線グラフエリア（シンプルな線グラフ表示） */}
+        <div style={{
+          height: '120px',
+          background: '#f8f9fa',
+          borderRadius: '8px',
+          padding: '15px',
+          marginBottom: '15px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}>
+          <div style={{ color: '#666', fontSize: '14px' }}>
+            売上推移グラフ
+          </div>
+        </div>
+
+        {/* 平日・週末目標（小さめ表示） */}
+        <div style={{ display: 'flex', gap: '15px' }}>
+          <div style={{ 
+            flex: 1, 
+            padding: '10px 15px', 
+            background: '#f8f9fa', 
+            borderRadius: '8px',
+            textAlign: 'center'
+          }}>
+            <div style={{ fontSize: '12px', color: '#666', marginBottom: '2px' }}>平日目標</div>
+            <div style={{ fontSize: '14px', fontWeight: '600', color: '#333' }}>
+              {storeGoalSettings.weekdayTarget.toLocaleString()}円
+            </div>
+          </div>
+          <div style={{ 
+            flex: 1, 
+            padding: '10px 15px', 
+            background: '#f8f9fa', 
+            borderRadius: '8px',
+            textAlign: 'center'
+          }}>
+            <div style={{ fontSize: '12px', color: '#666', marginBottom: '2px' }}>週末目標</div>
+            <div style={{ fontSize: '14px', fontWeight: '600', color: '#333' }}>
+              {storeGoalSettings.weekendTarget.toLocaleString()}円
+            </div>
           </div>
         </div>
       </div>
@@ -432,6 +474,177 @@ const StorePage: React.FC<StorePageProps> = ({ user }) => {
             }}>
               <button 
                 onClick={updateStoreGoalSettings}
+                style={{
+                  background: '#9333EA',
+                  color: 'white',
+                  border: 'none',
+                  padding: '12px 24px',
+                  borderRadius: '8px',
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  cursor: 'pointer'
+                }}
+              >
+                保存
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* 目標設定モーダル */}
+      {showTargetSettings && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 1000,
+          padding: '20px'
+        }}>
+          <div style={{
+            background: 'white',
+            borderRadius: '12px',
+            width: '100%',
+            maxWidth: '400px',
+            maxHeight: '90vh',
+            overflow: 'auto',
+            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)'
+          }}>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              padding: '20px',
+              borderBottom: '1px solid #e1e8ed'
+            }}>
+              <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '600', color: '#333' }}>
+                今月の目標設定
+              </h3>
+              <button 
+                onClick={() => setShowTargetSettings(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: '8px',
+                  borderRadius: '6px',
+                  color: '#666'
+                }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div style={{ padding: '20px' }}>
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ 
+                  display: 'block', 
+                  marginBottom: '8px', 
+                  fontWeight: '500',
+                  color: '#333',
+                  fontSize: '14px'
+                }}>
+                  月間目標
+                </label>
+                <input
+                  type="number"
+                  value={monthlyTarget}
+                  onChange={(e) => setMonthlyTarget(Number(e.target.value))}
+                  style={{
+                    width: '100%',
+                    padding: '12px 16px',
+                    border: '2px solid #e1e8ed',
+                    borderRadius: '8px',
+                    fontSize: '16px',
+                    color: '#000',
+                    outline: 'none',
+                    boxSizing: 'border-box'
+                  }}
+                />
+              </div>
+
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ 
+                  display: 'block', 
+                  marginBottom: '8px', 
+                  fontWeight: '500',
+                  color: '#333',
+                  fontSize: '14px'
+                }}>
+                  平日目標（1日あたり）
+                </label>
+                <input
+                  type="number"
+                  value={storeGoalSettings.weekdayTarget}
+                  onChange={(e) => setStoreGoalSettings(prev => ({
+                    ...prev,
+                    weekdayTarget: Number(e.target.value)
+                  }))}
+                  style={{
+                    width: '100%',
+                    padding: '12px 16px',
+                    border: '2px solid #e1e8ed',
+                    borderRadius: '8px',
+                    fontSize: '16px',
+                    color: '#000',
+                    outline: 'none',
+                    boxSizing: 'border-box'
+                  }}
+                />
+              </div>
+
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ 
+                  display: 'block', 
+                  marginBottom: '8px', 
+                  fontWeight: '500',
+                  color: '#333',
+                  fontSize: '14px'
+                }}>
+                  週末目標（1日あたり）
+                </label>
+                <input
+                  type="number"
+                  value={storeGoalSettings.weekendTarget}
+                  onChange={(e) => setStoreGoalSettings(prev => ({
+                    ...prev,
+                    weekendTarget: Number(e.target.value)
+                  }))}
+                  style={{
+                    width: '100%',
+                    padding: '12px 16px',
+                    border: '2px solid #e1e8ed',
+                    borderRadius: '8px',
+                    fontSize: '16px',
+                    color: '#000',
+                    outline: 'none',
+                    boxSizing: 'border-box'
+                  }}
+                />
+              </div>
+            </div>
+
+            <div style={{
+              padding: '20px',
+              borderTop: '1px solid #e1e8ed',
+              display: 'flex',
+              gap: '10px',
+              justifyContent: 'flex-end'
+            }}>
+              <button 
+                onClick={() => {
+                  // 保存処理
+                  setStoreGoalSettings(prev => ({
+                    ...prev,
+                    totalMonthlyTarget: monthlyTarget
+                  }));
+                  setShowTargetSettings(false);
+                }}
                 style={{
                   background: '#9333EA',
                   color: 'white',
