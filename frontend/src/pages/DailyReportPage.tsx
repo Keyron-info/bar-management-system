@@ -36,6 +36,22 @@ interface CashSettings {
   startingCash: number;
 }
 
+interface SummaryItem {
+  icon: React.ComponentType<any>;
+  label: string;
+  value: string | number;
+  color?: string;
+  isInput?: boolean;
+  onChange?: (value: number) => void;
+  hasSettings?: boolean;
+  onSettings?: () => void;
+}
+
+interface SummaryGroup {
+  title: string;
+  items: SummaryItem[];
+}
+
 const DailyReportPage: React.FC<DailyReportPageProps> = ({ user }) => {
   const [receipts, setReceipts] = useState<ReceiptItem[]>([]);
   const [alcoholExpense, setAlcoholExpense] = useState<number>(0);
@@ -142,7 +158,7 @@ const DailyReportPage: React.FC<DailyReportPageProps> = ({ user }) => {
     alert('日報を提出しました！');
   };
 
-  const summaryGroups = [
+  const summaryGroups: SummaryGroup[] = [
     {
       title: '売上管理',
       items: [
