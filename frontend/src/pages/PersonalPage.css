@@ -117,82 +117,85 @@
   color: #2c3e50;
 }
 
-/* Chart Toggle Container - Figmaデザインに準拠 */
-.chart-toggle-container {
+/* グラデーション文字スタイル */
+.gradient-text {
+  background: linear-gradient(135deg, #9333EA 0%, #FF00EE 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Chart Dropdown Container */
+.chart-dropdown-container {
+  position: relative;
+}
+
+.chart-dropdown {
   display: flex;
   align-items: center;
   gap: 8px;
-}
-
-.chart-toggle-switch {
-  width: 100px;
-  height: 24px;
-  padding: 2px;
-  position: relative;
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-}
-
-.toggle-btn {
-  width: 100px;
-  height: 24px;
-  padding: 0 8px 0 4px;
-  position: absolute;
-  left: 0;
-  top: 0;
-  display: flex;
-  justify-content: flex-start;
-  align-items: center;
+  padding: 6px 12px;
   background: white;
   border: 1px solid rgba(0, 0, 0, 0.08);
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s ease;
+  min-width: 100px;
 }
 
-.toggle-btn[data-state="active"] {
-  background: white;
-  box-shadow: 0px 0px 0px 1px rgba(0, 0, 0, 0.08);
+.chart-dropdown:hover {
+  border-color: #9333EA;
 }
 
-.toggle-content {
-  flex: 1;
+.dropdown-label {
   color: #4C4C4C;
   font-size: 13px;
   font-family: 'SF Pro', 'Noto Sans JP', sans-serif;
   font-weight: 510;
   line-height: 16px;
+  flex: 1;
 }
 
-.settings-indicator {
-  width: 24px;
-  height: 20px;
-  position: relative;
+.dropdown-arrow {
+  transition: transform 0.2s ease;
+}
+
+.dropdown-arrow.open {
+  transform: rotate(180deg);
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  left: 0;
+  background: white;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+  margin-top: 4px;
   overflow: hidden;
-  border-radius: 4.5px;
 }
 
-.settings-indicator::before {
-  content: '';
-  position: absolute;
-  width: 24px;
-  height: 20px;
-  left: 0;
-  top: 0;
-  opacity: 0.05;
-  background: linear-gradient(180deg, #FF00EE 0%, #9333EA 100%);
+.dropdown-item {
+  padding: 8px 12px;
+  color: #4C4C4C;
+  font-size: 13px;
+  font-family: 'SF Pro', 'Noto Sans JP', sans-serif;
+  font-weight: 510;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
 }
 
-.settings-icon-small {
-  position: absolute;
-  width: 24px;
-  height: 20px;
-  left: 0;
-  top: 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+.dropdown-item:hover {
+  background-color: #f8f9fa;
+}
+
+.dropdown-item.active {
+  background: linear-gradient(135deg, #9333EA 0%, #FF00EE 100%);
+  color: white;
 }
 
 /* Chart Area */

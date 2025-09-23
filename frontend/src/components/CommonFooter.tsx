@@ -14,13 +14,13 @@ const CommonFooter: React.FC<CommonFooterProps> = ({
   userRole 
 }) => {
   const navigationItems = [
-    { key: 'shift', icon: Calendar, className: 'nav-icon-1' },
+    { key: 'shift', icon: Calendar },
     ...(userRole === 'manager' ? 
-      [{ key: 'store', icon: Store, className: 'nav-icon-2' }] : []
+      [{ key: 'store', icon: Store }] : []
     ),
-    { key: 'personal', icon: User, className: 'nav-icon-3' },
-    { key: 'daily-report', icon: FileText, className: 'nav-icon-4' },
-    { key: 'settings', icon: Settings, className: 'nav-icon-5' },
+    { key: 'personal', icon: User },
+    { key: 'daily-report', icon: FileText },
+    { key: 'settings', icon: Settings },
   ];
 
   return (
@@ -40,7 +40,6 @@ const CommonFooter: React.FC<CommonFooterProps> = ({
               color="white"
               strokeWidth={1.5}
               fill="none"
-              className={item.className}
             />
           </div>
         );

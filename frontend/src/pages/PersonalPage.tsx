@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Settings, X } from 'lucide-react';
+import { Settings, X, ChevronDown } from 'lucide-react';
 import axios from 'axios';
 import './PersonalPage.css';
 
@@ -52,6 +52,13 @@ const PersonalPage: React.FC<PersonalPageProps> = ({ user, onPageChange }) => {
   const [loading, setLoading] = useState(true);
   const [showGoalSettings, setShowGoalSettings] = useState(false);
   const [chartType, setChartType] = useState<'sales' | 'drinks' | 'catch'>('sales');
+  const [showChartDropdown, setShowChartDropdown] = useState(false);
+
+  const chartOptions = [
+    { key: 'sales', label: '売上' },
+    { key: 'drinks', label: 'ドリンク' },
+    { key: 'catch', label: 'キャッチ' }
+  ];
 
   useEffect(() => {
     fetchPersonalData();
@@ -137,6 +144,11 @@ const PersonalPage: React.FC<PersonalPageProps> = ({ user, onPageChange }) => {
     setShowGoalSettings(false);
   };
 
+  const handleChartTypeChange = (type: 'sales' | 'drinks' | 'catch') => {
+    setChartType(type);
+    setShowChartDropdown(false);
+  };
+
   if (loading) {
     return (
       <div className="personal-page-loading">
@@ -172,43 +184,37 @@ const PersonalPage: React.FC<PersonalPageProps> = ({ user, onPageChange }) => {
         <div className="performance-section">
           <div className="performance-header">
             <span className="performance-label">今月の成績</span>
-            <div className="chart-toggle-container">
-              <div className="chart-toggle-switch">
-                <button 
-                  className={`toggle-btn ${chartType === 'sales' ? 'active' : ''}`}
-                  onClick={() => setChartType('sales')}
-                  data-state={chartType === 'sales' ? 'active' : 'idle'}
-                >
-                  <div className="toggle-content">
-                    <span>売上</span>
-                  </div>
-                </button>
-                <button 
-                  className={`toggle-btn ${chartType === 'drinks' ? 'active' : ''}`}
-                  onClick={() => setChartType('drinks')}
-                  data-state={chartType === 'drinks' ? 'active' : 'idle'}
-                >
-                  <div className="toggle-content">
-                    <span>ドリンク</span>
-                  </div>
-                </button>
-                <button 
-                  className={`toggle-btn ${chartType === 'catch' ? 'active' : ''}`}
-                  onClick={() => setChartType('catch')}
-                  data-state={chartType === 'catch' ? 'active' : 'idle'}
-                >
-                  <div className="toggle-content">
-                    <span>キャッチ</span>
-                  </div>
-                </button>
+            <div className="chart-dropdown-container">
+              <div 
+                className="chart-dropdown"
+                onClick={() => setShowChartDropdown(!showChartDropdown)}
+              >
+                <span className="dropdown-label">
+                  {chartOptions.find(opt => opt.key === chartType)?.label}
+                </span>
+                <ChevronDown 
+                  size={16} 
+                  color="#4C4C4C"
+                  className={`dropdown-arrow ${showChartDropdown ? 'open' : ''}`}
+                />
               </div>
-              <div className="settings-indicator">
-                <div className="settings-icon-small">
-                  <Settings size={11} color="#D0ACEF" />
+              
+              {showChartDropdown && (
+                <div className="dropdown-menu">
+                  {chartOptions.map((option) => (
+                    <div
+                      key={option.key}
+                      className={`dropdown-item ${chartType === option.key ? 'active' : ''}`}
+                      onClick={() => handleChartTypeChange(option.key as 'sales' | 'drinks' | 'catch')}
+                    >
+                      {option.label}
+                    </div>
+                  ))}
                 </div>
-              </div>
+              )}
             </div>
           </div>
+          
           <div className="chart-area">
             <div className="chart-bars">
               {chartData.map((day, index) => {
@@ -241,17 +247,17 @@ const PersonalPage: React.FC<PersonalPageProps> = ({ user, onPageChange }) => {
           <div className="metrics-column">
             <div className="metric-card small">
               <div className="metric-title">ドリンク杯数</div>
-              <div className="metric-value small">{totalDrinks}杯</div>
+              <div className="metric-value small gradient-text">{totalDrinks}杯</div>
             </div>
             
             <div className="metric-card small">
               <div className="metric-title">キャッチ数</div>
-              <div className="metric-value small">{totalCatch}杯</div>
+              <div className="metric-value small gradient-text">{totalCatch}回</div>
             </div>
             
             <div className="metric-card small">
               <div className="metric-title">出勤日数</div>
-              <div className="metric-value small">{workDays}日</div>
+              <div className="metric-value small gradient-text">{workDays}日</div>
             </div>
           </div>
         </div>
