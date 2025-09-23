@@ -4,12 +4,17 @@ import './CommonFooter.css';
 interface CommonFooterProps {
   currentPage: string;
   onPageChange: (page: string) => void;
+  userRole: string;
 }
 
-const CommonFooter: React.FC<CommonFooterProps> = ({ currentPage, onPageChange }) => {
+const CommonFooter: React.FC<CommonFooterProps> = ({ 
+  currentPage, 
+  onPageChange, 
+  userRole 
+}) => {
   const navigationItems = [
     { key: 'personal', label: '個人' },
-    { key: 'store', label: '店舗' },
+    ...(userRole === 'manager' ? [{ key: 'store', label: '店舗' }] : []),
     { key: 'daily-report', label: '日報' },
     { key: 'shift', label: 'シフト' },
     { key: 'settings', label: '設定' }

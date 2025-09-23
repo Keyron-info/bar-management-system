@@ -50,6 +50,10 @@ function App() {
     setCurrentPage('personal');
   };
 
+  const handlePageChange = (page: string) => {
+    setCurrentPage(page as PageType);
+  };
+
   if (loading) {
     return (
       <div className="app-loading">
@@ -96,7 +100,7 @@ function App() {
       {/* 共通フッター */}
       <CommonFooter 
         currentPage={currentPage} 
-        onPageChange={setCurrentPage}
+        onPageChange={handlePageChange}
         userRole={user.role}
       />
     </div>
