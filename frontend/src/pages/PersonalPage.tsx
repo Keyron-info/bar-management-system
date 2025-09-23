@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Settings, X, ChevronDown } from 'lucide-react';
+import { Settings, X, ChevronDown, Bell, LogOut, User, TrendingUp } from 'lucide-react';
 import axios from 'axios';
-import './PersonalPage.css';
 
 interface User {
   id: number;
@@ -13,6 +12,7 @@ interface User {
 interface PersonalPageProps {
   user: User;
   onPageChange?: (page: string) => void;
+  onLogout?: () => void;
 }
 
 interface SalesData {
@@ -41,7 +41,7 @@ interface GoalSettings {
   catch: number;
 }
 
-const PersonalPage: React.FC<PersonalPageProps> = ({ user, onPageChange }) => {
+const PersonalPage: React.FC<PersonalPageProps> = ({ user, onPageChange, onLogout }) => {
   const [salesData, setSalesData] = useState<SalesData[]>([]);
   const [monthlySummary, setMonthlySummary] = useState<MonthlySummary | null>(null);
   const [goalSettings, setGoalSettings] = useState<GoalSettings>({
@@ -55,9 +55,9 @@ const PersonalPage: React.FC<PersonalPageProps> = ({ user, onPageChange }) => {
   const [showChartDropdown, setShowChartDropdown] = useState(false);
 
   const chartOptions = [
-    { key: 'sales', label: '売上' },
-    { key: 'drinks', label: 'ドリンク' },
-    { key: 'catch', label: 'キャッチ' }
+    { key: 'sales', label: '売上', unit: '円' },
+    { key: 'drinks', label: 'ドリンク', unit: '杯' },
+    { key: 'catch', label: 'キャッチ', unit: '回' }
   ];
 
   useEffect(() => {
@@ -132,7 +132,7 @@ const PersonalPage: React.FC<PersonalPageProps> = ({ user, onPageChange }) => {
       case 'catch': return d.catch;
       default: return 0;
     }
-  }));
+  }), 1);
 
   const workDays = thisMonthData.length;
   const currentSales = monthlySummary?.total_sales || 0;
@@ -151,182 +151,590 @@ const PersonalPage: React.FC<PersonalPageProps> = ({ user, onPageChange }) => {
 
   if (loading) {
     return (
-      <div className="personal-page-loading">
-        <div className="loading-text">データを読み込んでいます...</div>
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '400px',
+        color: '#666',
+        backgroundColor: '#FAFAFA',
+        fontFamily: 'Sana, Noto Sans JP, sans-serif'
+      }}>
+        データを読み込んでいます...
       </div>
     );
   }
 
   return (
-    <div className="personal-page-container">
-      <div className="personal-page">
-        {/* Goal Card */}
-        <div className="goal-section">
-          <div className="goal-header">
-            <span className="goal-label">今月の目標</span>
-            <button 
-              className="goal-settings-icon" 
-              onClick={() => setShowGoalSettings(true)}
-              aria-label="目標設定"
-            >
-              <Settings size={16} color="#9333EA" />
-            </button>
+    <div style={{
+      width: '390px',
+      minHeight: '844px',
+      backgroundColor: '#FAFAFA', // 白ベースに戻す
+      margin: '0 auto',
+      padding: '20px',
+      boxSizing: 'border-box',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '20px',
+      fontFamily: 'Sana, Noto Sans JP, sans-serif'
+    }}>
+      {/* Header Section */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: '10px 0'
+      }}>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px'
+        }}>
+          {/* プロフィールアイコン - 白背景+紫ボーダー */}
+          <div style={{
+            width: '40px',
+            height: '40px',
+            borderRadius: '50%',
+            backgroundColor: 'white',
+            border: '2px solid #9333EA',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+          }}>
+            <User size={20} color="#9333EA" />
           </div>
-          <div className="goal-amount">{goalSettings.sales.toLocaleString()}円</div>
-          <div className="progress-container">
-            <div className="progress-bar">
-              <div 
-                className="progress-fill" 
-                style={{ width: `${Math.min(achievementRate, 100)}%` }}
+          <span style={{
+            color: '#000',
+            fontSize: '15px',
+            fontWeight: '400'
+          }}>
+            {user.name}さん
+          </span>
+        </div>
+
+        <div style={{ display: 'flex', gap: '15px' }}>
+          {/* 通知アイコン - 白背景 */}
+          <div style={{
+            width: '36px',
+            height: '36px',
+            borderRadius: '50%',
+            backgroundColor: 'white',
+            border: '1px solid #e1e8ed',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+          }}>
+            <Bell size={18} color="#9333EA" />
+          </div>
+
+          {/* ログアウトアイコン */}
+          <div style={{
+            width: '36px',
+            height: '36px',
+            borderRadius: '50%',
+            background: 'linear-gradient(90deg, #9333EA 0%, #F0E 100%)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+          }} onClick={onLogout}>
+            <LogOut size={16} color="white" />
+          </div>
+        </div>
+      </div>
+
+      {/* Monthly Goal Card */}
+      <div style={{
+        backgroundColor: 'white',
+        borderRadius: '12px',
+        padding: '20px',
+        boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
+        border: '1px solid #e1e8ed'
+      }}>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '15px'
+        }}>
+          <span style={{
+            color: '#000',
+            fontSize: '16px',
+            fontWeight: '500'
+          }}>
+            今月の目標
+          </span>
+          <button 
+            onClick={() => setShowGoalSettings(true)}
+            style={{
+              background: 'white',
+              border: '1px solid #e1e8ed',
+              borderRadius: '8px',
+              padding: '8px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+            }}
+          >
+            <Settings size={16} color="#9333EA" />
+          </button>
+        </div>
+
+        <div style={{
+          fontSize: '28px',
+          fontWeight: '700',
+          background: 'linear-gradient(90deg, #9333EA 0%, #F0E 100%)',
+          backgroundClip: 'text',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          marginBottom: '15px'
+        }}>
+          {goalSettings.sales.toLocaleString()}円
+        </div>
+
+        <div style={{
+          width: '100%',
+          height: '12px',
+          background: '#f1f3f4',
+          borderRadius: '8px',
+          overflow: 'hidden',
+          marginBottom: '8px'
+        }}>
+          <div style={{
+            height: '100%',
+            background: 'linear-gradient(90deg, #9333EA 0%, #F0E 100%)',
+            width: `${Math.min(100, achievementRate)}%`,
+            transition: 'width 0.6s ease'
+          }} />
+        </div>
+
+        <div style={{
+          color: '#F0E',
+          fontSize: '14px',
+          fontWeight: '600',
+          textAlign: 'right'
+        }}>
+          {achievementRate.toFixed(1)}%
+        </div>
+      </div>
+
+      {/* Chart Section */}
+      <div style={{
+        backgroundColor: 'white',
+        borderRadius: '12px',
+        padding: '20px',
+        boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
+        border: '1px solid #e1e8ed'
+      }}>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '20px'
+        }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}>
+            <TrendingUp size={18} color="#9333EA" />
+            <span style={{
+              color: '#000',
+              fontSize: '16px',
+              fontWeight: '600'
+            }}>
+              今月の成績
+            </span>
+          </div>
+
+          {/* Chart Type Selector */}
+          <div style={{ position: 'relative' }}>
+            <div 
+              onClick={() => setShowChartDropdown(!showChartDropdown)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '8px 12px',
+                backgroundColor: 'white',
+                border: '1px solid #e1e8ed',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                color: '#000'
+              }}
+            >
+              <span>{chartOptions.find(opt => opt.key === chartType)?.label}</span>
+              <ChevronDown 
+                size={16} 
+                color="#666"
+                style={{ 
+                  transform: showChartDropdown ? 'rotate(180deg)' : 'rotate(0deg)',
+                  transition: 'transform 0.2s ease'
+                }}
               />
             </div>
-            <div className="progress-text">{Math.round(achievementRate)}%</div>
+            
+            {showChartDropdown && (
+              <div style={{
+                position: 'absolute',
+                top: '100%',
+                right: 0,
+                backgroundColor: 'white',
+                border: '1px solid #e1e8ed',
+                borderRadius: '8px',
+                boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                zIndex: 10,
+                minWidth: '120px'
+              }}>
+                {chartOptions.map((option) => (
+                  <div
+                    key={option.key}
+                    onClick={() => handleChartTypeChange(option.key as 'sales' | 'drinks' | 'catch')}
+                    style={{
+                      padding: '10px 12px',
+                      cursor: 'pointer',
+                      fontSize: '14px',
+                      color: chartType === option.key ? '#9333EA' : '#000',
+                      backgroundColor: chartType === option.key ? '#fafaff' : 'white',
+                      borderBottom: '1px solid #f0f0f0'
+                    }}
+                  >
+                    {option.label}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+        
+        {/* Chart Area */}
+        <div style={{
+          height: '140px',
+          display: 'flex',
+          alignItems: 'end',
+          gap: '8px',
+          padding: '15px 10px',
+          backgroundColor: '#fafafa',
+          borderRadius: '8px'
+        }}>
+          {chartData.map((day, index) => {
+            const value = chartType === 'sales' ? day.sales : 
+                         chartType === 'drinks' ? day.drinks : day.catch;
+            const height = maxValue > 0 ? (value / maxValue) * 80 : 0;
+            const currentOption = chartOptions.find(opt => opt.key === chartType);
+            
+            return (
+              <div key={index} style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '6px',
+                flex: 1
+              }}>
+                <div style={{ fontSize: '10px', color: '#666', textAlign: 'center' }}>
+                  {chartType === 'sales' ? `${Math.floor(value / 10000)}万` : 
+                   value > 0 ? value.toString() : '0'}
+                </div>
+                <div style={{
+                  width: '20px',
+                  height: `${Math.max(height, 15)}px`,
+                  background: 'linear-gradient(180deg, #9333EA 0%, #F0E 100%)',
+                  borderRadius: '4px',
+                  minHeight: '15px'
+                }} />
+                <div style={{
+                  fontSize: '10px',
+                  color: '#666',
+                  whiteSpace: 'nowrap'
+                }}>
+                  {day.dayLabel}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Metrics Grid */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: '1fr 1fr',
+        gap: '15px'
+      }}>
+        {/* 総売上 */}
+        <div style={{
+          backgroundColor: 'white',
+          borderRadius: '12px',
+          padding: '20px',
+          boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
+          border: '1px solid #e1e8ed',
+          gridColumn: '1 / -1'
+        }}>
+          <div style={{
+            fontSize: '14px',
+            color: '#666',
+            marginBottom: '8px'
+          }}>
+            総売上
+          </div>
+          <div style={{
+            fontSize: '32px',
+            fontWeight: '700',
+            color: '#000'
+          }}>
+            {Math.floor(currentSales / 10000)}万円
           </div>
         </div>
 
-        {/* Performance Card */}
-        <div className="performance-section">
-          <div className="performance-header">
-            <span className="performance-label">今月の成績</span>
-            <div className="chart-dropdown-container">
-              <div 
-                className="chart-dropdown"
-                onClick={() => setShowChartDropdown(!showChartDropdown)}
+        {/* ドリンク数 */}
+        <div style={{
+          backgroundColor: 'white',
+          borderRadius: '12px',
+          padding: '15px',
+          boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
+          border: '1px solid #e1e8ed'
+        }}>
+          <div style={{
+            fontSize: '12px',
+            color: '#666',
+            marginBottom: '8px'
+          }}>
+            ドリンク数
+          </div>
+          <div style={{
+            fontSize: '24px',
+            fontWeight: '700',
+            color: '#9333EA'
+          }}>
+            {totalDrinks}杯
+          </div>
+        </div>
+
+        {/* キャッチ数 */}
+        <div style={{
+          backgroundColor: 'white',
+          borderRadius: '12px',
+          padding: '15px',
+          boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
+          border: '1px solid #e1e8ed'
+        }}>
+          <div style={{
+            fontSize: '12px',
+            color: '#666',
+            marginBottom: '8px'
+          }}>
+            キャッチ数
+          </div>
+          <div style={{
+            fontSize: '24px',
+            fontWeight: '700',
+            color: '#F0E'
+          }}>
+            {totalCatch}回
+          </div>
+        </div>
+      </div>
+
+      {/* 出勤日数 */}
+      <div style={{
+        backgroundColor: 'white',
+        borderRadius: '12px',
+        padding: '15px',
+        boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
+        border: '1px solid #e1e8ed',
+        textAlign: 'center'
+      }}>
+        <div style={{
+          fontSize: '14px',
+          color: '#666',
+          marginBottom: '8px'
+        }}>
+          出勤日数
+        </div>
+        <div style={{
+          fontSize: '28px',
+          fontWeight: '700',
+          color: '#000'
+        }}>
+          {workDays}日
+        </div>
+      </div>
+
+      {/* Goal Settings Modal */}
+      {showGoalSettings && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 1000,
+          padding: '20px'
+        }}>
+          <div style={{
+            background: 'white',
+            borderRadius: '12px',
+            width: '100%',
+            maxWidth: '400px',
+            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)'
+          }}>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              padding: '20px',
+              borderBottom: '1px solid #e1e8ed'
+            }}>
+              <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '600', color: '#000' }}>
+                目標設定
+              </h3>
+              <button 
+                onClick={() => setShowGoalSettings(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: '8px',
+                  borderRadius: '6px',
+                  color: '#666'
+                }}
               >
-                <span className="dropdown-label">
-                  {chartOptions.find(opt => opt.key === chartType)?.label}
-                </span>
-                <ChevronDown 
-                  size={16} 
-                  color="#4C4C4C"
-                  className={`dropdown-arrow ${showChartDropdown ? 'open' : ''}`}
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div style={{ padding: '20px' }}>
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ 
+                  display: 'block', 
+                  marginBottom: '8px', 
+                  fontWeight: '500',
+                  color: '#000',
+                  fontSize: '14px'
+                }}>
+                  売上目標
+                </label>
+                <input
+                  type="number"
+                  value={goalSettings.sales}
+                  onChange={(e) => setGoalSettings(prev => ({
+                    ...prev,
+                    sales: Number(e.target.value)
+                  }))}
+                  style={{
+                    width: '100%',
+                    padding: '12px 16px',
+                    border: '2px solid #e1e8ed',
+                    borderRadius: '8px',
+                    fontSize: '16px',
+                    color: '#000',
+                    backgroundColor: 'white',
+                    outline: 'none',
+                    boxSizing: 'border-box'
+                  }}
                 />
               </div>
-              
-              {showChartDropdown && (
-                <div className="dropdown-menu">
-                  {chartOptions.map((option) => (
-                    <div
-                      key={option.key}
-                      className={`dropdown-item ${chartType === option.key ? 'active' : ''}`}
-                      onClick={() => handleChartTypeChange(option.key as 'sales' | 'drinks' | 'catch')}
-                    >
-                      {option.label}
-                    </div>
-                  ))}
-                </div>
-              )}
+
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ 
+                  display: 'block', 
+                  marginBottom: '8px', 
+                  fontWeight: '500',
+                  color: '#000',
+                  fontSize: '14px'
+                }}>
+                  ドリンク目標
+                </label>
+                <input
+                  type="number"
+                  value={goalSettings.drinks}
+                  onChange={(e) => setGoalSettings(prev => ({
+                    ...prev,
+                    drinks: Number(e.target.value)
+                  }))}
+                  style={{
+                    width: '100%',
+                    padding: '12px 16px',
+                    border: '2px solid #e1e8ed',
+                    borderRadius: '8px',
+                    fontSize: '16px',
+                    color: '#000',
+                    backgroundColor: 'white',
+                    outline: 'none',
+                    boxSizing: 'border-box'
+                  }}
+                />
+              </div>
+
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ 
+                  display: 'block', 
+                  marginBottom: '8px', 
+                  fontWeight: '500',
+                  color: '#000',
+                  fontSize: '14px'
+                }}>
+                  キャッチ目標
+                </label>
+                <input
+                  type="number"
+                  value={goalSettings.catch}
+                  onChange={(e) => setGoalSettings(prev => ({
+                    ...prev,
+                    catch: Number(e.target.value)
+                  }))}
+                  style={{
+                    width: '100%',
+                    padding: '12px 16px',
+                    border: '2px solid #e1e8ed',
+                    borderRadius: '8px',
+                    fontSize: '16px',
+                    color: '#000',
+                    backgroundColor: 'white',
+                    outline: 'none',
+                    boxSizing: 'border-box'
+                  }}
+                />
+              </div>
             </div>
-          </div>
-          
-          <div className="chart-area">
-            <div className="chart-bars">
-              {chartData.map((day, index) => {
-                const value = chartType === 'sales' ? day.sales : 
-                             chartType === 'drinks' ? day.drinks : day.catch;
-                const height = maxValue > 0 ? (value / maxValue) * 100 : 0;
-                
-                return (
-                  <div key={index} className="chart-bar-container">
-                    <div 
-                      className="chart-bar" 
-                      style={{ height: `${height}%` }}
-                      title={`${day.dayLabel}: ${value}${chartType === 'sales' ? '円' : chartType === 'drinks' ? '杯' : '回'}`}
-                    />
-                    <span className="chart-label">{day.dayLabel}</span>
-                  </div>
-                );
-              })}
+
+            <div style={{
+              padding: '20px',
+              borderTop: '1px solid #e1e8ed',
+              display: 'flex',
+              gap: '10px',
+              justifyContent: 'flex-end'
+            }}>
+              <button 
+                onClick={updateGoalSettings}
+                style={{
+                  background: 'linear-gradient(135deg, #9333EA, #F0E)',
+                  color: 'white',
+                  border: 'none',
+                  padding: '12px 24px',
+                  borderRadius: '8px',
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  cursor: 'pointer'
+                }}
+              >
+                保存
+              </button>
             </div>
           </div>
         </div>
-
-        {/* Metrics Cards */}
-        <div className="metrics-grid">
-          <div className="metric-card large">
-            <div className="metric-title">総売上</div>
-            <div className="metric-value large">{currentSales.toLocaleString()}円</div>
-          </div>
-          
-          <div className="metrics-column">
-            <div className="metric-card small">
-              <div className="metric-title">ドリンク杯数</div>
-              <div className="metric-value small gradient-text">{totalDrinks}杯</div>
-            </div>
-            
-            <div className="metric-card small">
-              <div className="metric-title">キャッチ数</div>
-              <div className="metric-value small gradient-text">{totalCatch}回</div>
-            </div>
-            
-            <div className="metric-card small">
-              <div className="metric-title">出勤日数</div>
-              <div className="metric-value small gradient-text">{workDays}日</div>
-            </div>
-          </div>
-        </div>
-
-        {/* Goal Settings Modal */}
-        {showGoalSettings && (
-          <div className="modal-overlay">
-            <div className="modal-content">
-              <div className="modal-header">
-                <h3>目標設定</h3>
-                <button onClick={() => setShowGoalSettings(false)} className="close-btn">
-                  <X size={20} />
-                </button>
-              </div>
-              
-              <div className="goal-form">
-                <div className="form-group">
-                  <label>売上目標</label>
-                  <input
-                    type="number"
-                    value={goalSettings.sales}
-                    onChange={(e) => setGoalSettings(prev => ({
-                      ...prev,
-                      sales: Number(e.target.value)
-                    }))}
-                    className="form-input"
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>ドリンク目標</label>
-                  <input
-                    type="number"
-                    value={goalSettings.drinks}
-                    onChange={(e) => setGoalSettings(prev => ({
-                      ...prev,
-                      drinks: Number(e.target.value)
-                    }))}
-                    className="form-input"
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>キャッチ目標</label>
-                  <input
-                    type="number"
-                    value={goalSettings.catch}
-                    onChange={(e) => setGoalSettings(prev => ({
-                      ...prev,
-                      catch: Number(e.target.value)
-                    }))}
-                    className="form-input"
-                  />
-                </div>
-              </div>
-
-              <div className="modal-actions">
-                <button onClick={updateGoalSettings} className="save-btn">
-                  保存
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
+      )}
     </div>
   );
 };

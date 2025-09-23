@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { Calendar, Plus, Settings, X, Receipt, Calculator, DollarSign, User } from 'lucide-react';
-import './DailyReportPage.css';
+import { Calendar, Plus, Settings, X, Receipt, Calculator, DollarSign, User, Edit } from 'lucide-react';
 
 interface User {
   id: number;
@@ -36,23 +35,6 @@ interface CashSettings {
   startingCash: number;
 }
 
-interface SummaryItem {
-  icon: React.ComponentType<any>;
-  label: string;
-  value: string | number;
-  color?: string;
-  isInput?: boolean;
-  placeholder?: string;
-  onChange?: (value: number) => void;
-  hasSettings?: boolean;
-  onSettings?: () => void;
-}
-
-interface SummaryGroup {
-  title: string;
-  items: SummaryItem[];
-}
-
 const DailyReportPage: React.FC<DailyReportPageProps> = ({ user }) => {
   const [receipts, setReceipts] = useState<ReceiptItem[]>([]);
   const [alcoholExpense, setAlcoholExpense] = useState<number>(0);
@@ -60,6 +42,7 @@ const DailyReportPage: React.FC<DailyReportPageProps> = ({ user }) => {
   const [showReceiptForm, setShowReceiptForm] = useState(false);
   const [showCashSettings, setShowCashSettings] = useState(false);
   const [cashSettings, setCashSettings] = useState<CashSettings>({ startingCash: 50000 });
+  const [loading, setLoading] = useState(false);
   
   // 新規伝票フォーム状態
   const [newReceipt, setNewReceipt] = useState({
@@ -144,200 +127,418 @@ const DailyReportPage: React.FC<DailyReportPageProps> = ({ user }) => {
     setReceipts(prev => prev.filter(receipt => receipt.id !== receiptId));
   };
 
-  const submitDailyReport = () => {
-    const reportData = {
-      totalSales,
-      cardSales,
-      cashSales,
-      alcoholExpense,
-      otherExpenses,
-      cashRemaining,
-      netProfit,
-      receipts
-    };
-    console.log('日報データ:', reportData);
-    alert('日報を提出しました！');
+  const submitDailyReport = async () => {
+    setLoading(true);
+    try {
+      const reportData = {
+        totalSales,
+        cardSales,
+        cashSales,
+        alcoholExpense,
+        otherExpenses,
+        cashRemaining,
+        netProfit,
+        receipts
+      };
+      console.log('日報データ:', reportData);
+      alert('日報を提出しました！');
+    } catch (error) {
+      alert('提出中にエラーが発生しました');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const summaryGroups: SummaryGroup[] = [
-    {
-      title: '売上管理',
-      items: [
-        {
-          icon: DollarSign,
-          label: '総売上',
-          value: `${totalSales.toLocaleString()}円`,
-          color: '#9333EA'
-        },
-        {
-          icon: DollarSign,
-          label: 'カード売上',
-          value: `${cardSales.toLocaleString()}円`,
-          color: '#3498db'
-        },
-        {
-          icon: DollarSign,
-          label: '現金売上',
-          value: `${cashSales.toLocaleString()}円`,
-          color: '#27ae60'
-        }
-      ]
-    },
-    {
-      title: '経費管理',
-      items: [
-        {
-          icon: Receipt,
-          label: '酒代',
-          value: alcoholExpense,
-          isInput: true,
-          placeholder: '酒代を入力',
-          onChange: (value: number) => setAlcoholExpense(value)
-        },
-        {
-          icon: Receipt,
-          label: 'その他経費',
-          value: otherExpenses,
-          isInput: true,
-          placeholder: 'その他経費を入力',
-          onChange: (value: number) => setOtherExpenses(value)
-        }
-      ]
-    },
-    {
-      title: '計算結果',
-      items: [
-        {
-          icon: Calculator,
-          label: '現金残金',
-          value: `${cashRemaining.toLocaleString()}円`,
-          color: cashRemaining >= 0 ? '#27ae60' : '#e74c3c',
-          hasSettings: true,
-          onSettings: () => setShowCashSettings(true)
-        },
-        {
-          icon: Calculator,
-          label: '純利益',
-          value: `${netProfit.toLocaleString()}円`,
-          color: netProfit >= 0 ? '#27ae60' : '#e74c3c'
-        }
-      ]
-    }
-  ];
-
   return (
-    <div className="daily-report-page">
-      {/* Date Selection Section */}
-      <div className="date-section">
-        <div className="date-card">
-          <div className="date-icon">
+    <div style={{
+      maxWidth: '600px',
+      margin: '0 auto',
+      padding: '20px',
+      backgroundColor: '#FAFAFA',
+      minHeight: '100vh',
+      fontFamily: 'Sana, Noto Sans JP, sans-serif'
+    }}>
+      <div style={{ marginBottom: '30px' }}>
+        <h1 style={{ 
+          fontSize: '28px', 
+          color: '#000', 
+          margin: '0 0 10px 0',
+          fontWeight: '600'
+        }}>
+          日報提出
+        </h1>
+        <p style={{ color: '#666', margin: 0 }}>
+          今日の売上と経費を入力してください
+        </p>
+      </div>
+
+      {/* Date Selection Section - 白背景に統一 */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: '1fr 1fr',
+        gap: '15px',
+        marginBottom: '25px'
+      }}>
+        <div style={{
+          backgroundColor: 'white',
+          borderRadius: '12px',
+          padding: '20px',
+          boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
+          border: '1px solid #e1e8ed',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '15px'
+        }}>
+          <div style={{
+            backgroundColor: '#fafaff',
+            borderRadius: '10px',
+            padding: '10px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
             <Calendar size={20} color="#9333EA" />
           </div>
-          <div className="date-content">
-            <div className="date-label">作業日</div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: '12px', color: '#666', marginBottom: '5px' }}>作業日</div>
             <input 
               type="date" 
               defaultValue={new Date().toISOString().split('T')[0]}
-              className="date-input"
+              style={{
+                border: 'none',
+                fontSize: '16px',
+                color: '#000',
+                backgroundColor: 'transparent',
+                width: '100%',
+                outline: 'none'
+              }}
             />
           </div>
         </div>
         
-        <div className="submitter-card">
-          <div className="submitter-icon">
+        <div style={{
+          backgroundColor: 'white',
+          borderRadius: '12px',
+          padding: '20px',
+          boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
+          border: '1px solid #e1e8ed',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '15px'
+        }}>
+          <div style={{
+            backgroundColor: '#fafaff',
+            borderRadius: '10px',
+            padding: '10px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
             <User size={20} color="#9333EA" />
           </div>
-          <div className="submitter-content">
-            <div className="submitter-label">提出者</div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: '12px', color: '#666', marginBottom: '5px' }}>提出者</div>
             <input 
               type="text" 
               defaultValue={user.name}
-              className="submitter-input"
+              style={{
+                border: 'none',
+                fontSize: '16px',
+                color: '#000',
+                backgroundColor: 'transparent',
+                width: '100%',
+                outline: 'none'
+              }}
               placeholder="提出者名を入力"
             />
           </div>
         </div>
       </div>
 
-      {/* Summary Groups */}
-      <div className="summary-groups">
-        {summaryGroups.map((group, groupIndex) => (
-          <div key={groupIndex} className="summary-group">
-            <h3 className="group-title">{group.title}</h3>
-            <div className="summary-items">
-              {group.items.map((item, itemIndex) => {
-                const IconComponent = item.icon;
-                return (
-                  <div key={itemIndex} className="summary-item">
-                    <div className="item-left">
-                      <div className="item-icon">
-                        <IconComponent size={20} color={item.color || '#9333EA'} />
-                      </div>
-                      <div className="item-content">
-                        <div className="item-label">{item.label}</div>
-                        {item.isInput ? (
-                          <input
-                            type="number"
-                            value={item.value === 0 ? '' : item.value as number}
-                            onChange={(e) => item.onChange && item.onChange(Number(e.target.value) || 0)}
-                            className="item-input"
-                            placeholder={item.placeholder || "0"}
-                          />
-                        ) : (
-                          <div className="item-value" style={{ color: item.color || '#2c3e50' }}>
-                            {item.value}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    <div className="item-right">
-                      {item.hasSettings && (
-                        <button className="settings-btn" onClick={item.onSettings}>
-                          <Settings size={16} color="#9333EA" />
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
+      {/* 売上管理 - 白背景に統一 */}
+      <div style={{
+        backgroundColor: 'white',
+        borderRadius: '12px',
+        padding: '25px',
+        marginBottom: '25px',
+        boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
+        border: '1px solid #e1e8ed'
+      }}>
+        <h3 style={{
+          fontSize: '18px',
+          color: '#000',
+          margin: '0 0 20px 0',
+          fontWeight: '600',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px'
+        }}>
+          <DollarSign size={20} color="#9333EA" />
+          売上管理
+        </h3>
+        
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '20px' }}>
+          <div style={{ textAlign: 'center', padding: '15px', backgroundColor: '#fafafa', borderRadius: '8px' }}>
+            <div style={{ color: '#666', fontSize: '14px', marginBottom: '8px' }}>総売上</div>
+            <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#9333EA' }}>
+              ¥{totalSales.toLocaleString()}
             </div>
           </div>
-        ))}
+          
+          <div style={{ textAlign: 'center', padding: '15px', backgroundColor: '#fafafa', borderRadius: '8px' }}>
+            <div style={{ color: '#666', fontSize: '14px', marginBottom: '8px' }}>カード売上</div>
+            <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#000' }}>
+              ¥{cardSales.toLocaleString()}
+            </div>
+          </div>
+          
+          <div style={{ textAlign: 'center', padding: '15px', backgroundColor: '#fafafa', borderRadius: '8px' }}>
+            <div style={{ color: '#666', fontSize: '14px', marginBottom: '8px' }}>現金売上</div>
+            <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#000' }}>
+              ¥{cashSales.toLocaleString()}
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Receipt Management */}
-      <div className="receipt-section">
-        <div className="receipt-header">
-          <h3 className="section-title">伝票管理</h3>
-          <span className="receipt-count">{receipts.length}件の伝票</span>
+      {/* 経費管理 - 白背景に統一 */}
+      <div style={{
+        backgroundColor: 'white',
+        borderRadius: '12px',
+        padding: '25px',
+        marginBottom: '25px',
+        boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
+        border: '1px solid #e1e8ed'
+      }}>
+        <h3 style={{
+          fontSize: '18px',
+          color: '#000',
+          margin: '0 0 20px 0',
+          fontWeight: '600',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px'
+        }}>
+          <Receipt size={20} color="#9333EA" />
+          経費管理
+        </h3>
+        
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+          <div>
+            <label style={{
+              display: 'block',
+              fontSize: '14px',
+              color: '#000',
+              marginBottom: '8px',
+              fontWeight: '500'
+            }}>
+              酒代
+            </label>
+            <input
+              type="number"
+              value={alcoholExpense === 0 ? '' : alcoholExpense}
+              onChange={(e) => setAlcoholExpense(Number(e.target.value) || 0)}
+              style={{
+                width: '100%',
+                padding: '12px 16px',
+                border: '2px solid #e1e8ed',
+                borderRadius: '8px',
+                fontSize: '16px',
+                color: '#000',
+                backgroundColor: 'white',
+                outline: 'none',
+                boxSizing: 'border-box'
+              }}
+              placeholder="酒代を入力"
+            />
+          </div>
+          
+          <div>
+            <label style={{
+              display: 'block',
+              fontSize: '14px',
+              color: '#000',
+              marginBottom: '8px',
+              fontWeight: '500'
+            }}>
+              その他経費
+            </label>
+            <input
+              type="number"
+              value={otherExpenses === 0 ? '' : otherExpenses}
+              onChange={(e) => setOtherExpenses(Number(e.target.value) || 0)}
+              style={{
+                width: '100%',
+                padding: '12px 16px',
+                border: '2px solid #e1e8ed',
+                borderRadius: '8px',
+                fontSize: '16px',
+                color: '#000',
+                backgroundColor: 'white',
+                outline: 'none',
+                boxSizing: 'border-box'
+              }}
+              placeholder="その他経費を入力"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* 計算結果 - 白背景に統一 */}
+      <div style={{
+        backgroundColor: 'white',
+        borderRadius: '12px',
+        padding: '25px',
+        marginBottom: '25px',
+        boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
+        border: '1px solid #e1e8ed'
+      }}>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '20px'
+        }}>
+          <h3 style={{
+            fontSize: '18px',
+            color: '#000',
+            margin: '0',
+            fontWeight: '600',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}>
+            <Calculator size={20} color="#9333EA" />
+            計算結果
+          </h3>
+          <button 
+            onClick={() => setShowCashSettings(true)}
+            style={{
+              background: 'white',
+              border: '1px solid #e1e8ed',
+              borderRadius: '8px',
+              padding: '8px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+            }}
+          >
+            <Settings size={16} color="#9333EA" />
+          </button>
+        </div>
+        
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '20px' }}>
+          <div style={{ textAlign: 'center', padding: '15px', backgroundColor: '#fafafa', borderRadius: '8px' }}>
+            <div style={{ color: '#666', fontSize: '14px', marginBottom: '8px' }}>現金残金</div>
+            <div style={{ fontSize: '24px', fontWeight: 'bold', color: cashRemaining >= 0 ? '#27ae60' : '#e74c3c' }}>
+              ¥{cashRemaining.toLocaleString()}
+            </div>
+          </div>
+          
+          <div style={{ textAlign: 'center', padding: '15px', backgroundColor: '#fafafa', borderRadius: '8px' }}>
+            <div style={{ color: '#666', fontSize: '14px', marginBottom: '8px' }}>純利益</div>
+            <div style={{ fontSize: '24px', fontWeight: 'bold', color: netProfit >= 0 ? '#27ae60' : '#e74c3c' }}>
+              ¥{netProfit.toLocaleString()}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 伝票管理 */}
+      <div style={{
+        backgroundColor: 'white',
+        borderRadius: '12px',
+        padding: '25px',
+        marginBottom: '25px',
+        boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
+        border: '1px solid #e1e8ed'
+      }}>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '20px'
+        }}>
+          <h3 style={{
+            fontSize: '18px',
+            color: '#000',
+            margin: '0',
+            fontWeight: '600'
+          }}>
+            伝票管理
+          </h3>
+          <span style={{
+            fontSize: '14px',
+            color: '#666',
+            backgroundColor: '#fafafa',
+            padding: '4px 12px',
+            borderRadius: '20px'
+          }}>
+            {receipts.length}件の伝票
+          </span>
         </div>
         
         <button 
-          className="add-receipt-btn"
           onClick={() => setShowReceiptForm(true)}
+          style={{
+            width: '100%',
+            padding: '15px',
+            background: 'linear-gradient(135deg, #9333EA, #F0E)',
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            fontSize: '16px',
+            fontWeight: '600',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px',
+            marginBottom: '20px'
+          }}
         >
           <Plus size={20} />
-          <span>新しい伝票を追加</span>
+          新しい伝票を追加
         </button>
 
         {receipts.length > 0 && (
-          <div className="receipts-list">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {receipts.map((receipt) => (
-              <div key={receipt.id} className="receipt-item">
-                <div className="receipt-info">
-                  <div className="receipt-amount">{receipt.totalAmount.toLocaleString()}円</div>
-                  <div className="receipt-type">
-                    {receipt.isCardPayment ? 'カード' : '現金'}
+              <div key={receipt.id} style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '15px 20px',
+                backgroundColor: '#fafafa',
+                borderRadius: '8px',
+                border: '1px solid #e1e8ed'
+              }}>
+                <div>
+                  <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#000', marginBottom: '4px' }}>
+                    ¥{receipt.totalAmount.toLocaleString()}
+                  </div>
+                  <div style={{ fontSize: '12px', color: '#666' }}>
+                    {receipt.isCardPayment ? 'カード決済' : '現金決済'} | 
+                    ドリンク{receipt.drinks.length}品 | シャンパン{receipt.champagnes.length}品
                   </div>
                 </div>
-                <div className="receipt-details">
-                  ドリンク{receipt.drinks.length}品 | シャンパン{receipt.champagnes.length}品
-                </div>
                 <button 
-                  className="delete-receipt-btn"
                   onClick={() => deleteReceipt(receipt.id)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#e74c3c',
+                    cursor: 'pointer',
+                    padding: '8px',
+                    borderRadius: '4px',
+                    transition: 'background-color 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#fdeaea'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                 >
-                  <X size={16} />
+                  <X size={18} />
                 </button>
               </div>
             ))}
@@ -345,28 +546,94 @@ const DailyReportPage: React.FC<DailyReportPageProps> = ({ user }) => {
         )}
       </div>
 
-      {/* Submit Section */}
-      <div className="submit-section">
-        <button className="submit-button" onClick={submitDailyReport}>
-          <Receipt size={20} />
-          <span>日報を提出</span>
+      {/* 提出ボタン */}
+      <div style={{ display: 'flex', justifyContent: 'center' }}>
+        <button 
+          onClick={submitDailyReport}
+          disabled={loading}
+          style={{
+            padding: '15px 40px',
+            background: loading ? '#bdc3c7' : 'linear-gradient(135deg, #9333EA, #F0E)',
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            fontSize: '18px',
+            fontWeight: '600',
+            cursor: loading ? 'not-allowed' : 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            transition: 'transform 0.2s ease',
+            opacity: loading ? 0.7 : 1
+          }}
+          onMouseEnter={(e) => !loading && (e.currentTarget.style.transform = 'scale(1.05)')}
+          onMouseLeave={(e) => !loading && (e.currentTarget.style.transform = 'scale(1)')}
+        >
+          <Edit size={20} />
+          {loading ? '提出中...' : '日報を提出'}
         </button>
       </div>
 
       {/* Receipt Form Modal */}
       {showReceiptForm && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h3>新しい伝票</h3>
-              <button onClick={() => setShowReceiptForm(false)} className="close-btn">
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 1000,
+          padding: '20px'
+        }}>
+          <div style={{
+            background: 'white',
+            borderRadius: '12px',
+            width: '100%',
+            maxWidth: '500px',
+            maxHeight: '90vh',
+            overflow: 'auto',
+            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)'
+          }}>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              padding: '20px',
+              borderBottom: '1px solid #e1e8ed'
+            }}>
+              <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '600', color: '#000' }}>
+                新しい伝票
+              </h3>
+              <button 
+                onClick={() => setShowReceiptForm(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: '8px',
+                  borderRadius: '6px',
+                  color: '#666'
+                }}
+              >
                 <X size={20} />
               </button>
             </div>
             
-            <div className="modal-body">
-              <div className="form-group">
-                <label>合計金額</label>
+            <div style={{ padding: '20px' }}>
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ 
+                  display: 'block', 
+                  marginBottom: '8px', 
+                  fontWeight: '500',
+                  color: '#000',
+                  fontSize: '14px'
+                }}>
+                  合計金額
+                </label>
                 <input
                   type="number"
                   value={newReceipt.totalAmount}
@@ -374,13 +641,30 @@ const DailyReportPage: React.FC<DailyReportPageProps> = ({ user }) => {
                     ...prev,
                     totalAmount: Number(e.target.value)
                   }))}
-                  className="form-input"
+                  style={{
+                    width: '100%',
+                    padding: '12px 16px',
+                    border: '2px solid #e1e8ed',
+                    borderRadius: '8px',
+                    fontSize: '16px',
+                    color: '#000',
+                    backgroundColor: 'white',
+                    outline: 'none',
+                    boxSizing: 'border-box'
+                  }}
                   placeholder="金額を入力"
                 />
               </div>
 
-              <div className="form-group">
-                <label className="checkbox-container">
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  color: '#000',
+                  fontSize: '14px',
+                  cursor: 'pointer'
+                }}>
                   <input
                     type="checkbox"
                     checked={newReceipt.isCardPayment}
@@ -388,51 +672,106 @@ const DailyReportPage: React.FC<DailyReportPageProps> = ({ user }) => {
                       ...prev,
                       isCardPayment: e.target.checked
                     }))}
+                    style={{ accentColor: '#9333EA' }}
                   />
-                  <span className="checkbox-label">カード会計</span>
+                  カード決済
                 </label>
               </div>
 
-              <div className="form-section">
-                <div className="section-header">
-                  <label>ドリンク詳細</label>
+              <div style={{ marginBottom: '20px' }}>
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '10px'
+                }}>
+                  <label style={{ 
+                    fontWeight: '500',
+                    color: '#000',
+                    fontSize: '14px'
+                  }}>
+                    ドリンク詳細
+                  </label>
                   <button 
                     type="button"
                     onClick={addDrinkToReceipt} 
-                    className="add-btn"
+                    style={{
+                      background: '#9333EA',
+                      color: 'white',
+                      border: 'none',
+                      padding: '6px',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
                   >
                     <Plus size={16} />
                   </button>
                 </div>
                 
                 {newReceipt.drinks.map((drink, index) => (
-                  <div key={index} className="input-row">
+                  <div key={index} style={{
+                    display: 'grid',
+                    gridTemplateColumns: '2fr 1fr 2fr auto',
+                    gap: '10px',
+                    marginBottom: '10px',
+                    alignItems: 'center'
+                  }}>
                     <input
                       type="text"
                       placeholder="従業員名"
                       value={drink.employeeName}
                       onChange={(e) => updateDrink(index, 'employeeName', e.target.value)}
-                      className="form-input-small"
+                      style={{
+                        padding: '8px 12px',
+                        border: '1px solid #e1e8ed',
+                        borderRadius: '6px',
+                        fontSize: '14px',
+                        backgroundColor: 'white',
+                        color: '#000'
+                      }}
                     />
                     <input
                       type="number"
                       placeholder="杯数"
                       value={drink.drinkCount}
                       onChange={(e) => updateDrink(index, 'drinkCount', Number(e.target.value))}
-                      className="form-input-small"
+                      style={{
+                        padding: '8px 12px',
+                        border: '1px solid #e1e8ed',
+                        borderRadius: '6px',
+                        fontSize: '14px',
+                        backgroundColor: 'white',
+                        color: '#000'
+                      }}
                     />
                     <input
                       type="number"
                       placeholder="金額"
                       value={drink.amount}
                       onChange={(e) => updateDrink(index, 'amount', Number(e.target.value))}
-                      className="form-input-small"
+                      style={{
+                        padding: '8px 12px',
+                        border: '1px solid #e1e8ed',
+                        borderRadius: '6px',
+                        fontSize: '14px',
+                        backgroundColor: 'white',
+                        color: '#000'
+                      }}
                     />
                     {newReceipt.drinks.length > 1 && (
                       <button 
                         type="button"
                         onClick={() => removeDrinkFromReceipt(index)}
-                        className="remove-btn"
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: '#e74c3c',
+                          cursor: 'pointer',
+                          padding: '4px'
+                        }}
                       >
                         <X size={16} />
                       </button>
@@ -441,38 +780,85 @@ const DailyReportPage: React.FC<DailyReportPageProps> = ({ user }) => {
                 ))}
               </div>
 
-              <div className="form-section">
-                <div className="section-header">
-                  <label>シャンパン詳細</label>
+              <div style={{ marginBottom: '20px' }}>
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '10px'
+                }}>
+                  <label style={{ 
+                    fontWeight: '500',
+                    color: '#000',
+                    fontSize: '14px'
+                  }}>
+                    シャンパン詳細
+                  </label>
                   <button 
                     type="button"
                     onClick={addChampagneToReceipt} 
-                    className="add-btn"
+                    style={{
+                      background: '#9333EA',
+                      color: 'white',
+                      border: 'none',
+                      padding: '6px',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
                   >
                     <Plus size={16} />
                   </button>
                 </div>
                 
                 {newReceipt.champagnes.map((champagne, index) => (
-                  <div key={index} className="input-row">
+                  <div key={index} style={{
+                    display: 'grid',
+                    gridTemplateColumns: '2fr 2fr auto',
+                    gap: '10px',
+                    marginBottom: '10px',
+                    alignItems: 'center'
+                  }}>
                     <input
                       type="text"
                       placeholder="シャンパン名"
                       value={champagne.name}
                       onChange={(e) => updateChampagne(index, 'name', e.target.value)}
-                      className="form-input-small"
+                      style={{
+                        padding: '8px 12px',
+                        border: '1px solid #e1e8ed',
+                        borderRadius: '6px',
+                        fontSize: '14px',
+                        backgroundColor: 'white',
+                        color: '#000'
+                      }}
                     />
                     <input
                       type="number"
                       placeholder="金額"
                       value={champagne.amount}
                       onChange={(e) => updateChampagne(index, 'amount', Number(e.target.value))}
-                      className="form-input-small"
+                      style={{
+                        padding: '8px 12px',
+                        border: '1px solid #e1e8ed',
+                        borderRadius: '6px',
+                        fontSize: '14px',
+                        backgroundColor: 'white',
+                        color: '#000'
+                      }}
                     />
                     <button 
                       type="button"
                       onClick={() => removeChampagneFromReceipt(index)}
-                      className="remove-btn"
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: '#e74c3c',
+                        cursor: 'pointer',
+                        padding: '4px'
+                      }}
                     >
                       <X size={16} />
                     </button>
@@ -481,8 +867,26 @@ const DailyReportPage: React.FC<DailyReportPageProps> = ({ user }) => {
               </div>
             </div>
 
-            <div className="modal-actions">
-              <button onClick={submitReceipt} className="submit-receipt-btn">
+            <div style={{
+              padding: '20px',
+              borderTop: '1px solid #e1e8ed',
+              display: 'flex',
+              gap: '10px',
+              justifyContent: 'flex-end'
+            }}>
+              <button 
+                onClick={submitReceipt}
+                style={{
+                  background: 'linear-gradient(135deg, #9333EA, #F0E)',
+                  color: 'white',
+                  border: 'none',
+                  padding: '12px 24px',
+                  borderRadius: '8px',
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  cursor: 'pointer'
+                }}
+              >
                 伝票を追加
               </button>
             </div>
@@ -492,39 +896,127 @@ const DailyReportPage: React.FC<DailyReportPageProps> = ({ user }) => {
 
       {/* Cash Settings Modal */}
       {showCashSettings && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h3>レジ設定</h3>
-              <button onClick={() => setShowCashSettings(false)} className="close-btn">
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 1000,
+          padding: '20px'
+        }}>
+          <div style={{
+            background: 'white',
+            borderRadius: '12px',
+            width: '100%',
+            maxWidth: '400px',
+            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)'
+          }}>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              padding: '20px',
+              borderBottom: '1px solid #e1e8ed'
+            }}>
+              <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '600', color: '#000' }}>
+                レジ設定
+              </h3>
+              <button 
+                onClick={() => setShowCashSettings(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: '8px',
+                  borderRadius: '6px',
+                  color: '#666'
+                }}
+              >
                 <X size={20} />
               </button>
             </div>
             
-            <div className="modal-body">
-              <div className="form-group">
-                <label>開始時レジ金</label>
+            <div style={{ padding: '20px' }}>
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ 
+                  display: 'block', 
+                  marginBottom: '8px', 
+                  fontWeight: '500',
+                  color: '#000',
+                  fontSize: '14px'
+                }}>
+                  開始時レジ金
+                </label>
                 <input
                   type="number"
                   value={cashSettings.startingCash}
                   onChange={(e) => setCashSettings({
                     startingCash: Number(e.target.value)
                   })}
-                  className="form-input"
+                  style={{
+                    width: '100%',
+                    padding: '12px 16px',
+                    border: '2px solid #e1e8ed',
+                    borderRadius: '8px',
+                    fontSize: '16px',
+                    color: '#000',
+                    backgroundColor: 'white',
+                    outline: 'none',
+                    boxSizing: 'border-box'
+                  }}
                   placeholder="金額を入力"
                 />
               </div>
               
-              <div className="info-card">
-                <div className="info-title">計算式</div>
-                <div className="info-content">
+              <div style={{
+                padding: '15px',
+                backgroundColor: '#fafafa',
+                borderRadius: '8px',
+                marginBottom: '20px'
+              }}>
+                <div style={{
+                  fontSize: '14px',
+                  color: '#000',
+                  fontWeight: '600',
+                  marginBottom: '8px'
+                }}>
+                  計算式
+                </div>
+                <div style={{
+                  fontSize: '14px',
+                  color: '#666',
+                  lineHeight: '1.5'
+                }}>
                   現金残金 = 開始レジ金 + 現金売上 - 経費
                 </div>
               </div>
             </div>
 
-            <div className="modal-actions">
-              <button onClick={() => setShowCashSettings(false)} className="save-btn">
+            <div style={{
+              padding: '20px',
+              borderTop: '1px solid #e1e8ed',
+              display: 'flex',
+              gap: '10px',
+              justifyContent: 'flex-end'
+            }}>
+              <button 
+                onClick={() => setShowCashSettings(false)}
+                style={{
+                  background: 'linear-gradient(135deg, #9333EA, #F0E)',
+                  color: 'white',
+                  border: 'none',
+                  padding: '12px 24px',
+                  borderRadius: '8px',
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  cursor: 'pointer'
+                }}
+              >
                 保存
               </button>
             </div>
