@@ -1,4 +1,19 @@
 /* App.css - Mobile First Header/Footer System */
+/* フォント設定を一番上に追加 */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;600;700&display=swap');
+
+* {
+  font-family: "Noto Sans JP", sans-serif !important;
+}
+
+/* 既存のコードはそのまま残す */
+/* 基本設定 */
+#root {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+}
 
 * {
   margin: 0;

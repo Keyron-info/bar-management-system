@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Settings, X, ChevronDown, Bell, LogOut, User, TrendingUp } from 'lucide-react';
+import { Settings, X, ChevronDown, TrendingUp } from 'lucide-react';
 import axios from 'axios';
 
 interface User {
@@ -7,6 +7,7 @@ interface User {
   email: string;
   name: string;
   role: string;
+  store_id?: number;
 }
 
 interface PersonalPageProps {
@@ -158,7 +159,7 @@ const PersonalPage: React.FC<PersonalPageProps> = ({ user, onPageChange, onLogou
         height: '400px',
         color: '#666',
         backgroundColor: '#FAFAFA',
-        fontFamily: 'Sana, Noto Sans JP, sans-serif'
+        fontFamily: '"Noto Sans JP", sans-serif'
       }}>
         データを読み込んでいます...
       </div>
@@ -167,320 +168,270 @@ const PersonalPage: React.FC<PersonalPageProps> = ({ user, onPageChange, onLogou
 
   return (
     <div style={{
-      width: '390px',
-      minHeight: '844px',
-      backgroundColor: '#FAFAFA', // 白ベースに戻す
+      maxWidth: '1200px',
       margin: '0 auto',
       padding: '20px',
-      boxSizing: 'border-box',
-      display: 'flex',
-      flexDirection: 'column',
-      gap: '20px',
-      fontFamily: 'Sana, Noto Sans JP, sans-serif'
+      backgroundColor: '#FAFAFA',
+      minHeight: '100vh',
+      fontFamily: '"Noto Sans JP", sans-serif'
     }}>
-      {/* Header Section */}
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: '10px 0'
-      }}>
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '10px'
+      {/* ページタイトル */}
+      <div style={{ marginBottom: '30px' }}>
+        <h1 style={{ 
+          fontSize: '28px', 
+          color: '#000', 
+          margin: '0 0 10px 0',
+          fontWeight: '600'
         }}>
-          {/* プロフィールアイコン - 白背景+紫ボーダー */}
-          <div style={{
-            width: '40px',
-            height: '40px',
-            borderRadius: '50%',
-            backgroundColor: 'white',
-            border: '2px solid #9333EA',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-          }}>
-            <User size={20} color="#9333EA" />
-          </div>
-          <span style={{
-            color: '#000',
-            fontSize: '15px',
-            fontWeight: '400'
-          }}>
-            {user.name}さん
-          </span>
-        </div>
-
-        <div style={{ display: 'flex', gap: '15px' }}>
-          {/* 通知アイコン - 白背景 */}
-          <div style={{
-            width: '36px',
-            height: '36px',
-            borderRadius: '50%',
-            backgroundColor: 'white',
-            border: '1px solid #e1e8ed',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'pointer',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-          }}>
-            <Bell size={18} color="#9333EA" />
-          </div>
-
-          {/* ログアウトアイコン */}
-          <div style={{
-            width: '36px',
-            height: '36px',
-            borderRadius: '50%',
-            background: 'linear-gradient(90deg, #9333EA 0%, #F0E 100%)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'pointer',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-          }} onClick={onLogout}>
-            <LogOut size={16} color="white" />
-          </div>
-        </div>
+          個人ダッシュボード
+        </h1>
+        <p style={{ color: '#666', margin: 0 }}>
+          {user.name}さんの売上状況と目標達成度
+        </p>
       </div>
 
-      {/* Monthly Goal Card */}
+      {/* メインコンテンツグリッド */}
       <div style={{
-        backgroundColor: 'white',
-        borderRadius: '12px',
-        padding: '20px',
-        boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
-        border: '1px solid #e1e8ed'
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+        gap: '25px',
+        marginBottom: '25px'
       }}>
+        {/* Monthly Goal Card */}
         <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '15px'
-        }}>
-          <span style={{
-            color: '#000',
-            fontSize: '16px',
-            fontWeight: '500'
-          }}>
-            今月の目標
-          </span>
-          <button 
-            onClick={() => setShowGoalSettings(true)}
-            style={{
-              background: 'white',
-              border: '1px solid #e1e8ed',
-              borderRadius: '8px',
-              padding: '8px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-            }}
-          >
-            <Settings size={16} color="#9333EA" />
-          </button>
-        </div>
-
-        <div style={{
-          fontSize: '28px',
-          fontWeight: '700',
-          background: 'linear-gradient(90deg, #9333EA 0%, #F0E 100%)',
-          backgroundClip: 'text',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          marginBottom: '15px'
-        }}>
-          {goalSettings.sales.toLocaleString()}円
-        </div>
-
-        <div style={{
-          width: '100%',
-          height: '12px',
-          background: '#f1f3f4',
-          borderRadius: '8px',
-          overflow: 'hidden',
-          marginBottom: '8px'
-        }}>
-          <div style={{
-            height: '100%',
-            background: 'linear-gradient(90deg, #9333EA 0%, #F0E 100%)',
-            width: `${Math.min(100, achievementRate)}%`,
-            transition: 'width 0.6s ease'
-          }} />
-        </div>
-
-        <div style={{
-          color: '#F0E',
-          fontSize: '14px',
-          fontWeight: '600',
-          textAlign: 'right'
-        }}>
-          {achievementRate.toFixed(1)}%
-        </div>
-      </div>
-
-      {/* Chart Section */}
-      <div style={{
-        backgroundColor: 'white',
-        borderRadius: '12px',
-        padding: '20px',
-        boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
-        border: '1px solid #e1e8ed'
-      }}>
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '20px'
+          backgroundColor: 'white',
+          borderRadius: '12px',
+          padding: '25px',
+          boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
+          border: '1px solid #e1e8ed'
         }}>
           <div style={{
             display: 'flex',
+            justifyContent: 'space-between',
             alignItems: 'center',
-            gap: '8px'
+            marginBottom: '15px'
           }}>
-            <TrendingUp size={18} color="#9333EA" />
             <span style={{
               color: '#000',
-              fontSize: '16px',
+              fontSize: '18px',
               fontWeight: '600'
             }}>
-              今月の成績
+              今月の目標
             </span>
-          </div>
-
-          {/* Chart Type Selector */}
-          <div style={{ position: 'relative' }}>
-            <div 
-              onClick={() => setShowChartDropdown(!showChartDropdown)}
+            <button 
+              onClick={() => setShowGoalSettings(true)}
               style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '8px 12px',
-                backgroundColor: 'white',
+                background: 'white',
                 border: '1px solid #e1e8ed',
                 borderRadius: '8px',
+                padding: '8px',
                 cursor: 'pointer',
-                fontSize: '14px',
-                color: '#000'
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
               }}
             >
-              <span>{chartOptions.find(opt => opt.key === chartType)?.label}</span>
-              <ChevronDown 
-                size={16} 
-                color="#666"
-                style={{ 
-                  transform: showChartDropdown ? 'rotate(180deg)' : 'rotate(0deg)',
-                  transition: 'transform 0.2s ease'
-                }}
-              />
-            </div>
-            
-            {showChartDropdown && (
-              <div style={{
-                position: 'absolute',
-                top: '100%',
-                right: 0,
-                backgroundColor: 'white',
-                border: '1px solid #e1e8ed',
-                borderRadius: '8px',
-                boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-                zIndex: 10,
-                minWidth: '120px'
-              }}>
-                {chartOptions.map((option) => (
-                  <div
-                    key={option.key}
-                    onClick={() => handleChartTypeChange(option.key as 'sales' | 'drinks' | 'catch')}
-                    style={{
-                      padding: '10px 12px',
-                      cursor: 'pointer',
-                      fontSize: '14px',
-                      color: chartType === option.key ? '#9333EA' : '#000',
-                      backgroundColor: chartType === option.key ? '#fafaff' : 'white',
-                      borderBottom: '1px solid #f0f0f0'
-                    }}
-                  >
-                    {option.label}
-                  </div>
-                ))}
-              </div>
-            )}
+              <Settings size={16} color="#9333EA" />
+            </button>
+          </div>
+
+          <div style={{
+            fontSize: '32px',
+            fontWeight: '700',
+            background: 'linear-gradient(90deg, #9333EA 0%, #F0E 100%)',
+            backgroundClip: 'text',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            marginBottom: '15px'
+          }}>
+            {goalSettings.sales.toLocaleString()}円
+          </div>
+
+          <div style={{
+            width: '100%',
+            height: '12px',
+            background: '#f1f3f4',
+            borderRadius: '8px',
+            overflow: 'hidden',
+            marginBottom: '8px'
+          }}>
+            <div style={{
+              height: '100%',
+              background: 'linear-gradient(90deg, #9333EA 0%, #F0E 100%)',
+              width: `${Math.min(100, achievementRate)}%`,
+              transition: 'width 0.6s ease'
+            }} />
+          </div>
+
+          <div style={{
+            color: '#F0E',
+            fontSize: '16px',
+            fontWeight: '600',
+            textAlign: 'right'
+          }}>
+            {achievementRate.toFixed(1)}%
           </div>
         </div>
-        
-        {/* Chart Area */}
+
+        {/* Chart Section */}
         <div style={{
-          height: '140px',
-          display: 'flex',
-          alignItems: 'end',
-          gap: '8px',
-          padding: '15px 10px',
-          backgroundColor: '#fafafa',
-          borderRadius: '8px'
+          backgroundColor: 'white',
+          borderRadius: '12px',
+          padding: '25px',
+          boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
+          border: '1px solid #e1e8ed',
+          gridColumn: 'span 1'
         }}>
-          {chartData.map((day, index) => {
-            const value = chartType === 'sales' ? day.sales : 
-                         chartType === 'drinks' ? day.drinks : day.catch;
-            const height = maxValue > 0 ? (value / maxValue) * 80 : 0;
-            const currentOption = chartOptions.find(opt => opt.key === chartType);
-            
-            return (
-              <div key={index} style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: '6px',
-                flex: 1
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '20px'
+          }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}>
+              <TrendingUp size={20} color="#9333EA" />
+              <span style={{
+                color: '#000',
+                fontSize: '18px',
+                fontWeight: '600'
               }}>
-                <div style={{ fontSize: '10px', color: '#666', textAlign: 'center' }}>
-                  {chartType === 'sales' ? `${Math.floor(value / 10000)}万` : 
-                   value > 0 ? value.toString() : '0'}
-                </div>
-                <div style={{
-                  width: '20px',
-                  height: `${Math.max(height, 15)}px`,
-                  background: 'linear-gradient(180deg, #9333EA 0%, #F0E 100%)',
-                  borderRadius: '4px',
-                  minHeight: '15px'
-                }} />
-                <div style={{
-                  fontSize: '10px',
-                  color: '#666',
-                  whiteSpace: 'nowrap'
-                }}>
-                  {day.dayLabel}
-                </div>
+                今月の成績
+              </span>
+            </div>
+
+            {/* Chart Type Selector */}
+            <div style={{ position: 'relative' }}>
+              <div 
+                onClick={() => setShowChartDropdown(!showChartDropdown)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '8px 12px',
+                  backgroundColor: 'white',
+                  border: '1px solid #e1e8ed',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  color: '#000'
+                }}
+              >
+                <span>{chartOptions.find(opt => opt.key === chartType)?.label}</span>
+                <ChevronDown 
+                  size={16} 
+                  color="#666"
+                  style={{ 
+                    transform: showChartDropdown ? 'rotate(180deg)' : 'rotate(0deg)',
+                    transition: 'transform 0.2s ease'
+                  }}
+                />
               </div>
-            );
-          })}
+              
+              {showChartDropdown && (
+                <div style={{
+                  position: 'absolute',
+                  top: '100%',
+                  right: 0,
+                  backgroundColor: 'white',
+                  border: '1px solid #e1e8ed',
+                  borderRadius: '8px',
+                  boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                  zIndex: 10,
+                  minWidth: '120px'
+                }}>
+                  {chartOptions.map((option) => (
+                    <div
+                      key={option.key}
+                      onClick={() => handleChartTypeChange(option.key as 'sales' | 'drinks' | 'catch')}
+                      style={{
+                        padding: '10px 12px',
+                        cursor: 'pointer',
+                        fontSize: '14px',
+                        color: chartType === option.key ? '#9333EA' : '#000',
+                        backgroundColor: chartType === option.key ? '#fafaff' : 'white',
+                        borderBottom: '1px solid #f0f0f0'
+                      }}
+                    >
+                      {option.label}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+          
+          {/* Chart Area */}
+          <div style={{
+            height: '200px',
+            display: 'flex',
+            alignItems: 'end',
+            gap: '8px',
+            padding: '20px 15px',
+            backgroundColor: '#fafafa',
+            borderRadius: '8px'
+          }}>
+            {chartData.map((day, index) => {
+              const value = chartType === 'sales' ? day.sales : 
+                           chartType === 'drinks' ? day.drinks : day.catch;
+              const height = maxValue > 0 ? (value / maxValue) * 120 : 0;
+              
+              return (
+                <div key={index} style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: '8px',
+                  flex: 1
+                }}>
+                  <div style={{ fontSize: '12px', color: '#666', textAlign: 'center' }}>
+                    {chartType === 'sales' ? `${Math.floor(value / 10000)}万` : 
+                     value > 0 ? value.toString() : '0'}
+                  </div>
+                  <div style={{
+                    width: '24px',
+                    height: `${Math.max(height, 20)}px`,
+                    background: 'linear-gradient(180deg, #9333EA 0%, #F0E 100%)',
+                    borderRadius: '4px',
+                    minHeight: '20px'
+                  }} />
+                  <div style={{
+                    fontSize: '11px',
+                    color: '#666',
+                    whiteSpace: 'nowrap'
+                  }}>
+                    {day.dayLabel}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
 
       {/* Metrics Grid */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: '1fr 1fr',
-        gap: '15px'
+        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+        gap: '20px'
       }}>
         {/* 総売上 */}
         <div style={{
           backgroundColor: 'white',
           borderRadius: '12px',
-          padding: '20px',
+          padding: '25px',
           boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
           border: '1px solid #e1e8ed',
-          gridColumn: '1 / -1'
+          textAlign: 'center'
         }}>
           <div style={{
-            fontSize: '14px',
+            fontSize: '16px',
             color: '#666',
-            marginBottom: '8px'
+            marginBottom: '10px'
           }}>
             総売上
           </div>
@@ -497,19 +448,20 @@ const PersonalPage: React.FC<PersonalPageProps> = ({ user, onPageChange, onLogou
         <div style={{
           backgroundColor: 'white',
           borderRadius: '12px',
-          padding: '15px',
+          padding: '25px',
           boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
-          border: '1px solid #e1e8ed'
+          border: '1px solid #e1e8ed',
+          textAlign: 'center'
         }}>
           <div style={{
-            fontSize: '12px',
+            fontSize: '16px',
             color: '#666',
-            marginBottom: '8px'
+            marginBottom: '10px'
           }}>
             ドリンク数
           </div>
           <div style={{
-            fontSize: '24px',
+            fontSize: '32px',
             fontWeight: '700',
             color: '#9333EA'
           }}>
@@ -521,49 +473,50 @@ const PersonalPage: React.FC<PersonalPageProps> = ({ user, onPageChange, onLogou
         <div style={{
           backgroundColor: 'white',
           borderRadius: '12px',
-          padding: '15px',
+          padding: '25px',
           boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
-          border: '1px solid #e1e8ed'
+          border: '1px solid #e1e8ed',
+          textAlign: 'center'
         }}>
           <div style={{
-            fontSize: '12px',
+            fontSize: '16px',
             color: '#666',
-            marginBottom: '8px'
+            marginBottom: '10px'
           }}>
             キャッチ数
           </div>
           <div style={{
-            fontSize: '24px',
+            fontSize: '32px',
             fontWeight: '700',
             color: '#F0E'
           }}>
             {totalCatch}回
           </div>
         </div>
-      </div>
 
-      {/* 出勤日数 */}
-      <div style={{
-        backgroundColor: 'white',
-        borderRadius: '12px',
-        padding: '15px',
-        boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
-        border: '1px solid #e1e8ed',
-        textAlign: 'center'
-      }}>
+        {/* 出勤日数 */}
         <div style={{
-          fontSize: '14px',
-          color: '#666',
-          marginBottom: '8px'
+          backgroundColor: 'white',
+          borderRadius: '12px',
+          padding: '25px',
+          boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
+          border: '1px solid #e1e8ed',
+          textAlign: 'center'
         }}>
-          出勤日数
-        </div>
-        <div style={{
-          fontSize: '28px',
-          fontWeight: '700',
-          color: '#000'
-        }}>
-          {workDays}日
+          <div style={{
+            fontSize: '16px',
+            color: '#666',
+            marginBottom: '10px'
+          }}>
+            出勤日数
+          </div>
+          <div style={{
+            fontSize: '32px',
+            fontWeight: '700',
+            color: '#000'
+          }}>
+            {workDays}日
+          </div>
         </div>
       </div>
 
@@ -596,7 +549,7 @@ const PersonalPage: React.FC<PersonalPageProps> = ({ user, onPageChange, onLogou
               padding: '20px',
               borderBottom: '1px solid #e1e8ed'
             }}>
-              <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '600', color: '#000' }}>
+              <h3 style={{ margin: 0, fontSize: '20px', fontWeight: '600', color: '#000' }}>
                 目標設定
               </h3>
               <button 

@@ -114,7 +114,7 @@ const StorePage: React.FC<StorePageProps> = ({ user }) => {
       padding: '20px', 
       backgroundColor: '#FAFAFA', 
       minHeight: '100vh',
-      fontFamily: 'Sana, Noto Sans JP, sans-serif'
+      fontFamily: '"Noto Sans JP", sans-serif'
     }}>
       {/* 今月の目標セクション - 大きく改善 */}
       <div style={{
