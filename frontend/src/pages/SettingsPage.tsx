@@ -14,11 +14,19 @@ interface SettingsPageProps {
   onLogout: () => void;
 }
 
+interface SettingsItem {
+  icon: React.ComponentType<any>;
+  label: string;
+  value?: string | boolean;
+  action?: () => void;
+  isReadOnly?: boolean;
+  isToggle?: boolean;
+}
+
 const SettingsPage: React.FC<SettingsPageProps> = ({ user, onLogout }) => {
   const [notifications, setNotifications] = useState(true);
-  const [darkMode, setDarkMode] = useState(false);
 
-  const settingsGroups = [
+  const settingsGroups: { title: string; items: SettingsItem[] }[] = [
     {
       title: 'アカウント',
       items: [
@@ -105,7 +113,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user, onLogout }) => {
                       <div className="item-content">
                         <div className="item-label">{item.label}</div>
                         {!item.isToggle && (
-                          <div className="item-value">{item.value}</div>
+                          <div className="item-value">{String(item.value)}</div>
                         )}
                       </div>
                     </div>
