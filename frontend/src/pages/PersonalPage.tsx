@@ -148,16 +148,6 @@ const PersonalPage: React.FC<PersonalPageProps> = ({ user, onPageChange }) => {
   return (
     <div className="personal-page-container">
       <div className="personal-page">
-        {/* User Header */}
-        <div className="user-header">
-          <span className="user-name">{user.name}さん（{user.role === 'manager' ? '店長' : '店員'}）</span>
-          <div className="header-icons">
-            <div className="bell-icon"></div>
-            <div className="profile-icon"></div>
-            <div className="logout-icon"></div>
-          </div>
-        </div>
-
         {/* Goal Card */}
         <div className="goal-section">
           <div className="goal-header">
@@ -182,29 +172,42 @@ const PersonalPage: React.FC<PersonalPageProps> = ({ user, onPageChange }) => {
         <div className="performance-section">
           <div className="performance-header">
             <span className="performance-label">今月の成績</span>
-            <div className="performance-settings-icon">
-              <Settings size={16} color="white" />
+            <div className="chart-toggle-container">
+              <div className="chart-toggle-switch">
+                <button 
+                  className={`toggle-btn ${chartType === 'sales' ? 'active' : ''}`}
+                  onClick={() => setChartType('sales')}
+                  data-state={chartType === 'sales' ? 'active' : 'idle'}
+                >
+                  <div className="toggle-content">
+                    <span>売上</span>
+                  </div>
+                </button>
+                <button 
+                  className={`toggle-btn ${chartType === 'drinks' ? 'active' : ''}`}
+                  onClick={() => setChartType('drinks')}
+                  data-state={chartType === 'drinks' ? 'active' : 'idle'}
+                >
+                  <div className="toggle-content">
+                    <span>ドリンク</span>
+                  </div>
+                </button>
+                <button 
+                  className={`toggle-btn ${chartType === 'catch' ? 'active' : ''}`}
+                  onClick={() => setChartType('catch')}
+                  data-state={chartType === 'catch' ? 'active' : 'idle'}
+                >
+                  <div className="toggle-content">
+                    <span>キャッチ</span>
+                  </div>
+                </button>
+              </div>
+              <div className="settings-indicator">
+                <div className="settings-icon-small">
+                  <Settings size={11} color="#D0ACEF" />
+                </div>
+              </div>
             </div>
-          </div>
-          <div className="chart-controls">
-            <button 
-              className={`chart-btn ${chartType === 'sales' ? 'active' : ''}`}
-              onClick={() => setChartType('sales')}
-            >
-              売上
-            </button>
-            <button 
-              className={`chart-btn ${chartType === 'drinks' ? 'active' : ''}`}
-              onClick={() => setChartType('drinks')}
-            >
-              ドリンク
-            </button>
-            <button 
-              className={`chart-btn ${chartType === 'catch' ? 'active' : ''}`}
-              onClick={() => setChartType('catch')}
-            >
-              キャッチ
-            </button>
           </div>
           <div className="chart-area">
             <div className="chart-bars">
@@ -313,15 +316,6 @@ const PersonalPage: React.FC<PersonalPageProps> = ({ user, onPageChange }) => {
             </div>
           </div>
         )}
-      </div>
-
-      {/* Bottom Navigation */}
-      <div className="bottom-navigation">
-        <div className="nav-icon-item" onClick={() => onPageChange?.('personal')}></div>
-        <div className="nav-icon-item" onClick={() => onPageChange?.('store')}></div>
-        <div className="nav-icon-item" onClick={() => onPageChange?.('daily-report')}></div>
-        <div className="nav-icon-item" onClick={() => onPageChange?.('shift')}></div>
-        <div className="nav-icon-item" onClick={() => onPageChange?.('settings')}></div>
       </div>
     </div>
   );

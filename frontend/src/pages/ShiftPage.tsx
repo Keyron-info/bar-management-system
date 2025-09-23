@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Bell, LogOut, Calendar, Clock, Users, Plus } from 'lucide-react';
+import { Calendar, Clock, Users, Plus } from 'lucide-react';
 import './ShiftPage.css';
 
 interface User {
@@ -86,20 +86,6 @@ const ShiftPage: React.FC<ShiftPageProps> = ({ user }) => {
 
   return (
     <div className="shift-page">
-      {/* Header */}
-      <div className="shift-header">
-        <div className="header-user">
-          <span className="user-display-name">
-            {user.name}さん（{user.role === 'manager' ? '店長' : '店員'}）
-          </span>
-        </div>
-        <div className="header-actions">
-          <Bell size={24} className="header-icon" />
-          <div className="profile-circle" />
-          <LogOut size={20} className="header-icon" />
-        </div>
-      </div>
-
       {/* Calendar View */}
       <div className="calendar-section">
         <div className="calendar-header">
