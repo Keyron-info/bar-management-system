@@ -42,6 +42,7 @@ interface SummaryItem {
   value: string | number;
   color?: string;
   isInput?: boolean;
+  placeholder?: string;
   onChange?: (value: number) => void;
   hasSettings?: boolean;
   onSettings?: () => void;
@@ -190,6 +191,7 @@ const DailyReportPage: React.FC<DailyReportPageProps> = ({ user }) => {
           label: '酒代',
           value: alcoholExpense,
           isInput: true,
+          placeholder: '酒代を入力',
           onChange: (value: number) => setAlcoholExpense(value)
         },
         {
@@ -197,6 +199,7 @@ const DailyReportPage: React.FC<DailyReportPageProps> = ({ user }) => {
           label: 'その他経費',
           value: otherExpenses,
           isInput: true,
+          placeholder: 'その他経費を入力',
           onChange: (value: number) => setOtherExpenses(value)
         }
       ]
@@ -239,6 +242,21 @@ const DailyReportPage: React.FC<DailyReportPageProps> = ({ user }) => {
             />
           </div>
         </div>
+        
+        <div className="submitter-card">
+          <div className="submitter-icon">
+            <User size={20} color="#9333EA" />
+          </div>
+          <div className="submitter-content">
+            <div className="submitter-label">提出者</div>
+            <input 
+              type="text" 
+              defaultValue={user.name}
+              className="submitter-input"
+              placeholder="提出者名を入力"
+            />
+          </div>
+        </div>
       </div>
 
       {/* Summary Groups */}
@@ -260,10 +278,10 @@ const DailyReportPage: React.FC<DailyReportPageProps> = ({ user }) => {
                         {item.isInput ? (
                           <input
                             type="number"
-                            value={item.value as number}
-                            onChange={(e) => item.onChange && item.onChange(Number(e.target.value))}
+                            value={item.value === 0 ? '' : item.value as number}
+                            onChange={(e) => item.onChange && item.onChange(Number(e.target.value) || 0)}
                             className="item-input"
-                            placeholder="0"
+                            placeholder={item.placeholder || "0"}
                           />
                         ) : (
                           <div className="item-value" style={{ color: item.color || '#2c3e50' }}>

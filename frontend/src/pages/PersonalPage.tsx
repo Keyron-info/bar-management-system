@@ -164,9 +164,13 @@ const PersonalPage: React.FC<PersonalPageProps> = ({ user, onPageChange }) => {
         <div className="goal-section">
           <div className="goal-header">
             <span className="goal-label">今月の目標</span>
-            <div className="goal-settings-icon" onClick={() => setShowGoalSettings(true)}>
+            <button 
+              className="goal-settings-icon" 
+              onClick={() => setShowGoalSettings(true)}
+              aria-label="目標設定"
+            >
               <Settings size={16} color="white" />
-            </div>
+            </button>
           </div>
           <div className="goal-amount">{goalSettings.sales.toLocaleString()}円</div>
           <div className="progress-container">

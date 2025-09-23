@@ -13,9 +13,13 @@
 /* Date Section */
 .date-section {
   margin-bottom: 25px;
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
 }
 
-.date-card {
+.date-card,
+.submitter-card {
   background: white;
   border-radius: 12px;
   padding: 20px;
@@ -24,9 +28,12 @@
   gap: 15px;
   box-shadow: 0 2px 10px rgba(0,0,0,0.05);
   border: 1px solid #e1e8ed;
+  flex: 1;
+  min-width: 250px;
 }
 
-.date-icon {
+.date-icon,
+.submitter-icon {
   width: 40px;
   height: 40px;
   background: #f8f9fa;
@@ -36,18 +43,21 @@
   justify-content: center;
 }
 
-.date-content {
+.date-content,
+.submitter-content {
   flex: 1;
 }
 
-.date-label {
+.date-label,
+.submitter-label {
   font-size: 16px;
   font-weight: 500;
   color: #333;
   margin-bottom: 5px;
 }
 
-.date-input {
+.date-input,
+.submitter-input {
   border: none;
   outline: none;
   font-size: 16px;
