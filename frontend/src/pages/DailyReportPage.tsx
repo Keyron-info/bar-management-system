@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Calendar, Plus, Settings, X, Receipt, Calculator, DollarSign } from 'lucide-react';
+import { Calendar, Plus, Settings, X, Receipt, Calculator, DollarSign, User } from 'lucide-react';
 import './DailyReportPage.css';
 
 interface User {
