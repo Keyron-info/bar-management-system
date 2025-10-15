@@ -1,4 +1,4 @@
-/* DailyReportPage.css - 設定ページトンマナ準拠 */
+/* DailyReportPage.css - マルチテナント対応 */
 
 .daily-report-page {
   max-width: 600px;
@@ -131,41 +131,26 @@
   margin-bottom: 2px;
 }
 
-.item-value {
-  font-size: 18px;
-  font-weight: 600;
-}
-
 .item-input {
   border: none;
   outline: none;
   font-size: 18px;
   font-weight: 600;
-  color: #9333EA;
+  color: #000;
   background: transparent;
-  width: 100%;
+  text-align: right;
+  width: 120px;
 }
 
-.item-input::placeholder {
-  color: #ddd;
+.item-input::-webkit-outer-spin-button,
+.item-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
 
-.item-right {
-  display: flex;
-  align-items: center;
-}
-
-.settings-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 8px;
-  border-radius: 6px;
-  transition: background-color 0.2s ease;
-}
-
-.settings-btn:hover {
-  background: #f0f0f0;
+.item-input[type=number] {
+  appearance: textfield;
+  -moz-appearance: textfield;
 }
 
 /* Receipt Section */
@@ -178,78 +163,56 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 15px;
-  padding-left: 5px;
-}
-
-.section-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: #333;
-  margin: 0;
-}
-
-.receipt-count {
-  font-size: 14px;
-  color: #666;
 }
 
 .add-receipt-btn {
-  width: 100%;
-  background: linear-gradient(135deg, #9333EA 0%, #FF00EE 100%);
+  background: linear-gradient(135deg, #9333EA, #F0E);
   color: white;
   border: none;
-  padding: 16px;
-  border-radius: 12px;
-  font-size: 16px;
-  font-weight: 600;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 10px;
-  margin-bottom: 15px;
+  gap: 6px;
+  transition: transform 0.2s ease;
 }
 
 .add-receipt-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(147, 51, 234, 0.3);
+  transform: scale(1.05);
 }
 
 .receipts-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e1e8ed;
 }
 
 .receipt-item {
-  background: white;
-  border-radius: 12px;
-  padding: 16px;
-  border: 1px solid #e1e8ed;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.receipt-item:last-child {
+  border-bottom: none;
 }
 
 .receipt-info {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
+  flex: 1;
 }
 
-.receipt-amount {
-  font-size: 18px;
+.customer-name {
+  font-size: 16px;
   font-weight: 600;
-  color: #9333EA;
-}
-
-.receipt-type {
-  padding: 4px 8px;
-  border-radius: 12px;
-  font-size: 12px;
-  font-weight: 500;
-  background: #f8f9fa;
-  color: #666;
+  color: #333;
+  margin-bottom: 4px;
 }
 
 .receipt-details {
@@ -257,31 +220,18 @@
   color: #666;
 }
 
-/* Submit Section */
-.submit-section {
-  margin-top: 30px;
-}
-
-.submit-button {
-  width: 100%;
-  background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
-  color: white;
+.delete-receipt-btn {
+  background: none;
   border: none;
-  padding: 18px;
-  border-radius: 12px;
-  font-size: 18px;
-  font-weight: 600;
+  color: #e74c3c;
   cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
+  padding: 8px;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
 }
 
-.submit-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(39, 174, 96, 0.3);
+.delete-receipt-btn:hover {
+  background-color: #fdeaea;
 }
 
 /* Modal Styles */
@@ -293,57 +243,55 @@
   bottom: 0;
   background: rgba(0, 0, 0, 0.5);
   display: flex;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
   z-index: 1000;
   padding: 20px;
 }
 
 .modal-content {
   background: white;
-  border-radius: 12px;
+  border-radius: 16px;
   width: 100%;
   max-width: 500px;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
 }
 
 .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px;
+  padding: 24px 24px 16px;
   border-bottom: 1px solid #e1e8ed;
 }
 
 .modal-header h3 {
-  margin: 0;
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 600;
-  color: #2c3e50;
+  color: #333;
+  margin: 0;
 }
 
-.close-btn {
+.close-modal-btn {
   background: none;
   border: none;
+  color: #666;
   cursor: pointer;
-  padding: 8px;
-  border-radius: 6px;
-  color: #7f8c8d;
+  padding: 4px;
+  border-radius: 4px;
   transition: background-color 0.2s ease;
 }
 
-.close-btn:hover {
-  background: #f8f9fa;
-  color: #2c3e50;
+.close-modal-btn:hover {
+  background-color: #f0f0f0;
 }
 
 .modal-body {
-  padding: 20px;
+  padding: 24px;
 }
 
-/* Form Styles */
 .form-group {
   margin-bottom: 20px;
 }
@@ -351,8 +299,8 @@
 .form-group label {
   display: block;
   margin-bottom: 8px;
-  font-weight: 600;
-  color: #2c3e50;
+  font-weight: 500;
+  color: #333;
   font-size: 14px;
 }
 
@@ -363,187 +311,228 @@
   border-radius: 8px;
   font-size: 16px;
   color: #000;
+  background: white;
   outline: none;
-  transition: border-color 0.2s ease;
   box-sizing: border-box;
+  transition: border-color 0.2s ease;
 }
 
 .form-input:focus {
   border-color: #9333EA;
 }
 
-.checkbox-container {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  cursor: pointer;
+/* Dropdown Styles */
+.dropdown-container {
+  position: relative;
 }
 
-.checkbox-container input[type="checkbox"] {
-  width: 18px;
-  height: 18px;
-  accent-color: #9333EA;
-}
-
-.checkbox-label {
-  color: #2c3e50;
-  font-weight: 500;
-  user-select: none;
-}
-
-.form-section {
-  margin-bottom: 20px;
-}
-
-.section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 15px;
-}
-
-.section-header label {
-  font-weight: 600;
-  color: #2c3e50;
-  font-size: 16px;
-  margin: 0;
-}
-
-.add-btn {
-  background: #3498db;
-  color: white;
-  border: none;
-  padding: 6px;
-  border-radius: 6px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background-color 0.2s ease;
-}
-
-.add-btn:hover {
-  background: #2980b9;
-}
-
-.input-row {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 10px;
-  align-items: center;
-}
-
-.form-input-small {
-  flex: 1;
-  padding: 8px 12px;
+.dropdown-trigger {
+  width: 100%;
+  padding: 12px 16px;
   border: 2px solid #e1e8ed;
-  border-radius: 6px;
-  font-size: 14px;
-  color: #000;
-  outline: none;
+  border-radius: 8px;
+  font-size: 16px;
+  color: #333;
+  background: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   transition: border-color 0.2s ease;
 }
 
-.form-input-small:focus {
+.dropdown-trigger:hover {
   border-color: #9333EA;
 }
 
-.remove-btn {
-  background: #e74c3c;
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #e1e8ed;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.dropdown-item {
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.dropdown-item:hover {
+  background-color: #f8f9fa;
+}
+
+/* Payment Methods */
+.payment-methods {
+  display: flex;
+  gap: 20px;
+}
+
+.payment-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.payment-option input[type="radio"] {
+  margin: 0;
+}
+
+/* Modal Actions */
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 16px 24px 24px;
+  border-top: 1px solid #e1e8ed;
+}
+
+.cancel-btn {
+  background: #f8f9fa;
+  color: #333;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 24px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.cancel-btn:hover {
+  background-color: #e9ecef;
+}
+
+.submit-btn {
+  background: linear-gradient(135deg, #9333EA, #F0E);
   color: white;
   border: none;
-  padding: 6px;
-  border-radius: 6px;
+  border-radius: 8px;
+  padding: 12px 24px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.submit-btn:hover:not(:disabled) {
+  transform: scale(1.05);
+}
+
+.submit-btn:disabled {
+  background: #bdc3c7;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* Submit Section */
+.submit-section {
+  display: flex;
+  justify-content: center;
+  margin-top: 30px;
+}
+
+.submit-report-btn {
+  padding: 15px 40px;
+  background: linear-gradient(135deg, #9333EA, #F0E);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 18px;
+  font-weight: 600;
   cursor: pointer;
   display: flex;
   align-items: center;
-  justify-content: center;
-  transition: background-color 0.2s ease;
+  gap: 8px;
+  transition: transform 0.2s ease;
+  box-shadow: 0 4px 16px rgba(147, 51, 234, 0.3);
 }
 
-.remove-btn:hover {
-  background: #c0392b;
+.submit-report-btn:hover:not(:disabled) {
+  transform: scale(1.05);
 }
 
-.info-card {
-  background: #f8f9fa;
-  border-radius: 8px;
-  padding: 15px;
-  margin-top: 15px;
+.submit-report-btn:disabled {
+  background: #bdc3c7;
+  cursor: not-allowed;
+  opacity: 0.7;
+  transform: none;
+  box-shadow: none;
 }
 
-.info-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: #333;
-  margin-bottom: 8px;
-}
-
-.info-content {
-  font-size: 14px;
-  color: #666;
-  line-height: 1.5;
-}
-
-.modal-actions {
-  padding: 20px;
-  border-top: 1px solid #e1e8ed;
-  display: flex;
-  gap: 10px;
-  justify-content: flex-end;
-}
-
-.submit-receipt-btn,
-.save-btn {
-  background: #9333EA;
-  color: white;
-  border: none;
-  padding: 12px 24px;
-  border-radius: 8px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.submit-receipt-btn:hover,
-.save-btn:hover {
-  background: #7c2d92;
-}
-
-/* レスポンシブデザイン */
+/* Responsive Design */
 @media (max-width: 480px) {
   .daily-report-page {
     padding: 15px;
   }
   
-  .date-card {
-    padding: 15px;
+  .date-section {
+    flex-direction: column;
   }
   
-  .summary-item {
-    padding: 14px 16px;
-  }
-  
-  .item-label {
-    font-size: 15px;
-  }
-  
-  .item-value {
-    font-size: 16px;
+  .date-card,
+  .submitter-card {
+    min-width: unset;
   }
   
   .modal-content {
     margin: 10px;
-    max-width: none;
+    max-width: calc(100vw - 20px);
   }
   
-  .input-row {
+  .receipt-item {
     flex-direction: column;
+    align-items: flex-start;
     gap: 10px;
   }
   
-  .form-input-small {
-    margin-bottom: 0;
+  .delete-receipt-btn {
+    align-self: flex-end;
   }
+}
+
+/* 店舗確認表示 */
+.store-verified-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: #f0fdf4;
+  border: 1px solid #86efac;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  font-size: 14px;
+  color: #166534;
+}
+
+.store-verified-info svg {
+  flex-shrink: 0;
+}
+
+.link-button {
+  background: none;
+  border: none;
+  color: #7B109F;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 4px;
+  transition: opacity 0.2s;
+}
+
+.link-button:hover {
+  opacity: 0.7;
+  text-decoration: underline;
 }

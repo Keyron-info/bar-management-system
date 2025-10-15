@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Mail, Lock, User } from 'lucide-react';
+import { Mail, Lock, User, Building2 } from 'lucide-react';
 import './Loginpage.css';
 
 interface User {
@@ -7,18 +7,18 @@ interface User {
   email: string;
   name: string;
   role: string;
+  store_id: number;
 }
 
 interface LoginPageProps {
-  onLogin: (user: User) => void;
+  onLoginSuccess: () => void;
+  onShowRegister: () => void;
 }
 
-const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
-  const [isLogin, setIsLogin] = useState(true);
+const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess, onShowRegister }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
-  const [role, setRole] = useState('staff');
+  const [storeCode, setStoreCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
@@ -29,45 +29,36 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
     setMessage('');
 
     try {
-      const url = isLogin 
-        ? 'https://bar-management-system.onrender.com/api/auth/login'
-        : 'https://bar-management-system.onrender.com/api/auth/register';
-      
-      const payload = isLogin 
-        ? { email, password }
-        : { email, password, name, role };
+      const formBody = new URLSearchParams();
+      formBody.append('username', email);
+      formBody.append('password', password);
+      formBody.append('store_code', storeCode);
 
-      const response = await fetch(url, {
+      const response = await fetch('http://localhost:8002/api/auth/employee/login', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: JSON.stringify(payload),
+        body: formBody.toString(),
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        if (isLogin) {
-          if (rememberMe) {
-            localStorage.setItem('token', data.access_token);
-            localStorage.setItem('user', JSON.stringify(data.user));
-          }
-          onLogin(data.user);
-          setMessage('');
-        } else {
-          setMessage('ユーザー登録が完了しました。ログインしてください。');
-          setIsLogin(true);
-        }
+        localStorage.setItem('token', data.access_token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+        localStorage.setItem('store_code', storeCode);
         
-        setEmail('');
-        setPassword('');
-        setName('');
-        setRole('staff');
+        onLoginSuccess();
+        setMessage('');
       } else {
-        setMessage(`${data.detail || 'エラーが発生しました'}`);
+        const errorMsg = typeof data.detail === 'string' 
+          ? data.detail 
+          : JSON.stringify(data.detail);
+        setMessage(errorMsg);
       }
     } catch (error) {
+      console.error('認証エラー:', error);
       setMessage('通信エラーが発生しました');
     } finally {
       setLoading(false);
@@ -78,29 +69,24 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
     <div className="login-page-container">
       <div className="login-form-box">
         <form onSubmit={handleAuth} className="login-form">
-          {/* Header */}
           <div className="form-header">
-            {isLogin ? 'Log in' : 'Create account'}
+            Log in
           </div>
 
-          {/* Name field for registration */}
-          {!isLogin && (
-            <div className="form-input-group">
-              <div className="form-icon">
-                <User size={20} />
-              </div>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Full name"
-                required={!isLogin}
-                className="form-input"
-              />
+          <div className="form-input-group">
+            <div className="form-icon">
+              <Building2 size={20} />
             </div>
-          )}
+            <input
+              type="text"
+              value={storeCode}
+              onChange={(e) => setStoreCode(e.target.value)}
+              placeholder="店舗コード (例: STORE001)"
+              required
+              className="form-input"
+            />
+          </div>
 
-          {/* Email field */}
           <div className="form-input-group">
             <div className="form-icon">
               <Mail size={20} />
@@ -115,7 +101,6 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
             />
           </div>
 
-          {/* Password field */}
           <div className="form-input-group">
             <div className="form-icon">
               <Lock size={20} />
@@ -130,76 +115,63 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
             />
           </div>
 
-          {/* Role selection for registration */}
-          {!isLogin && (
-            <div className="form-input-group">
-              <div className="form-icon">
-                <User size={20} />
-              </div>
-              <select
-                value={role}
-                onChange={(e) => setRole(e.target.value)}
-                className="form-select"
-              >
-                <option value="staff">スタッフ</option>
-                <option value="manager">マネージャー</option>
-              </select>
-            </div>
-          )}
-
-          {/* Login Button */}
           <button
             type="submit"
             disabled={loading}
             className={`auth-button ${loading ? 'loading' : ''}`}
           >
-            {loading ? 'Processing...' : (isLogin ? 'Login to your account' : 'Create account')}
+            {loading ? 'Processing...' : 'Login to your account'}
           </button>
 
-          {/* Remember me and Sign up links */}
           <div className="auth-links">
-            {/* Remember me checkbox */}
-            {isLogin && (
-              <label className="remember-me-container">
-                <div className={`remember-me-checkbox ${rememberMe ? 'checked' : ''}`}>
-                  <input
-                    type="checkbox"
-                    checked={rememberMe}
-                    onChange={(e) => setRememberMe(e.target.checked)}
-                  />
-                  <div className="remember-me-checkmark"></div>
-                </div>
-                <span className="remember-me-text">remember me</span>
-              </label>
-            )}
+            <label className="remember-me-container">
+              <input
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+              />
+              <span className="remember-me-text">remember me</span>
+            </label>
 
-            {/* Sign up link */}
             <div className="auth-link-section">
-              <span className="auth-link-text">
-                {isLogin ? 'New here?' : 'Already have account?'}
-              </span>
+              <span className="auth-link-text">New here?</span>
               <button
                 type="button"
-                onClick={() => setIsLogin(!isLogin)}
+                onClick={onShowRegister}
                 className="auth-link"
               >
-                {isLogin ? 'Sign in!' : 'Login!'}
+                アカウントを作成
               </button>
             </div>
           </div>
         </form>
 
-        {/* Message display */}
         {message && (
           <div className={`message-box ${message.includes('完了') ? 'success' : 'error'}`}>
             {message}
           </div>
         )}
+
+        <div style={{
+          marginTop: '20px',
+          padding: '15px',
+          background: 'rgba(255, 255, 255, 0.05)',
+          borderRadius: '10px',
+          fontSize: '12px',
+          color: 'rgba(255, 255, 255, 0.6)',
+          border: '1px solid rgba(255, 255, 255, 0.1)'
+        }}>
+          <div style={{ marginBottom: '8px', fontWeight: 'bold', color: 'rgba(255, 255, 255, 0.8)' }}>
+            テスト用アカウント
+          </div>
+          <div>店舗コード: STORE001</div>
+          <div>Email: employee1@store001.com</div>
+          <div>Password: password123</div>
+        </div>
       </div>
 
-      {/* Footer */}
       <div className="page-footer">
-        Powered by KEYRON
+        Powered by KEYRON | SaaS Edition
       </div>
     </div>
   );

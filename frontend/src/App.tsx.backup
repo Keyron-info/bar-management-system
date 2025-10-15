@@ -3,14 +3,12 @@ import './App.css';
 
 // ページコンポーネントのインポート
 import LoginPage from './pages/LoginPage';
-import RegisterPage from './pages/RegisterPage';
 import PersonalPage from './pages/PersonalPage';
 import StorePage from './pages/StorePage';
 import DailyReportPage from './pages/DailyReportPage';
 import ShiftPage from './pages/ShiftPage';
 import SettingsPage from './pages/SettingsPage';
-import SuperAdminLoginPage from './pages/SuperAdminLoginPage';
-import SuperAdminDashboard from './pages/SuperAdminDashboard';
+
 interface User {
   id: number;
   email: string;
@@ -34,10 +32,7 @@ function App() {
   const [user, setUser] = useState<User | null>(null);
   const [store, setStore] = useState<Store | null>(null);
   const [currentPage, setCurrentPage] = useState<PageType>('personal');
-  const [showRegister, setShowRegister] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [adminUser, setAdminUser] = useState<any>(null);
-  const [isAdminMode, setIsAdminMode] = useState(false);
 
   // ページ読み込み時にトークンをチェック
   useEffect(() => {
@@ -57,28 +52,13 @@ function App() {
         localStorage.removeItem('store');
       }
     }
-
-    // 管理者チェック
-    const adminToken = localStorage.getItem('admin_token');
-    const adminData = localStorage.getItem('admin_user');
-    
-    if (adminToken && adminData) {
-      try {
-        setAdminUser(JSON.parse(adminData));
-        setIsAdminMode(true);
-      } catch (error) {
-        localStorage.removeItem('admin_token');
-        localStorage.removeItem('admin_user');
-      }
-    }
-
     setLoading(false);
   }, []);
 
-  const handleLoginSuccess = () => {
-    const userData = localStorage.getItem('user');
-    if (userData) {
-      setUser(JSON.parse(userData));
+  const handleLogin = (user: User, store?: Store) => {
+    setUser(user);
+    if (store) {
+      setStore(store);
     }
   };
 
@@ -89,18 +69,6 @@ function App() {
     setUser(null);
     setStore(null);
     setCurrentPage('personal');
-  };
-
-  const handleAdminLogout = () => {
-    localStorage.removeItem('admin_token');
-    localStorage.removeItem('admin_user');
-    setAdminUser(null);
-    setIsAdminMode(false);
-  };
-
-  const handleAdminLoginSuccess = (admin: any, token: string) => {
-    setAdminUser(admin);
-    setIsAdminMode(true);
   };
 
   if (loading) {
@@ -119,33 +87,9 @@ function App() {
     );
   }
 
-  // 管理者モードの場合
-  if (isAdminMode && adminUser) {
-    return <SuperAdminDashboard admin={adminUser} onLogout={handleAdminLogout} />;
-  }
-
-  // 管理者ログインページへのアクセス
-  if (window.location.pathname === '/admin' || window.location.hash === '#admin') {
-    return <SuperAdminLoginPage onLoginSuccess={handleAdminLoginSuccess} />;
-  }
-
   // ログインしていない場合
   if (!user) {
-    if (showRegister) {
-      return (
-        <RegisterPage 
-          onRegisterSuccess={() => setShowRegister(false)}
-          onBackToLogin={() => setShowRegister(false)}
-        />
-      );
-    }
-    
-    return (
-      <LoginPage 
-        onLoginSuccess={handleLoginSuccess}
-        onShowRegister={() => setShowRegister(true)}
-      />
-    );
+    return <LoginPage onLogin={handleLogin} />;
   }
 
   // 現在のページコンポーネントを取得
@@ -171,8 +115,9 @@ function App() {
       minHeight: '100vh', 
       backgroundColor: '#f5f5f5',
       position: 'relative',
-      paddingBottom: '80px'
+      paddingBottom: '80px' // フッターナビのスペース
     }}>
+      {/* シンプルなヘッダー */}
       <header style={{
         backgroundColor: '#ffffff',
         padding: '15px 20px',
@@ -194,6 +139,7 @@ function App() {
         </div>
         
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+          {/* 通知ボタン（白いアイコン） */}
           <button style={{
             background: 'none',
             border: 'none',
@@ -209,6 +155,7 @@ function App() {
             </svg>
           </button>
           
+          {/* ログアウトボタン */}
           <button 
             onClick={handleLogout}
             style={{
@@ -227,6 +174,7 @@ function App() {
         </div>
       </header>
 
+      {/* メインコンテンツ */}
       <main style={{ 
         padding: '20px',
         maxWidth: '1200px',
@@ -235,6 +183,7 @@ function App() {
         {getCurrentPageComponent()}
       </main>
 
+      {/* フッターナビゲーション（紫〜ピンクのグラデーション） */}
       <footer style={{
         position: 'fixed',
         bottom: 0,
@@ -248,6 +197,7 @@ function App() {
         zIndex: 100,
         boxShadow: '0 -2px 10px rgba(0, 0, 0, 0.1)'
       }}>
+        {/* カレンダー（シフト調整） */}
         <button
           onClick={() => setCurrentPage('shift')}
           style={{
@@ -268,6 +218,7 @@ function App() {
           </svg>
         </button>
 
+        {/* 店（店舗ページ）（オーナー・店長のみ） */}
         {(user.role === 'manager' || user.role === 'owner') && (
           <button
             onClick={() => setCurrentPage('store')}
@@ -290,6 +241,7 @@ function App() {
           </button>
         )}
 
+        {/* ユーザー（個人ページ） */}
         <button
           onClick={() => setCurrentPage('personal')}
           style={{
@@ -310,6 +262,7 @@ function App() {
           </svg>
         </button>
 
+        {/* 書類提出（日報ページ） */}
         <button
           onClick={() => setCurrentPage('daily-report')}
           style={{
@@ -330,6 +283,7 @@ function App() {
           </svg>
         </button>
 
+        {/* 設定 */}
         <button
           onClick={() => setCurrentPage('settings')}
           style={{

@@ -1,0 +1,32 @@
+# SaaS版バー管理システム 必要パッケージ
+
+# Web フレームワーク
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+
+# データベース
+sqlalchemy==2.0.23
+alembic==1.12.1
+
+# 認証・セキュリティ
+passlib[bcrypt]==1.7.4
+python-jose[cryptography]==3.3.0
+python-multipart==0.0.6
+
+# データバリデーション
+pydantic==2.4.2
+email-validator==2.1.0
+
+# HTTP クライアント
+httpx==0.25.1
+requests==2.31.0
+
+# 日付・時刻処理
+python-dateutil==2.8.2
+
+# 開発・テスト用
+pytest==7.4.3
+pytest-asyncio==0.21.1
+
+# その他ユーティリティ
+python-dotenv==1.0.0

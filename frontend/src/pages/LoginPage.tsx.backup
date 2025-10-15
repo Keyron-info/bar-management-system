@@ -1,0 +1,365 @@
+import React, { useState } from 'react';
+import { Mail, Lock, User, Building } from 'lucide-react';
+import './Loginpage.css';
+
+interface User {
+  id: number;
+  email: string;
+  name: string;
+  role: string;
+  store_id?: number;
+  employee_code?: string;
+}
+
+interface Store {
+  id: number;
+  name: string;
+  code: string;
+  subscription_status: string;
+  monthly_goal: number;
+}
+
+interface LoginPageProps {
+  onLogin: (user: User, store?: Store) => void;
+}
+
+const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
+  const [isLogin, setIsLogin] = useState(true);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [storeCode, setStoreCode] = useState('');
+  const [name, setName] = useState('');
+  const [role, setRole] = useState('staff');
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
+
+  const handleAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setMessage('');
+
+    try {
+      if (isLogin) {
+        // 店舗コード指定ログイン
+        const response = await fetch('http://localhost:8000/api/auth/login-with-store', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email,
+            password,
+            store_code: storeCode
+          }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          localStorage.setItem('token', data.access_token);
+          localStorage.setItem('user', JSON.stringify(data.user));
+          localStorage.setItem('store', JSON.stringify(data.store));
+          
+          onLogin(data.user, data.store);
+          setMessage('');
+        } else {
+          setMessage(data.detail || 'ログインに失敗しました');
+        }
+      } else {
+        // 新規登録（既存API使用）
+        const response = await fetch('http://localhost:8000/api/auth/register', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email,
+            password,
+            name,
+            role
+          }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          setMessage('ユーザー登録が完了しました。ログインしてください。');
+          setIsLogin(true);
+          setEmail('');
+          setPassword('');
+          setStoreCode('');
+          setName('');
+          setRole('staff');
+        } else {
+          setMessage(data.detail || '登録に失敗しました');
+        }
+      }
+    } catch (error) {
+      setMessage('通信エラーが発生しました');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // デモ用アカウント情報のクイック入力
+  const fillDemoAccount = (accountType: 'owner' | 'manager' | 'staff') => {
+    const accounts = {
+      owner: {
+        email: 'owner@keyron-bar.com',
+        password: 'password123',
+        storeCode: 'KEYRON_001'
+      },
+      manager: {
+        email: 'manager@keyron-bar.com',
+        password: 'manager123',
+        storeCode: 'KEYRON_001'
+      },
+      staff: {
+        email: 'staff@keyron-bar.com',
+        password: 'staff123',
+        storeCode: 'KEYRON_001'
+      }
+    };
+
+    const account = accounts[accountType];
+    setEmail(account.email);
+    setPassword(account.password);
+    setStoreCode(account.storeCode);
+  };
+
+  return (
+    <div className="login-page-container">
+      <div className="login-form-box">
+        <div className="form-header">
+          {isLogin ? 'Log in to your store' : 'Create new account'}
+        </div>
+
+        <form onSubmit={handleAuth}>
+          {/* Name field for registration */}
+          {!isLogin && (
+            <div className="form-input-group">
+              <User size={20} className="form-icon" />
+              <input
+                type="text"
+                placeholder="Name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required={!isLogin}
+                className="form-input"
+              />
+            </div>
+          )}
+
+          {/* Store Code field (ログイン時のみ) */}
+          {isLogin && (
+            <div className="form-input-group">
+              <Building size={20} className="form-icon" />
+              <input
+                type="text"
+                placeholder="Store Code"
+                value={storeCode}
+                onChange={(e) => setStoreCode(e.target.value)}
+                required={isLogin}
+                className="form-input"
+              />
+            </div>
+          )}
+
+          {/* Email field */}
+          <div className="form-input-group">
+            <Mail size={20} className="form-icon" />
+            <input
+              type="email"
+              placeholder="Email address"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="form-input"
+            />
+          </div>
+
+          {/* Password field */}
+          <div className="form-input-group">
+            <Lock size={20} className="form-icon" />
+            <input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className="form-input"
+            />
+          </div>
+
+          {/* Role selection for registration */}
+          {!isLogin && (
+            <div className="form-input-group">
+              <select
+                value={role}
+                onChange={(e) => setRole(e.target.value)}
+                className="form-input"
+                style={{
+                  background: 'rgba(255, 255, 255, 0.1)',
+                  border: '1px solid rgba(255, 255, 255, 0.3)',
+                  borderRadius: '8px',
+                  padding: '10px',
+                  paddingLeft: '30px'
+                }}
+              >
+                <option value="staff" style={{ color: '#000' }}>従業員</option>
+                <option value="manager" style={{ color: '#000' }}>店長</option>
+              </select>
+            </div>
+          )}
+
+          {/* Login button */}
+          <button
+            type="submit"
+            disabled={loading}
+            className="auth-button"
+          >
+            {loading ? '処理中...' : isLogin ? 'Login to your account' : 'Create account'}
+          </button>
+
+          {/* Demo account buttons (ログイン時のみ) */}
+          {isLogin && (
+            <div style={{ marginTop: '20px' }}>
+              <div style={{ 
+                fontSize: '12px', 
+                color: 'rgba(255, 255, 255, 0.7)', 
+                marginBottom: '10px',
+                textAlign: 'center'
+              }}>
+                Demo Accounts:
+              </div>
+              <div style={{ 
+                display: 'flex', 
+                gap: '8px', 
+                justifyContent: 'center',
+                flexWrap: 'wrap'
+              }}>
+                <button
+                  type="button"
+                  onClick={() => fillDemoAccount('owner')}
+                  className="demo-button"
+                  style={{
+                    padding: '6px 12px',
+                    fontSize: '11px',
+                    background: 'rgba(255, 255, 255, 0.1)',
+                    border: '1px solid rgba(255, 255, 255, 0.3)',
+                    borderRadius: '4px',
+                    color: 'white',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Owner
+                </button>
+                <button
+                  type="button"
+                  onClick={() => fillDemoAccount('manager')}
+                  className="demo-button"
+                  style={{
+                    padding: '6px 12px',
+                    fontSize: '11px',
+                    background: 'rgba(255, 255, 255, 0.1)',
+                    border: '1px solid rgba(255, 255, 255, 0.3)',
+                    borderRadius: '4px',
+                    color: 'white',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Manager
+                </button>
+                <button
+                  type="button"
+                  onClick={() => fillDemoAccount('staff')}
+                  className="demo-button"
+                  style={{
+                    padding: '6px 12px',
+                    fontSize: '11px',
+                    background: 'rgba(255, 255, 255, 0.1)',
+                    border: '1px solid rgba(255, 255, 255, 0.3)',
+                    borderRadius: '4px',
+                    color: 'white',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Staff
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Remember me and Sign up link */}
+          <div className="auth-links">
+            {/* Remember me checkbox */}
+            <label className="remember-me-container">
+              <div style={{
+                width: '17px',
+                height: '17px',
+                border: '1px solid rgba(255, 255, 255, 0.5)',
+                borderRadius: '3px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: rememberMe ? 'rgba(255, 255, 255, 0.2)' : 'transparent',
+                position: 'relative'
+              }}>
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  style={{
+                    opacity: 0,
+                    position: 'absolute',
+                    width: '17px',
+                    height: '17px',
+                    cursor: 'pointer'
+                  }}
+                />
+                {rememberMe && (
+                  <div style={{
+                    width: '13.81px',
+                    height: '13.81px',
+                    background: 'white',
+                    borderRadius: '2px'
+                  }} />
+                )}
+              </div>
+              <span className="remember-me-text">remember me</span>
+            </label>
+
+            {/* Sign up link */}
+            <div style={{ display: 'flex', gap: '4px' }}>
+              <span className="auth-link-text" style={{ color: 'rgba(255, 255, 255, 0.60)' }}>
+                {isLogin ? 'New here?' : 'Already have account?'}
+              </span>
+              <button
+                type="button"
+                onClick={() => setIsLogin(!isLogin)}
+                className="auth-link"
+              >
+                {isLogin ? 'Sign up!' : 'Login!'}
+              </button>
+            </div>
+          </div>
+        </form>
+
+        {/* Message display */}
+        {message && (
+          <div className={`message-box ${message.includes('完了') ? 'success' : 'error'}`}>
+            {message}
+          </div>
+        )}
+      </div>
+
+      {/* Footer */}
+      <div className="page-footer">
+        Powered by KEYRON
+      </div>
+    </div>
+  );
+};
+
+export default LoginPage;

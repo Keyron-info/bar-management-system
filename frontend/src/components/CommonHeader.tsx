@@ -7,20 +7,32 @@ interface User {
   email: string;
   name: string;
   role: string;
+  employee_code?: string;
+  position?: string;
+  store_id?: number;
+}
+
+interface Store {
+  id: number;
+  name: string;
+  code: string;
+  subscription_status: string;
+  monthly_goal: number;
 }
 
 interface CommonHeaderProps {
   user: User;
+  store: Store;
   onLogout: () => void;
 }
 
-const CommonHeader: React.FC<CommonHeaderProps> = ({ user, onLogout }) => {
+const CommonHeader: React.FC<CommonHeaderProps> = ({ user, store, onLogout }) => {
   return (
     <header className="common-header">
       <div className="header-content">
         <div className="user-info">
           <span className="user-name">
-            {user.name}さん ({user.role === 'manager' ? '店長' : '従業員'})
+            {user.name}さん ({user.role === 'owner' ? 'オーナー' : user.role === 'manager' ? '店長' : 'スタッフ'}) - {store.name}
           </span>
         </div>
         

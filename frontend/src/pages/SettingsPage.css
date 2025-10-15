@@ -1,4 +1,4 @@
-/* SettingsPage.css */
+/* SettingsPage.css - 従業員管理機能対応版 */
 
 .settings-page {
   max-width: 600px;
@@ -234,6 +234,412 @@
   transform: translateY(0);
 }
 
+/* ===== 従業員管理モーダルスタイル ===== */
+
+/* モーダルオーバーレイ */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.modal-overlay.add-form {
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 1001;
+}
+
+/* メインモーダル */
+.employee-management-modal {
+  background: white;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 800px;
+  max-height: 90vh;
+  overflow: hidden;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+}
+
+/* モーダルヘッダー */
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 24px 16px;
+  border-bottom: 1px solid #e1e8ed;
+}
+
+.modal-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.modal-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+}
+
+.modal-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.add-button {
+  background: linear-gradient(135deg, #9333EA, #F0E);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: transform 0.2s ease;
+}
+
+.add-button:hover {
+  transform: scale(1.05);
+}
+
+.close-modal-button {
+  background: none;
+  border: none;
+  color: #666;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.close-modal-button:hover {
+  background-color: #f0f0f0;
+}
+
+/* モーダルコンテンツ */
+.modal-content {
+  flex: 1;
+  overflow: auto;
+  padding: 24px;
+}
+
+.loading-state {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+  color: #666;
+}
+
+.empty-state {
+  text-align: center;
+  color: #666;
+  padding: 60px 20px;
+  background: #f8f9fa;
+  border-radius: 12px;
+  border: 2px dashed #ddd;
+}
+
+.empty-state-icon {
+  margin-bottom: 16px;
+}
+
+.empty-state-title {
+  font-size: 16px;
+  margin-bottom: 8px;
+}
+
+.empty-state-description {
+  font-size: 14px;
+  color: #999;
+}
+
+/* 従業員リスト */
+.employees-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.employee-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border: 2px solid #e1e8ed;
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
+
+.employee-card.active {
+  background: #fafafa;
+  border-color: #e1e8ed;
+  opacity: 1;
+}
+
+.employee-card.inactive {
+  background: #f8f8f8;
+  border-color: #ddd;
+  opacity: 0.7;
+}
+
+.employee-info {
+  flex: 1;
+}
+
+.employee-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.employee-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.employee-avatar.active {
+  background: linear-gradient(135deg, #9333EA, #F0E);
+}
+
+.employee-avatar.inactive {
+  background: #bdc3c7;
+}
+
+.employee-name {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.employee-name.active {
+  color: #333;
+}
+
+.employee-name.inactive {
+  color: #666;
+}
+
+.employee-role-info {
+  font-size: 14px;
+  color: #666;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.status-badge {
+  background: #e74c3c;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+}
+
+.employee-details {
+  font-size: 12px;
+  color: #999;
+}
+
+.employee-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.toggle-status-button {
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.toggle-status-button.deactivate {
+  background: #e74c3c;
+  color: white;
+}
+
+.toggle-status-button.activate {
+  background: #27ae60;
+  color: white;
+}
+
+.toggle-status-button:hover {
+  opacity: 0.8;
+}
+
+/* ===== 従業員追加フォームモーダル ===== */
+
+.add-employee-modal {
+  background: white;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow: auto;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+}
+
+.form-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 24px 16px;
+  border-bottom: 1px solid #e1e8ed;
+}
+
+.form-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+}
+
+.form-content {
+  padding: 24px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: #333;
+  font-size: 14px;
+}
+
+.form-input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid #e1e8ed;
+  border-radius: 8px;
+  font-size: 16px;
+  color: #000;
+  background-color: white;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease;
+}
+
+.form-input:focus {
+  border-color: #9333EA;
+}
+
+.form-input:disabled {
+  background: #f8f9fa;
+  border-color: #e9ecef;
+  color: #666;
+}
+
+.form-select {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid #e1e8ed;
+  border-radius: 8px;
+  font-size: 16px;
+  color: #000;
+  background-color: white;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.auto-generated-field {
+  padding: 12px 16px;
+  background: #f8f9fa;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  font-size: 16px;
+  color: #666;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.check-icon {
+  color: #27ae60;
+}
+
+/* フォームアクション */
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 16px 24px 24px;
+  border-top: 1px solid #e1e8ed;
+}
+
+.cancel-button {
+  background: #f8f9fa;
+  color: #333;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 24px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.cancel-button:hover {
+  background: #e9ecef;
+}
+
+.submit-button {
+  border: none;
+  border-radius: 8px;
+  padding: 12px 24px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: transform 0.2s ease;
+  color: white;
+}
+
+.submit-button.enabled {
+  background: linear-gradient(135deg, #9333EA, #F0E);
+}
+
+.submit-button.enabled:hover {
+  transform: scale(1.05);
+}
+
+.submit-button.disabled {
+  background: #bdc3c7;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
 /* レスポンシブデザイン */
 @media (max-width: 480px) {
   .profile-section {
@@ -259,5 +665,49 @@
   
   .item-value {
     font-size: 13px;
+  }
+  
+  .employee-management-modal {
+    max-width: none;
+    margin: 10px;
+  }
+  
+  .add-employee-modal {
+    max-width: none;
+    margin: 10px;
+  }
+  
+  .modal-header {
+    padding: 16px;
+  }
+  
+  .modal-content {
+    padding: 16px;
+  }
+  
+  .form-content {
+    padding: 16px;
+  }
+  
+  .employee-card {
+    padding: 12px;
+  }
+  
+  .employee-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+}
+
+@media (max-width: 320px) {
+  .modal-header-actions {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .add-button {
+    font-size: 12px;
+    padding: 6px 12px;
   }
 }

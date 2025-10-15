@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Settings, X, ChevronDown, TrendingUp } from 'lucide-react';
-import axios from 'axios';
 
 interface User {
   id: number;
@@ -16,24 +15,20 @@ interface PersonalPageProps {
   onLogout?: () => void;
 }
 
-interface SalesData {
+interface DailyReport {
   id: number;
   date: string;
-  employee_name: string;
   total_sales: number;
-  drink_count: number;
-  champagne_count: number;
-  catch_count: number;
-  work_hours: number;
-  created_at: string;
+  cash_sales: number;
+  card_sales: number;
+  is_approved: boolean;
 }
 
 interface MonthlySummary {
-  year: number;
-  month: number;
+  total_reports: number;
   total_sales: number;
-  drink_count: number;
-  champagne_count: number;
+  average_sales: number;
+  approved_count: number;
 }
 
 interface GoalSettings {
@@ -43,7 +38,7 @@ interface GoalSettings {
 }
 
 const PersonalPage: React.FC<PersonalPageProps> = ({ user, onPageChange, onLogout }) => {
-  const [salesData, setSalesData] = useState<SalesData[]>([]);
+  const [dailyReports, setDailyReports] = useState<DailyReport[]>([]);
   const [monthlySummary, setMonthlySummary] = useState<MonthlySummary | null>(null);
   const [goalSettings, setGoalSettings] = useState<GoalSettings>({
     sales: 500000,
@@ -66,40 +61,71 @@ const PersonalPage: React.FC<PersonalPageProps> = ({ user, onPageChange, onLogou
   }, []);
 
   const fetchPersonalData = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) return;
-
-      const salesResponse = await axios.get(
-        'https://bar-management-system.onrender.com/api/sales',
-        {
-          headers: { 'Authorization': `Bearer ${token}` },
-        }
-      );
-
-      const summaryResponse = await axios.get(
-        'https://bar-management-system.onrender.com/api/sales/monthly-summary',
-        {
-          headers: { 'Authorization': `Bearer ${token}` },
-        }
-      );
-
-      setSalesData(salesResponse.data);
-      setMonthlySummary(summaryResponse.data);
-    } catch (error) {
-      console.error('データ取得エラー:', error);
-    } finally {
+  try {
+    const token = localStorage.getItem('token');
+    const store_id = user.store_id;
+    
+    console.log('🔍 デバッグ:', { token: token?.slice(0, 20) + '...', store_id, user_id: user.id });
+    
+    if (!token || !store_id) {
+      console.error('❌ トークンまたはstore_idが見つかりません');
       setLoading(false);
+      return;
     }
-  };
+
+    // 自分の日報一覧を取得
+    const reportsResponse = await fetch(
+      `http://localhost:8002/api/stores/${store_id}/daily-reports?employee_id=${user.id}`,
+      {
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+      }
+    );
+
+    console.log('📡 レスポンスステータス:', reportsResponse.status);
+
+    if (reportsResponse.ok) {
+      const reports = await reportsResponse.json();
+      console.log('✅ 日報データ取得成功:', reports.length, '件');
+      setDailyReports(reports);
+      
+      // 月次サマリーを計算
+      const currentMonth = new Date().getMonth() + 1;
+      const currentYear = new Date().getFullYear();
+      const thisMonthReports = reports.filter((report: DailyReport) => {
+        const reportDate = new Date(report.date);
+        return reportDate.getMonth() + 1 === currentMonth && reportDate.getFullYear() === currentYear;
+      });
+      
+      const totalSales = thisMonthReports.reduce((sum: number, r: DailyReport) => sum + r.total_sales, 0);
+      const approvedCount = thisMonthReports.filter((r: DailyReport) => r.is_approved).length;
+      
+      setMonthlySummary({
+        total_reports: thisMonthReports.length,
+        total_sales: totalSales,
+        average_sales: thisMonthReports.length > 0 ? totalSales / thisMonthReports.length : 0,
+        approved_count: approvedCount
+      });
+    } else {
+      const errorData = await reportsResponse.json();
+      console.error('❌ APIエラー:', errorData);
+    }
+  } catch (error) {
+    console.error('❌ データ取得エラー:', error);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const achievementRate = monthlySummary ? (monthlySummary.total_sales / goalSettings.sales) * 100 : 0;
 
   const currentMonth = new Date().getMonth() + 1;
   const currentYear = new Date().getFullYear();
-  const thisMonthData = salesData.filter(item => {
-    const itemDate = new Date(item.date);
-    return itemDate.getMonth() + 1 === currentMonth && itemDate.getFullYear() === currentYear;
+  const thisMonthReports = dailyReports.filter(report => {
+    const reportDate = new Date(report.date);
+    return reportDate.getMonth() + 1 === currentMonth && reportDate.getFullYear() === currentYear;
   });
 
   // 過去7日間のデータ取得
@@ -112,13 +138,13 @@ const PersonalPage: React.FC<PersonalPageProps> = ({ user, onPageChange, onLogou
       date.setDate(today.getDate() - i);
       const dateStr = date.toISOString().split('T')[0];
       
-      const dayData = thisMonthData.find(item => item.date === dateStr);
+      const dayReport = thisMonthReports.find(report => report.date === dateStr);
       last7Days.push({
         date: dateStr,
         dayLabel: date.getDate() + '日',
-        sales: dayData?.total_sales || 0,
-        drinks: dayData?.drink_count || 0,
-        catch: dayData?.catch_count || 0
+        sales: dayReport?.total_sales || 0,
+        drinks: 0,
+        catch: 0
       });
     }
     
@@ -135,13 +161,12 @@ const PersonalPage: React.FC<PersonalPageProps> = ({ user, onPageChange, onLogou
     }
   }), 1);
 
-  const workDays = thisMonthData.length;
+  const workDays = thisMonthReports.length;
   const currentSales = monthlySummary?.total_sales || 0;
-  const totalDrinks = monthlySummary?.drink_count || 0;
-  const totalCatch = thisMonthData.reduce((acc, item) => acc + item.catch_count, 0);
+  const totalDrinks = 0;
+  const totalCatch = 0;
 
   const updateGoalSettings = () => {
-    // ここで実際にはAPIに保存
     setShowGoalSettings(false);
   };
 

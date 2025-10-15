@@ -1,84 +1,97 @@
-from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi import FastAPI, HTTPException, Depends, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import func, extract
-from typing import List
-from datetime import timedelta, datetime, date
-import uvicorn
-import os
+from datetime import datetime, date, timedelta
+from typing import List, Optional
 
-# 既存のインポート
-from database import get_db, create_tables, DailySales, User, DailyReport, Receipt
+# インポート
+from database import (
+    get_db, create_tables, User, Store, Employee, DailyReport, 
+    Receipt, DailySales, SalesDetail, run_migration
+)
 from schemas import (
-    SalesInput, SalesResponse, UserCreate, UserLogin, UserResponse, Token,
-    DailyReportInput, DailyReportResponse, DailyCalculationResponse, ReceiptResponse
+    # 店舗関連
+    StoreCreate, StoreResponse, 
+    # 従業員関連
+    EmployeeCreate, EmployeeUpdate, EmployeeResponse,
+    # 認証関連
+    UserCreate, UserLogin, UserResponse, Token,
+    # 日報関連
+    DailyReportInput, DailyReportResponse, ReceiptInput, ReceiptResponse,
+    SalesDetailInput, SalesDetailResponse,
+    # 既存互換
+    SalesInput, SalesResponse,
+    # 統計関連
+    StoreStatistics, EmployeeStatistics, DailyCalculationResponse
 )
 from auth import (
-    get_password_hash, 
-    authenticate_user, 
-    create_access_token, 
-    get_current_active_user,
-    require_manager,
-    ACCESS_TOKEN_EXPIRE_MINUTES
+    get_password_hash, create_access_token, authenticate_user_with_store,
+    get_current_active_user, get_current_store, require_manager, require_owner,
+    generate_store_code, generate_employee_code, validate_store_access,
+    get_store_by_code, validate_store_for_user_creation, create_user_session_data,
+    filter_by_store
 )
 
+# FastAPIアプリケーションの作成
 app = FastAPI(title="バー管理システム API", version="2.0.0")
 
-# CORS設定（本番環境対応）
+@app.exception_handler(Exception)
+async def global_exception_handler(request, exc):
+    import traceback
+    print(f"Global exception: {exc}")
+    print(f"Traceback: {traceback.format_exc()}")
+    return JSONResponse(
+        status_code=500,
+        content={"detail": f"Internal server error: {str(exc)}"}  # str(e) → str(exc) に修正
+    )
+#　CORS設定
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # 開発段階では全てのオリジンを許可
+    allow_origins=[
+        "http://localhost:5173", 
+        "http://127.0.0.1:5173",
+        "http://localhost:5174",  # 追加
+        "http://127.0.0.1:5174",  # 追加
+        "http://localhost:5175",
+        "http://127.0.0.1:5175"
+    ],
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# プリフライトリクエストの明示的処理
-@app.options("/{path:path}")
-async def handle_options(path: str):
-    return JSONResponse(
-        content={},
-        headers={
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-            "Access-Control-Allow-Headers": "*",
-            "Access-Control-Max-Age": "86400",
-        }
-    )
-
-# UTF-8レスポンス用ミドルウェア
-@app.middleware("http")
-async def add_charset_header(request, call_next):
-    response = await call_next(request)
-    if response.headers.get("content-type", "").startswith("application/json"):
-        response.headers["content-type"] = "application/json; charset=utf-8"
-    return response
-
-# アプリ起動時にデータベーステーブルを作成
+# 起動時にテーブル作成とマイグレーション実行
 @app.on_event("startup")
-def startup_event():
-    create_tables()
+async def startup_event():
+    try:
+        run_migration()
+        print("✅ データベース初期化完了")
+    except Exception as e:
+        print(f"❌ データベース初期化エラー: {e}")
 
+# ヘルスチェック
 @app.get("/")
 async def root():
-    return JSONResponse(
-        content={"message": "バー管理システム API が正常に動作しています"},
-        media_type="application/json; charset=utf-8"
-    )
+    return {"message": "バー管理システム API v2.0.0 - マルチテナント対応"}
 
-@app.get("/api/health")
-async def health_check():
-    return JSONResponse(
-        content={"status": "OK", "message": "API is running"},
-        media_type="application/json; charset=utf-8"
-    )
+# ===== 認証系API =====
 
-# ユーザー登録API
 @app.post("/api/auth/register", response_model=UserResponse)
-def register_user(user_data: UserCreate, db: Session = Depends(get_db)):
+def register_user(
+    user_data: UserCreate,
+    db: Session = Depends(get_db)
+):
+    """ユーザー登録（店舗コード必須）"""
     try:
-        # メールアドレスの重複チェック
+        print(f"受信データ: {user_data}")  # デバッグ用
+        
+        # 店舗の存在確認
+        store = validate_store_for_user_creation(db, user_data.store_code)
+        print(f"店舗確認: {store}")  # デバッグ用
+        
+        # 既存ユーザー確認
         existing_user = db.query(User).filter(User.email == user_data.email).first()
         if existing_user:
             raise HTTPException(
@@ -86,62 +99,197 @@ def register_user(user_data: UserCreate, db: Session = Depends(get_db)):
                 detail="このメールアドレスは既に登録されています"
             )
         
-        # パスワードをハッシュ化してユーザーを作成
-        hashed_password = get_password_hash(user_data.password)
-        db_user = User(
+        # 新規ユーザー作成
+        new_user = User(
+            store_id=store.id,
             email=user_data.email,
-            password_hash=hashed_password,
+            password_hash=get_password_hash(user_data.password),
             name=user_data.name,
             role=user_data.role
         )
-        db.add(db_user)
+        
+        db.add(new_user)
         db.commit()
-        db.refresh(db_user)
-        return db_user
+        db.refresh(new_user)
+        
+        print(f"ユーザー作成成功: {new_user.id}")  # デバッグ用
+        return new_user
+        
     except Exception as e:
+        print(f"エラー詳細: {str(e)}")  # 追加
+        print(f"エラータイプ: {type(e)}")  # 追加
+        import traceback
+        print(f"トレースバック: {traceback.format_exc()}")  # 追加
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"ユーザー登録に失敗しました: {str(e)}"
         )
 
-# ログインAPI
 @app.post("/api/auth/login", response_model=Token)
-def login_user(user_data: UserLogin, db: Session = Depends(get_db)):
-    user = authenticate_user(db, user_data.email, user_data.password)
+def login_user(
+    login_data: UserLogin,
+    db: Session = Depends(get_db)
+):
+    """ログイン（店舗コード付き）"""
+    user, error_message = authenticate_user_with_store(
+        db, login_data.email, login_data.password, login_data.store_code
+    )
+    
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="メールアドレスまたはパスワードが間違っています",
+            detail=error_message or "認証に失敗しました",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = create_access_token(
-        data={"sub": user.email}, expires_delta=access_token_expires
-    )
+    
+    # 店舗情報取得
+    store = db.query(Store).filter(Store.id == user.store_id).first()
+    
+    # JWTトークン作成
+    session_data = create_user_session_data(user, store)
+    access_token = create_access_token(data=session_data)
+    
     return {
         "access_token": access_token,
         "token_type": "bearer",
         "user": user
     }
 
-# 現在のユーザー情報取得API
-@app.get("/api/auth/me", response_model=UserResponse)
-def get_current_user_info(current_user: User = Depends(get_current_active_user)):
-    return current_user
+# ===== 店舗管理API =====
 
-# === 新しい日報API ===
+@app.post("/api/stores", response_model=StoreResponse)
+def create_store(
+    store_data: StoreCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_owner)
+):
+    """新規店舗作成（オーナー権限必要）"""
+    try:
+        # 店舗コード重複チェック
+        existing_store = db.query(Store).filter(Store.store_code == store_data.store_code).first()
+        if existing_store:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="店舗コードが既に存在します"
+            )
+        
+        new_store = Store(
+            store_code=store_data.store_code,
+            store_name=store_data.store_name,
+            address=store_data.address,
+            phone_number=store_data.phone_number
+        )
+        
+        db.add(new_store)
+        db.commit()
+        db.refresh(new_store)
+        
+        return new_store
+        
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"店舗作成に失敗しました: {str(e)}"
+        )
 
-# 日報提出API
-@app.post("/api/daily-report", response_model=DailyReportResponse)
+@app.get("/api/stores/current", response_model=StoreResponse)
+def get_current_store_info(
+    current_store: Store = Depends(get_current_store)
+):
+    """現在のユーザーの店舗情報取得"""
+    return current_store
+
+# ===== 従業員管理API =====
+
+@app.post("/api/employees", response_model=EmployeeResponse)
+def create_employee(
+    employee_data: EmployeeCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_manager),
+    current_store: Store = Depends(get_current_store)
+):
+    """従業員登録（店長権限必要）"""
+    try:
+        # 従業員コード重複チェック（同一店舗内）
+        existing_employee = db.query(Employee).filter(
+            Employee.store_id == current_store.id,
+            Employee.employee_code == employee_data.employee_code
+        ).first()
+        
+        if existing_employee:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="従業員コードが既に存在します"
+            )
+        
+        new_employee = Employee(
+            store_id=current_store.id,
+            employee_code=employee_data.employee_code,
+            name=employee_data.name,
+            email=employee_data.email,
+            role=employee_data.role,
+            hire_date=employee_data.hire_date
+        )
+        
+        db.add(new_employee)
+        db.commit()
+        db.refresh(new_employee)
+        
+        return new_employee
+        
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"従業員登録に失敗しました: {str(e)}"
+        )
+
+@app.get("/api/employees", response_model=List[EmployeeResponse])
+def get_employees(
+    skip: int = 0,
+    limit: int = 100,
+    is_active: Optional[bool] = None,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+    current_store: Store = Depends(get_current_store)
+):
+    """従業員一覧取得（店舗内のみ）"""
+    query = db.query(Employee).filter(Employee.store_id == current_store.id)
+    
+    if is_active is not None:
+        query = query.filter(Employee.is_active == is_active)
+    
+    employees = query.order_by(Employee.employee_code).offset(skip).limit(limit).all()
+    return employees
+
+@app.get("/api/employees/generate-code")
+def generate_new_employee_code(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_manager),
+    current_store: Store = Depends(get_current_store)
+):
+    """新しい従業員コードを生成"""
+    return {
+        "suggested_code": generate_employee_code(db, current_store.id),
+        "store_id": current_store.id
+    }
+
+# ===== 日報管理API =====
+
+@app.post("/api/daily-reports", response_model=DailyReportResponse)
 def create_daily_report(
     report_data: DailyReportInput,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
+    current_store: Store = Depends(get_current_store)
 ):
+    """日報作成（売上詳細対応）"""
     try:
-        # 日報メインデータを作成
+        # 日報メインデータ作成
         db_report = DailyReport(
+            store_id=current_store.id,
             date=report_data.date,
             employee_name=report_data.employee_name,
             total_sales=report_data.total_sales,
@@ -158,7 +306,7 @@ def create_daily_report(
         db.commit()
         db.refresh(db_report)
         
-        # 伝票データを作成
+        # 伝票データ作成
         for receipt_data in report_data.receipts:
             db_receipt = Receipt(
                 daily_report_id=db_report.id,
@@ -172,10 +320,33 @@ def create_daily_report(
             )
             db.add(db_receipt)
         
-        db.commit()
+        # 売上詳細データ作成
+        for sales_detail_data in report_data.sales_details:
+            # 従業員の存在確認（同一店舗内）
+            employee = db.query(Employee).filter(
+                Employee.id == sales_detail_data.employee_id,
+                Employee.store_id == current_store.id
+            ).first()
+            
+            if not employee:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"従業員ID {sales_detail_data.employee_id} が見つかりません"
+                )
+            
+            db_sales_detail = SalesDetail(
+                daily_report_id=db_report.id,
+                employee_id=sales_detail_data.employee_id,
+                drink_count=sales_detail_data.drink_count,
+                champagne_count=sales_detail_data.champagne_count,
+                customer_info=sales_detail_data.customer_info,
+                notes=sales_detail_data.notes
+            )
+            db.add(db_sales_detail)
         
-        # レスポンス用にデータを再取得
+        db.commit()
         db.refresh(db_report)
+        
         return db_report
         
     except Exception as e:
@@ -185,18 +356,19 @@ def create_daily_report(
             detail=f"日報の保存に失敗しました: {str(e)}"
         )
 
-# 日報一覧取得API
 @app.get("/api/daily-reports", response_model=List[DailyReportResponse])
 def get_daily_reports(
     skip: int = 0,
     limit: int = 100,
-    employee_name: str = None,
-    start_date: date = None,
-    end_date: date = None,
+    employee_name: Optional[str] = None,
+    start_date: Optional[date] = None,
+    end_date: Optional[date] = None,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
+    current_store: Store = Depends(get_current_store)
 ):
-    query = db.query(DailyReport)
+    """日報一覧取得（店舗内データのみ）"""
+    query = db.query(DailyReport).filter(DailyReport.store_id == current_store.id)
     
     # 権限に応じてフィルタリング
     if current_user.role != "manager":
@@ -204,7 +376,7 @@ def get_daily_reports(
     elif employee_name:
         query = query.filter(DailyReport.employee_name == employee_name)
     
-    # 日付フィルタ
+    # 日付フィルタリング
     if start_date:
         query = query.filter(DailyReport.date >= start_date)
     if end_date:
@@ -213,63 +385,62 @@ def get_daily_reports(
     reports = query.order_by(DailyReport.date.desc()).offset(skip).limit(limit).all()
     return reports
 
-# 特定の日報取得API
-@app.get("/api/daily-report/{report_id}", response_model=DailyReportResponse)
-def get_daily_report(
-    report_id: int,
+# ===== 統計・分析API =====
+
+@app.get("/api/statistics/employee-performance")
+def get_employee_performance(
+    year: int = None,
+    month: int = None,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(require_manager),
+    current_store: Store = Depends(get_current_store)
 ):
-    report = db.query(DailyReport).filter(DailyReport.id == report_id).first()
-    if not report:
-        raise HTTPException(status_code=404, detail="日報が見つかりません")
+    """従業員パフォーマンス分析（店長権限必要）"""
+    if not year:
+        year = datetime.now().year
+    if not month:
+        month = datetime.now().month
     
-    # 権限チェック
-    if current_user.role != "manager" and report.employee_name != current_user.name:
-        raise HTTPException(status_code=403, detail="この日報にアクセスする権限がありません")
+    # 従業員別の売上詳細集計
+    performance_data = db.query(
+        Employee.id,
+        Employee.employee_code,
+        Employee.name,
+        func.sum(SalesDetail.drink_count).label('total_drinks'),
+        func.sum(SalesDetail.champagne_count).label('total_champagne'),
+        func.count(SalesDetail.id).label('service_count')
+    ).join(
+        SalesDetail, Employee.id == SalesDetail.employee_id
+    ).join(
+        DailyReport, SalesDetail.daily_report_id == DailyReport.id
+    ).filter(
+        Employee.store_id == current_store.id,
+        extract('year', DailyReport.date) == year,
+        extract('month', DailyReport.date) == month
+    ).group_by(Employee.id).all()
     
-    return report
+    return [{
+        "employee_id": emp.id,
+        "employee_code": emp.employee_code,
+        "employee_name": emp.name,
+        "total_drinks": emp.total_drinks or 0,
+        "total_champagne": emp.total_champagne or 0,
+        "service_count": emp.service_count or 0
+    } for emp in performance_data]
 
-# 日報の計算結果取得API
-@app.get("/api/daily-report/{report_id}/calculations", response_model=DailyCalculationResponse)
-def get_daily_report_calculations(
-    report_id: int,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
-):
-    report = db.query(DailyReport).filter(DailyReport.id == report_id).first()
-    if not report:
-        raise HTTPException(status_code=404, detail="日報が見つかりません")
-    
-    # 権限チェック
-    if current_user.role != "manager" and report.employee_name != current_user.name:
-        raise HTTPException(status_code=403, detail="この日報にアクセスする権限がありません")
-    
-    # 計算
-    total_receipt_amount = sum(receipt.amount for receipt in report.receipts)
-    total_expenses = report.alcohol_cost + report.other_expenses
-    cash_remaining = report.total_sales - report.card_sales
-    net_profit = report.total_sales - total_expenses
-    
-    return {
-        "net_profit": net_profit,
-        "cash_remaining": cash_remaining,
-        "total_expenses": total_expenses,
-        "total_receipt_amount": total_receipt_amount
-    }
+# ===== 既存API（後方互換性保持）=====
 
-# === 既存の売上データAPI（後方互換性のため保持） ===
-
-# 売上データ投稿API（認証必須）
 @app.post("/api/sales", response_model=SalesResponse)
 def create_sales(
     sales_data: SalesInput, 
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
+    current_store: Store = Depends(get_current_store)
 ):
+    """売上データ作成（後方互換性）"""
     try:
-        # 新しい売上データをデータベースに保存
         db_sales = DailySales(
+            store_id=current_store.id,  # 店舗ID追加
             date=sales_data.date,
             employee_name=sales_data.employee_name,
             total_sales=sales_data.total_sales,
@@ -289,172 +460,40 @@ def create_sales(
             detail=f"売上データの保存に失敗しました: {str(e)}"
         )
 
-# 売上データ取得API（認証必須）
 @app.get("/api/sales", response_model=List[SalesResponse])
 def get_sales(
     skip: int = 0, 
     limit: int = 100, 
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
+    current_store: Store = Depends(get_current_store)
 ):
+    """売上データ取得（店舗分離対応）"""
+    query = db.query(DailySales).filter(DailySales.store_id == current_store.id)
+    
     # 店長は全データ、従業員は自分のデータのみ表示
-    if current_user.role == "manager":
-        sales = db.query(DailySales).order_by(DailySales.date.desc()).offset(skip).limit(limit).all()
-    else:
-        sales = db.query(DailySales).filter(
-            DailySales.employee_name == current_user.name
-        ).order_by(DailySales.date.desc()).offset(skip).limit(limit).all()
+    if current_user.role != "manager":
+        query = query.filter(DailySales.employee_name == current_user.name)
+    
+    sales = query.order_by(DailySales.date.desc()).offset(skip).limit(limit).all()
     return sales
 
-# 日次売上集計API（認証必須）
-@app.get("/api/sales/daily-summary")
-def get_daily_summary(
-    target_date: str = None, 
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
-):
-    if target_date:
-        target = datetime.fromisoformat(target_date).date()
-    else:
-        target = date.today()
-    
-    # 権限に応じてフィルタリング
-    query = db.query(DailySales).filter(DailySales.date == target)
-    if current_user.role != "manager":
-        query = query.filter(DailySales.employee_name == current_user.name)
-    
-    # 指定日の売上合計
-    daily_total = query.with_entities(func.sum(DailySales.total_sales)).scalar() or 0
-    drinks_total = query.with_entities(func.sum(DailySales.drink_count)).scalar() or 0
-    champagne_total = query.with_entities(func.sum(DailySales.champagne_count)).scalar() or 0
-    catch_total = query.with_entities(func.sum(DailySales.catch_count)).scalar() or 0
-    
-    return {
-        "date": target,
-        "total_sales": daily_total,
-        "drink_count": drinks_total,
-        "champagne_count": champagne_total,
-        "catch_count": catch_total
-    }
+# ===== システム管理API =====
 
-# 月次売上集計API（認証必須）
-@app.get("/api/sales/monthly-summary")
-def get_monthly_summary(
-    year: int = None, 
-    month: int = None, 
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+@app.get("/api/system/migrate")
+def run_system_migration(
+    current_user: User = Depends(require_owner)
 ):
-    if not year:
-        year = datetime.now().year
-    if not month:
-        month = datetime.now().month
-    
-    # 権限に応じてフィルタリング
-    query = db.query(DailySales).filter(
-        extract('year', DailySales.date) == year,
-        extract('month', DailySales.date) == month
-    )
-    if current_user.role != "manager":
-        query = query.filter(DailySales.employee_name == current_user.name)
-    
-    # 月次売上合計
-    monthly_total = query.with_entities(func.sum(DailySales.total_sales)).scalar() or 0
-    drinks_total = query.with_entities(func.sum(DailySales.drink_count)).scalar() or 0
-    champagne_total = query.with_entities(func.sum(DailySales.champagne_count)).scalar() or 0
-    
-    return {
-        "year": year,
-        "month": month,
-        "total_sales": monthly_total,
-        "drink_count": drinks_total,
-        "champagne_count": champagne_total
-    }
-
-# 従業員別売上ランキングAPI（店長のみ）
-@app.get("/api/sales/employee-ranking")
-def get_employee_ranking(
-    year: int = None, 
-    month: int = None, 
-    db: Session = Depends(get_db),
-    current_user: User = Depends(require_manager)
-):
-    if not year:
-        year = datetime.now().year
-    if not month:
-        month = datetime.now().month
-    
-    # 従業員別の売上合計（店長のみアクセス可能）
-    ranking = db.query(
-        DailySales.employee_name,
-        func.sum(DailySales.total_sales).label('total_sales'),
-        func.sum(DailySales.drink_count).label('total_drinks'),
-        func.sum(DailySales.champagne_count).label('total_champagne'),
-        func.sum(DailySales.catch_count).label('total_catch'),
-        func.sum(DailySales.work_hours).label('total_hours')
-    ).filter(
-        extract('year', DailySales.date) == year,
-        extract('month', DailySales.date) == month
-    ).group_by(DailySales.employee_name).order_by(
-        func.sum(DailySales.total_sales).desc()
-    ).all()
-    
-    return [
-        {
-            "employee_name": r.employee_name,
-            "total_sales": r.total_sales,
-            "total_drinks": r.total_drinks,
-            "total_champagne": r.total_champagne,
-            "total_catch": r.total_catch,
-            "total_hours": r.total_hours
-        }
-        for r in ranking
-    ]
-
-# 売上データ削除API（認証必須、店長のみ）
-@app.delete("/api/sales/{sales_id}")
-def delete_sales(
-    sales_id: int,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
-):
-    sales = db.query(DailySales).filter(DailySales.id == sales_id).first()
-    if not sales:
-        raise HTTPException(status_code=404, detail="売上データが見つかりません")
-    
-    # 権限チェック：店長のみ削除可能
-    if current_user.role != "manager":
-        raise HTTPException(status_code=403, detail="この操作を実行する権限がありません")
-    
-    db.delete(sales)
-    db.commit()
-    return {"message": "売上データを削除しました"}
-
-# 日報削除API（認証必須、店長のみ）
-@app.delete("/api/daily-report/{report_id}")
-def delete_daily_report(
-    report_id: int,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
-):
-    report = db.query(DailyReport).filter(DailyReport.id == report_id).first()
-    if not report:
-        raise HTTPException(status_code=404, detail="日報が見つかりません")
-    
-    # 権限チェック：店長のみ削除可能
-    if current_user.role != "manager":
-        raise HTTPException(status_code=403, detail="この操作を実行する権限がありません")
-    
-    db.delete(report)
-    db.commit()
-    return {"message": "日報を削除しました"}
-
-# デバッグ用エンドポイント
-@app.get("/api/debug/cors")
-async def debug_cors():
-    return {"message": "CORS test successful", "status": "OK"}
+    """システム全体のマイグレーション実行（オーナー権限必要）"""
+    try:
+        run_migration()
+        return {"message": "マイグレーションが正常に完了しました"}
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"マイグレーション実行に失敗しました: {str(e)}"
+        )
 
 if __name__ == "__main__":
-    # 本番環境ではPORTを環境変数から取得
-    port = int(os.environ.get("PORT", 8000))
-    uvicorn.run(app, host="0.0.0.0", port=port)
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8001)

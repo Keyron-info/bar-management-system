@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Plus, Settings, X, Receipt, Calculator, DollarSign, User, Edit, ChevronDown } from 'lucide-react';
+import { Calendar, Plus, Settings, X, Receipt, Calculator, DollarSign, User, Edit, ChevronDown, Wine, Trash2 } from 'lucide-react';
 
 interface User {
   id: number;
@@ -15,24 +15,26 @@ interface StoreEmployee {
   employee_code: string;
 }
 
-interface ReceiptItem {
-  id: string;
-  totalAmount: number | string; // 初期値対応
-  isCardPayment: boolean;
-  assignedEmployeeId: number; // 売上担当者
-  drinks: DrinkItem[];
-  champagnes: ChampagneItem[];
-}
-
 interface DrinkItem {
+  id: string;
+  employeeId: number;
   employeeName: string;
   drinkCount: number;
-  amount: number;
 }
 
 interface ChampagneItem {
+  id: string;
   name: string;
   amount: number;
+}
+
+interface ReceiptItem {
+  id: string;
+  totalAmount: number | string;
+  isCardPayment: boolean;
+  assignedEmployeeId: number;
+  drinks: DrinkItem[];
+  champagnes: ChampagneItem[];
 }
 
 interface DailyReportPageProps {
@@ -47,14 +49,20 @@ const DailyReportPage: React.FC<DailyReportPageProps> = ({ user }) => {
   const [loading, setLoading] = useState(false);
   const [storeEmployees, setStoreEmployees] = useState<StoreEmployee[]>([]);
   const [showEmployeeDropdown, setShowEmployeeDropdown] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   
-  // 新規伝票フォーム状態
-  const [newReceipt, setNewReceipt] = useState({
-    totalAmount: '', // 初期値を空文字に変更
+  const [newReceipt, setNewReceipt] = useState<{
+    totalAmount: string;
+    isCardPayment: boolean;
+    assignedEmployeeId: number;
+    drinks: DrinkItem[];
+    champagnes: ChampagneItem[];
+  }>({
+    totalAmount: '',
     isCardPayment: false,
-    assignedEmployeeId: user.id, // デフォルトは自分
-    drinks: [{ employeeName: user.name, drinkCount: 0, amount: 0 }],
-    champagnes: [] as ChampagneItem[]
+    assignedEmployeeId: user.id,
+    drinks: [],
+    champagnes: []
   });
 
   useEffect(() => {
@@ -64,20 +72,119 @@ const DailyReportPage: React.FC<DailyReportPageProps> = ({ user }) => {
   const fetchStoreEmployees = async () => {
     try {
       const token = localStorage.getItem('token');
-      // 同じ店舗の従業員一覧を取得
-      const response = await fetch('https://bar-management-system.onrender.com/api/store/employees', {
-        headers: { 'Authorization': `Bearer ${token}` }
+      const store_id = user.store_id;
+      
+      console.log('🔍 従業員データ取得開始:', { store_id, user });
+      
+      if (!store_id) {
+        console.error('❌ 店舗IDが見つかりません');
+        return;
+      }
+
+      const response = await fetch(`http://localhost:8002/api/stores/${store_id}/employees`, {
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
       });
+      
+      console.log('📡 従業員API レスポンスステータス:', response.status);
+      
       if (response.ok) {
         const employees = await response.json();
+        console.log('✅ 従業員データ取得成功:', employees);
         setStoreEmployees(employees);
+      } else {
+        const errorData = await response.json();
+        console.error('❌ 従業員データ取得失敗:', errorData);
       }
     } catch (error) {
-      console.error('従業員データ取得エラー:', error);
+      console.error('❌ 従業員データ取得エラー:', error);
     }
   };
 
-  // 計算
+  // 🆕 ドリンク追加
+  const addDrinkEntry = () => {
+    if (storeEmployees.length === 0) {
+      alert('従業員データを読み込み中です。少々お待ちください。');
+      return;
+    }
+    
+    const newDrink: DrinkItem = {
+      id: Date.now().toString(),
+      employeeId: storeEmployees[0]?.id || user.id,
+      employeeName: storeEmployees[0]?.name || user.name,
+      drinkCount: 0
+    };
+    setNewReceipt(prev => ({
+      ...prev,
+      drinks: [...prev.drinks, newDrink]
+    }));
+  };
+
+  // 🆕 ドリンク削除
+  const removeDrinkEntry = (drinkId: string) => {
+    setNewReceipt(prev => ({
+      ...prev,
+      drinks: prev.drinks.filter(d => d.id !== drinkId)
+    }));
+  };
+
+  // 🆕 ドリンク更新
+  const updateDrinkEntry = (drinkId: string, field: 'employeeId' | 'drinkCount', value: number | string) => {
+    setNewReceipt(prev => ({
+      ...prev,
+      drinks: prev.drinks.map(drink => {
+        if (drink.id === drinkId) {
+          if (field === 'employeeId') {
+            const employee = storeEmployees.find(e => e.id === Number(value));
+            return {
+              ...drink,
+              employeeId: Number(value),
+              employeeName: employee?.name || drink.employeeName
+            };
+          } else {
+            return { ...drink, drinkCount: Number(value) };
+          }
+        }
+        return drink;
+      })
+    }));
+  };
+
+  // 🆕 シャンパン追加
+  const addChampagneEntry = () => {
+    const newChampagne: ChampagneItem = {
+      id: Date.now().toString(),
+      name: '',
+      amount: 0
+    };
+    setNewReceipt(prev => ({
+      ...prev,
+      champagnes: [...prev.champagnes, newChampagne]
+    }));
+  };
+
+  // 🆕 シャンパン削除
+  const removeChampagneEntry = (champagneId: string) => {
+    setNewReceipt(prev => ({
+      ...prev,
+      champagnes: prev.champagnes.filter(c => c.id !== champagneId)
+    }));
+  };
+
+  // 🆕 シャンパン更新
+  const updateChampagneEntry = (champagneId: string, field: 'name' | 'amount', value: string | number) => {
+    setNewReceipt(prev => ({
+      ...prev,
+      champagnes: prev.champagnes.map(champagne => 
+        champagne.id === champagneId 
+          ? { ...champagne, [field]: field === 'amount' ? Number(value) : value }
+          : champagne
+      )
+    }));
+  };
+
   const totalSales = receipts.reduce((sum, receipt) => {
     const amount = typeof receipt.totalAmount === 'string' ? 
       parseFloat(receipt.totalAmount) || 0 : receipt.totalAmount;
@@ -114,7 +221,7 @@ const DailyReportPage: React.FC<DailyReportPageProps> = ({ user }) => {
       totalAmount: '',
       isCardPayment: false,
       assignedEmployeeId: user.id,
-      drinks: [{ employeeName: user.name, drinkCount: 0, amount: 0 }],
+      drinks: [],
       champagnes: []
     });
     setShowReceiptForm(false);
@@ -128,23 +235,40 @@ const DailyReportPage: React.FC<DailyReportPageProps> = ({ user }) => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
+      const store_id = user.store_id;
       
-      // 日報データを準備
+      if (!store_id) {
+        alert('店舗IDが見つかりません');
+        setLoading(false);
+        return;
+      }
+
+      if (!user.id) {
+        alert('ユーザーIDが見つかりません');
+        setLoading(false);
+        return;
+      }
+
       const reportData = {
-        date: new Date().toISOString().split('T')[0],
-        employee_name: user.name,
+        store_id: store_id,
+        employee_id: user.id,
+        date: selectedDate,
         total_sales: totalSales,
         alcohol_cost: alcoholExpense,
         other_expenses: otherExpenses,
-        receipts: receipts.map(receipt => ({
-          ...receipt,
-          totalAmount: typeof receipt.totalAmount === 'string' ? 
-            parseFloat(receipt.totalAmount) || 0 : receipt.totalAmount
-        }))
+        card_sales: cardSales,
+        drink_count: 0,
+        champagne_type: '',
+        champagne_price: 0,
+        work_start_time: '18:00',
+        work_end_time: '02:00',
+        break_minutes: 0,
+        notes: `伝票数: ${receipts.length}件`
       };
 
-      // APIに送信
-      const response = await fetch('https://bar-management-system.onrender.com/api/daily-reports/', {
+      console.log('📤 送信データ:', reportData);
+
+      const response = await fetch(`http://localhost:8002/api/stores/${store_id}/daily-reports`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -156,18 +280,17 @@ const DailyReportPage: React.FC<DailyReportPageProps> = ({ user }) => {
       if (response.ok) {
         alert('日報が正常に提出されました！店長に通知が送信されます。');
         
-        // フォームをリセット
         setReceipts([]);
         setAlcoholExpense(0);
         setOtherExpenses(0);
         
-        // 売上データを他のページに反映させるため、ページリロード
         window.location.reload();
       } else {
         const errorData = await response.json();
         alert(`提出エラー: ${errorData.detail || '不明なエラー'}`);
       }
     } catch (error) {
+      console.error('日報提出エラー:', error);
       alert('提出中にエラーが発生しました');
     } finally {
       setLoading(false);
@@ -233,7 +356,8 @@ const DailyReportPage: React.FC<DailyReportPageProps> = ({ user }) => {
             <div style={{ fontSize: '14px', color: '#666', marginBottom: '5px' }}>作業日</div>
             <input 
               type="date" 
-              defaultValue={new Date().toISOString().split('T')[0]}
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
               style={{
                 border: 'none',
                 fontSize: '16px',
@@ -484,22 +608,31 @@ const DailyReportPage: React.FC<DailyReportPageProps> = ({ user }) => {
               return (
                 <div key={receipt.id} style={{
                   display: 'flex',
-                  alignItems: 'center',
+                  alignItems: 'flex-start',
                   justifyContent: 'space-between',
                   padding: '15px 20px',
                   backgroundColor: '#fafafa',
                   borderRadius: '8px',
                   border: '1px solid #e1e8ed'
                 }}>
-                  <div>
-                    <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#000', marginBottom: '4px' }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#000', marginBottom: '6px' }}>
                       ¥{amount.toLocaleString()}
                     </div>
-                    <div style={{ fontSize: '14px', color: '#666' }}>
-                      {receipt.isCardPayment ? 'カード決済' : '現金決済'} | 
-                      担当: {getEmployeeName(receipt.assignedEmployeeId)} | 
-                      ドリンク{receipt.drinks.length}品
+                    <div style={{ fontSize: '14px', color: '#666', marginBottom: '4px' }}>
+                      {receipt.isCardPayment ? '💳 カード決済' : '💵 現金決済'} | 
+                      担当: {getEmployeeName(receipt.assignedEmployeeId)}
                     </div>
+                    {receipt.drinks.length > 0 && (
+                      <div style={{ fontSize: '13px', color: '#888', marginTop: '6px' }}>
+                        🍹 ドリンク: {receipt.drinks.map(d => `${d.employeeName}(${d.drinkCount}杯)`).join(', ')}
+                      </div>
+                    )}
+                    {receipt.champagnes.length > 0 && (
+                      <div style={{ fontSize: '13px', color: '#888', marginTop: '4px' }}>
+                        🍾 シャンパン: {receipt.champagnes.map(c => `${c.name}(¥${c.amount.toLocaleString()})`).join(', ')}
+                      </div>
+                    )}
                   </div>
                   <button 
                     onClick={() => deleteReceipt(receipt.id)}
@@ -602,6 +735,7 @@ const DailyReportPage: React.FC<DailyReportPageProps> = ({ user }) => {
             </div>
             
             <div style={{ padding: '20px' }}>
+              {/* 合計金額 */}
               <div style={{ marginBottom: '20px' }}>
                 <label style={{ 
                   display: 'block', 
@@ -668,7 +802,7 @@ const DailyReportPage: React.FC<DailyReportPageProps> = ({ user }) => {
                     <ChevronDown size={16} color="#666" />
                   </div>
                   
-                  {showEmployeeDropdown && (
+                  {showEmployeeDropdown && storeEmployees.length > 0 && (
                     <div style={{
                       position: 'absolute',
                       top: '100%',
@@ -680,7 +814,8 @@ const DailyReportPage: React.FC<DailyReportPageProps> = ({ user }) => {
                       boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
                       zIndex: 10,
                       maxHeight: '200px',
-                      overflowY: 'auto'
+                      overflowY: 'auto',
+                      marginTop: '4px'
                     }}>
                       {storeEmployees.map((employee) => (
                         <div
@@ -709,6 +844,264 @@ const DailyReportPage: React.FC<DailyReportPageProps> = ({ user }) => {
                 </div>
               </div>
 
+              {/* 🆕 ドリンク記録セクション */}
+              <div style={{ marginBottom: '25px' }}>
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '12px'
+                }}>
+                  <label style={{ 
+                    fontWeight: '500',
+                    color: '#000',
+                    fontSize: '14px'
+                  }}>
+                    ドリンク記録
+                  </label>
+                  <button
+                    type="button"
+                    onClick={addDrinkEntry}
+                    style={{
+                      background: 'linear-gradient(135deg, #9333EA, #F0E)',
+                      color: 'white',
+                      border: 'none',
+                      padding: '6px 12px',
+                      borderRadius: '6px',
+                      fontSize: '13px',
+                      fontWeight: '500',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}
+                  >
+                    <Plus size={14} />
+                    追加
+                  </button>
+                </div>
+
+                {newReceipt.drinks.length === 0 ? (
+                  <div style={{
+                    padding: '20px',
+                    backgroundColor: '#fafafa',
+                    borderRadius: '8px',
+                    textAlign: 'center',
+                    color: '#999',
+                    fontSize: '14px'
+                  }}>
+                    「追加」ボタンでドリンクを記録できます
+                    {storeEmployees.length === 0 && (
+                      <div style={{ marginTop: '8px', color: '#e74c3c', fontSize: '13px' }}>
+                        ⚠️ 従業員データを読み込み中...
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    {newReceipt.drinks.map((drink) => (
+                      <div key={drink.id} style={{
+                        display: 'flex',
+                        gap: '10px',
+                        alignItems: 'center',
+                        padding: '12px',
+                        backgroundColor: '#fafafa',
+                        borderRadius: '8px',
+                        border: '1px solid #e1e8ed'
+                      }}>
+                        {storeEmployees.length > 0 ? (
+                          <select
+                            value={drink.employeeId}
+                            onChange={(e) => updateDrinkEntry(drink.id, 'employeeId', e.target.value)}
+                            style={{
+                              flex: 1,
+                              padding: '8px 12px',
+                              border: '1px solid #e1e8ed',
+                              borderRadius: '6px',
+                              fontSize: '14px',
+                              color: '#000',
+                              backgroundColor: 'white',
+                              outline: 'none'
+                            }}
+                          >
+                            {storeEmployees.map((emp) => (
+                              <option key={emp.id} value={emp.id}>
+                                {emp.name}
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          <div style={{
+                            flex: 1,
+                            padding: '8px 12px',
+                            border: '1px solid #e1e8ed',
+                            borderRadius: '6px',
+                            fontSize: '14px',
+                            color: '#999',
+                            backgroundColor: '#f5f5f5'
+                          }}>
+                            従業員を読み込み中...
+                          </div>
+                        )}
+                        
+                        <input
+                          type="number"
+                          value={drink.drinkCount || ''}
+                          onChange={(e) => updateDrinkEntry(drink.id, 'drinkCount', e.target.value)}
+                          placeholder="杯数"
+                          style={{
+                            width: '80px',
+                            padding: '8px 12px',
+                            border: '1px solid #e1e8ed',
+                            borderRadius: '6px',
+                            fontSize: '14px',
+                            color: '#000',
+                            backgroundColor: 'white',
+                            outline: 'none',
+                            textAlign: 'center'
+                          }}
+                        />
+                        <span style={{ fontSize: '14px', color: '#666', minWidth: '20px' }}>杯</span>
+                        
+                        <button
+                          type="button"
+                          onClick={() => removeDrinkEntry(drink.id)}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            color: '#e74c3c',
+                            cursor: 'pointer',
+                            padding: '4px',
+                            display: 'flex',
+                            alignItems: 'center'
+                          }}
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* 🆕 シャンパンセクション */}
+              <div style={{ marginBottom: '20px' }}>
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '12px'
+                }}>
+                  <label style={{ 
+                    fontWeight: '500',
+                    color: '#000',
+                    fontSize: '14px'
+                  }}>
+                    シャンパン
+                  </label>
+                  <button
+                    type="button"
+                    onClick={addChampagneEntry}
+                    style={{
+                      background: 'white',
+                      color: '#9333EA',
+                      border: '1px solid #9333EA',
+                      padding: '6px 12px',
+                      borderRadius: '6px',
+                      fontSize: '13px',
+                      fontWeight: '500',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}
+                  >
+                    <Wine size={14} />
+                    追加
+                  </button>
+                </div>
+
+                {newReceipt.champagnes.length === 0 ? (
+                  <div style={{
+                    padding: '20px',
+                    backgroundColor: '#fafafa',
+                    borderRadius: '8px',
+                    textAlign: 'center',
+                    color: '#999',
+                    fontSize: '14px'
+                  }}>
+                    シャンパンがある場合は「追加」ボタンで記録できます
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    {newReceipt.champagnes.map((champagne) => (
+                      <div key={champagne.id} style={{
+                        display: 'flex',
+                        gap: '10px',
+                        alignItems: 'center',
+                        padding: '12px',
+                        backgroundColor: '#fffaf0',
+                        borderRadius: '8px',
+                        border: '1px solid #ffd700'
+                      }}>
+                        <input
+                          type="text"
+                          value={champagne.name}
+                          onChange={(e) => updateChampagneEntry(champagne.id, 'name', e.target.value)}
+                          placeholder="シャンパン名"
+                          style={{
+                            flex: 1,
+                            padding: '8px 12px',
+                            border: '1px solid #e1e8ed',
+                            borderRadius: '6px',
+                            fontSize: '14px',
+                            color: '#000',
+                            backgroundColor: 'white',
+                            outline: 'none'
+                          }}
+                        />
+                        
+                        <input
+                          type="number"
+                          value={champagne.amount || ''}
+                          onChange={(e) => updateChampagneEntry(champagne.id, 'amount', e.target.value)}
+                          placeholder="金額"
+                          style={{
+                            width: '120px',
+                            padding: '8px 12px',
+                            border: '1px solid #e1e8ed',
+                            borderRadius: '6px',
+                            fontSize: '14px',
+                            color: '#000',
+                            backgroundColor: 'white',
+                            outline: 'none',
+                            textAlign: 'right'
+                          }}
+                        />
+                        <span style={{ fontSize: '14px', color: '#666', minWidth: '20px' }}>円</span>
+                        
+                        <button
+                          type="button"
+                          onClick={() => removeChampagneEntry(champagne.id)}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            color: '#e74c3c',
+                            cursor: 'pointer',
+                            padding: '4px',
+                            display: 'flex',
+                            alignItems: 'center'
+                          }}
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* カード決済チェックボックス */}
               <div style={{ marginBottom: '20px' }}>
                 <label style={{
                   display: 'flex',

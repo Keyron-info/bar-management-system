@@ -1,25 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { Settings, X, Target, TrendingUp, Users } from 'lucide-react';
-import axios from 'axios';
 
 interface User {
   id: number;
   email: string;
   name: string;
   role: string;
+  store_id?: number;
 }
 
 interface StorePageProps {
   user: User;
 }
 
-interface EmployeeRanking {
+interface EmployeeReport {
+  employee_id: number;
   employee_name: string;
   total_sales: number;
-  total_drinks: number;
-  total_champagne: number;
-  total_catch: number;
-  total_hours: number;
+  report_count: number;
+  approved_count: number;
 }
 
 interface StoreGoalSettings {
@@ -28,14 +27,22 @@ interface StoreGoalSettings {
   totalMonthlyTarget: number;
 }
 
+interface StoreSummary {
+  today_sales: number;
+  month_sales: number;
+  active_employees: number;
+  pending_reports: number;
+}
+
 const StorePage: React.FC<StorePageProps> = ({ user }) => {
-  const [employeeRanking, setEmployeeRanking] = useState<EmployeeRanking[]>([]);
+  const [employeeReports, setEmployeeReports] = useState<EmployeeReport[]>([]);
+  const [storeSummary, setStoreSummary] = useState<StoreSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [showTargetSettings, setShowTargetSettings] = useState(false);
   const [storeGoalSettings, setStoreGoalSettings] = useState<StoreGoalSettings>({
-    weekdayTarget: 150000, // 平日目標
-    weekendTarget: 300000, // 週末目標
-    totalMonthlyTarget: 2000000 // 月間総目標
+    weekdayTarget: 150000,
+    weekendTarget: 300000,
+    totalMonthlyTarget: 2000000
   });
 
   useEffect(() => {
@@ -44,19 +51,70 @@ const StorePage: React.FC<StorePageProps> = ({ user }) => {
     }
   }, [user.role]);
 
+  // ✅ 修正: 正しいSaaS版エンドポイント
   const fetchStoreData = async () => {
     try {
       const token = localStorage.getItem('token');
-      if (!token) return;
+      const store_id = user.store_id;
+      
+      if (!token || !store_id) return;
 
-      const response = await axios.get(
-        'https://bar-management-system.onrender.com/api/sales/employee-ranking',
-        {
-          headers: { 'Authorization': `Bearer ${token}` },
-        }
-      );
+      // 店舗ダッシュボード取得
+      const dashboardResponse = await fetch(`http://localhost:8002/api/stores/${store_id}/dashboard`, {
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+      });
 
-      setEmployeeRanking(response.data);
+      // 日報一覧取得
+      const reportsResponse = await fetch(`http://localhost:8002/api/stores/${store_id}/daily-reports`, {
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+      });
+
+      if (dashboardResponse.ok) {
+        const dashboard = await dashboardResponse.json();
+        setStoreSummary({
+          today_sales: dashboard.today_sales || 0,
+          month_sales: dashboard.month_sales || 0,
+          active_employees: dashboard.active_employees || 0,
+          pending_reports: dashboard.pending_reports || 0
+        });
+      }
+
+      if (reportsResponse.ok) {
+        const reports = await reportsResponse.json();
+        
+        // 従業員ごとに集計
+        const employeeMap = new Map<number, EmployeeReport>();
+        
+        reports.forEach((report: any) => {
+          if (!employeeMap.has(report.employee_id)) {
+            employeeMap.set(report.employee_id, {
+              employee_id: report.employee_id,
+              employee_name: `従業員${report.employee_id}`,
+              total_sales: 0,
+              report_count: 0,
+              approved_count: 0
+            });
+          }
+          
+          const empReport = employeeMap.get(report.employee_id)!;
+          empReport.total_sales += report.total_sales;
+          empReport.report_count++;
+          if (report.is_approved) {
+            empReport.approved_count++;
+          }
+        });
+
+        const sortedReports = Array.from(employeeMap.values())
+          .sort((a, b) => b.total_sales - a.total_sales);
+        
+        setEmployeeReports(sortedReports);
+      }
     } catch (error) {
       console.error('データ取得エラー:', error);
     } finally {
@@ -64,13 +122,8 @@ const StorePage: React.FC<StorePageProps> = ({ user }) => {
     }
   };
 
-  // 店舗全体の売上合計
-  const totalStoreSales = employeeRanking.reduce((sum, emp) => sum + emp.total_sales, 0);
+  const totalStoreSales = storeSummary?.month_sales || 0;
   const achievementRate = (totalStoreSales / storeGoalSettings.totalMonthlyTarget) * 100;
-
-  // 平日・週末の達成率計算（簡易版）
-  const weekdayAchievementRate = 78; // 実際はAPIから取得
-  const weekendAchievementRate = 85; // 実際はAPIから取得
 
   // 簡易的な7日間売上データ（実際はAPIから取得）
   const dailySalesData = [
@@ -84,9 +137,10 @@ const StorePage: React.FC<StorePageProps> = ({ user }) => {
   ];
 
   const maxDailySales = Math.max(...dailySalesData.map(d => d.sales));
+  const weekdayAchievementRate = 78;
+  const weekendAchievementRate = 85;
 
   const saveTargetSettings = () => {
-    // 実際にはAPIに保存
     console.log('店舗目標設定を保存:', storeGoalSettings);
     setShowTargetSettings(false);
   };
@@ -102,7 +156,7 @@ const StorePage: React.FC<StorePageProps> = ({ user }) => {
   if (loading) {
     return (
       <div style={{ textAlign: 'center', padding: '40px', backgroundColor: '#FAFAFA', minHeight: '100vh' }}>
-        <div style={{ fontSize: '18px', color: '#666' }}>データを読み込んでいます...</div>
+        <div style={{ fontSize: '18px', color: '666' }}>データを読み込んでいます...</div>
       </div>
     );
   }
@@ -116,7 +170,7 @@ const StorePage: React.FC<StorePageProps> = ({ user }) => {
       minHeight: '100vh',
       fontFamily: '"Noto Sans JP", sans-serif'
     }}>
-      {/* 今月の目標セクション - 大きく改善 */}
+      {/* 今月の目標セクション */}
       <div style={{
         backgroundColor: 'white',
         borderRadius: '12px',
@@ -194,12 +248,12 @@ const StorePage: React.FC<StorePageProps> = ({ user }) => {
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontSize: '12px', color: '#666', marginBottom: '5px' }}>従業員数</div>
             <div style={{ fontSize: '24px', fontWeight: '700', color: '#000' }}>
-              {employeeRanking.length}人
+              {storeSummary?.active_employees || 0}人
             </div>
           </div>
         </div>
 
-        {/* 達成率の横バー - より目立つように */}
+        {/* 達成率の横バー */}
         <div style={{ marginBottom: '25px' }}>
           <div style={{
             display: 'flex',
@@ -233,7 +287,7 @@ const StorePage: React.FC<StorePageProps> = ({ user }) => {
           </div>
         </div>
 
-        {/* 線グラフエリア - より詳細に */}
+        {/* 線グラフエリア */}
         <div style={{ marginBottom: '20px' }}>
           <div style={{
             display: 'flex',
@@ -288,7 +342,7 @@ const StorePage: React.FC<StorePageProps> = ({ user }) => {
           </div>
         </div>
 
-        {/* 平日・週末目標（小さめ表示） */}
+        {/* 平日・週末目標 */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
           <div style={{ 
             padding: '15px', 
@@ -347,9 +401,9 @@ const StorePage: React.FC<StorePageProps> = ({ user }) => {
           </h2>
         </div>
         
-        {employeeRanking.length > 0 ? (
+        {employeeReports.length > 0 ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {employeeRanking.map((employee, index) => (
+            {employeeReports.map((employee, index) => (
               <div key={index} style={{
                 display: 'flex',
                 justifyContent: 'space-between',
@@ -382,7 +436,7 @@ const StorePage: React.FC<StorePageProps> = ({ user }) => {
                       {employee.employee_name}
                     </div>
                     <div style={{ fontSize: '12px', color: '#666' }}>
-                      ドリンク: {employee.total_drinks}杯 | キャッチ: {employee.total_catch}回 | {employee.total_hours.toFixed(1)}時間
+                      日報: {employee.report_count}件 | 承認済: {employee.approved_count}件
                     </div>
                   </div>
                 </div>

@@ -1,12 +1,3 @@
-/* App.css - Mobile First Header/Footer System */
-/* フォント設定を一番上に追加 */
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;600;700&display=swap');
-
-* {
-  font-family: "Noto Sans JP", sans-serif !important;
-}
-
-/* 既存のコードはそのまま残す */
 /* 基本設定 */
 #root {
   max-width: 1280px;
@@ -15,219 +6,333 @@
   text-align: center;
 }
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+/* バー管理システム用スタイル */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-body {
-  font-family: 'Noto Sans JP', 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
-  background-color: #FAFAFA;
-  overflow-x: hidden;
+.card {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e5e7eb;
 }
 
-/* App Container */
+/* アプリのメイン構造 */
 .app-container {
-  width: 100vw;
   min-height: 100vh;
-  background: #FAFAFA;
-  position: relative;
-}
-
-/* Loading State */
-.app-loading {
-  width: 100vw;
-  height: 100vh;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #FAFAFA;
+  flex-direction: column;
+  background-color: #f5f5f5;
 }
 
-.loading-spinner {
-  color: #666;
-  font-size: 16px;
-  font-family: 'Noto Sans JP', sans-serif;
-}
-
-/* Common Header */
-.common-header {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  background: #FAFAFA;
-  z-index: 100;
-  border-bottom: 1px solid #e9ecef;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+/* ヘッダースタイル */
+.app-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 1rem 2rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .header-content {
-  max-width: 600px;
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 55px 30px 10px 30px;
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.header-left h1 {
+  margin: 0;
+  font-size: 1.8rem;
+  font-weight: 600;
+}
+
+.store-info {
+  margin-top: 0.25rem;
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
+.store-name {
+  font-weight: 500;
+}
+
+.store-code {
+  opacity: 0.8;
+  margin-left: 0.5rem;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
 }
 
 .user-info {
-  flex: 1;
+  text-align: right;
+  font-size: 0.9rem;
 }
 
 .user-name {
-  color: #333;
-  font-size: 15px;
-  font-family: 'Noto Sans JP', sans-serif;
-  font-weight: 400;
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
 }
 
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+.user-role {
+  opacity: 0.8;
+  font-size: 0.8rem;
 }
 
-.notification-icon {
-  width: 26px;
-  height: 26px;
+.employee-code {
+  opacity: 0.7;
+  font-size: 0.75rem;
+  margin-left: 0.5rem;
+}
+
+.notification-button {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  padding: 0.75rem;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s;
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
-  color: #333;
-  transition: color 0.2s;
+  font-size: 1.2rem;
 }
 
-.notification-icon:hover {
-  color: #9333EA;
-}
-
-.profile-avatar {
-  width: 26px;
-  height: 26px;
-  background: linear-gradient(221deg, #FF00EE 0%, #AD3AA5 100%, #7B109F 100%);
-  border-radius: 50%;
-  cursor: pointer;
-  transition: transform 0.2s;
-}
-
-.profile-avatar:hover {
+.notification-button:hover {
+  background: rgba(255, 255, 255, 0.3);
   transform: scale(1.05);
 }
 
-.logout-icon {
-  width: 24px;
-  height: 24px;
+.logout-button {
+  background: rgba(239, 68, 68, 0.9);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.logout-button:hover {
+  background: rgba(220, 38, 38, 1);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(239, 68, 68, 0.3);
+}
+
+/* ナビゲーション */
+.navigation-bar {
+  background: rgba(52, 73, 94, 0.95);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.navigation-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0;
+}
+
+.nav-button {
+  background: transparent;
+  color: white;
+  border: none;
+  padding: 1rem 1.5rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
   display: flex;
   align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  color: #666;
-  transition: color 0.2s;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+  border-bottom: 3px solid transparent;
+  position: relative;
+  overflow: hidden;
 }
 
-.logout-icon:hover {
-  color: #e74c3c;
-}
-
-/* Main Content */
-.main-content {
-  padding-top: 85px;
-  padding-bottom: 85px;
-  min-height: 100vh;
-  width: 100%;
-  overflow-y: auto;
-}
-
-/* Common Footer - Exact Figma Implementation */
-.common-footer {
-  position: fixed;
-  bottom: 0;
+.nav-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
   left: 0;
   right: 0;
-  align-self: stretch;
-  min-width: 360px;
-  padding-left: 30px;
-  padding-right: 30px;
-  padding-top: 20px;
-  padding-bottom: 20px;
-  background: linear-gradient(90deg, #7B109F 0%, #FF00EE 100%);
-  justify-content: space-between;
-  align-items: flex-start;
-  display: inline-flex;
-  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
-  z-index: 100;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
 }
 
-.footer-nav-item {
-  cursor: pointer;
-  transition: transform 0.2s ease;
+.nav-button:hover::before {
+  opacity: 1;
+}
+
+.nav-button.active {
+  border-bottom-color: #3498db;
+  background: rgba(52, 152, 219, 0.2);
+}
+
+.nav-button.active::before {
+  opacity: 1;
+  background: linear-gradient(135deg, rgba(52, 152, 219, 0.3) 0%, rgba(155, 89, 182, 0.3) 100%);
+}
+
+.nav-icon {
+  font-size: 1.1rem;
+  position: relative;
+  z-index: 1;
+}
+
+.nav-label {
+  position: relative;
+  z-index: 1;
+}
+
+/* メインコンテンツ */
+.app-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-content {
+  flex: 1;
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* フッター */
+.app-footer {
+  background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+  color: white;
+  padding: 2rem 0;
+  margin-top: auto;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.footer-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 2rem;
+}
+
+.footer-brand {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.footer-brand h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+  background: linear-gradient(135deg, #3498db 0%, #9b59b6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.footer-tagline {
+  font-size: 0.8rem;
+  opacity: 0.7;
+  margin: 0;
+}
+
+.footer-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.25rem;
+  font-size: 0.85rem;
+  opacity: 0.8;
+}
+
+/* レスポンシブデザイン */
+@media (max-width: 768px) {
+  .header-content {
+    flex-direction: column;
+    gap: 1rem;
+    padding: 0;
+  }
+  
+  .header-right {
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .navigation-content {
+    flex-wrap: wrap;
+    gap: 0;
+  }
+  
+  .nav-button {
+    flex: 1;
+    min-width: 0;
+    padding: 0.75rem 0.5rem;
+    font-size: 0.8rem;
+  }
+  
+  .nav-label {
+    display: none;
+  }
+  
+  .nav-icon {
+    font-size: 1.3rem;
+  }
+  
+  .app-content {
+    padding: 1rem;
+  }
+  
+  .footer-content {
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
+  }
+  
+  .footer-info {
+    align-items: center;
+  }
+}
+
+/* 既存のスタイル（互換性のため保持） */
+.header-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.user-info {
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 16px;
+  font-weight: 500;
+  color: #374151;
 }
 
-.footer-nav-item:hover {
-  transform: scale(1.1);
-}
-
-.footer-nav-item.active {
-  transform: scale(1.15);
-}
-
-/* Exact Figma Icon Sizes */
-.nav-icon-1 {
-  width: 19.62px;
-  height: 19.62px;
-  background: white;
-}
-
-.nav-icon-2 {
-  width: 18.75px;
-  height: 18.75px;
-  background: white;
-}
-
-.nav-icon-3 {
-  width: 19.52px;
-  height: 18.77px;
-  background: white;
-}
-
-.nav-icon-4 {
-  width: 19.50px;
-  height: 18px;
-  background: white;
-}
-
-.nav-icon-5 {
-  width: 18px;
-  height: 19.50px;
-  background: white;
-}
-
-/* Active State */
-.footer-nav-item.active .nav-icon-1,
-.footer-nav-item.active .nav-icon-2,
-.footer-nav-item.active .nav-icon-3,
-.footer-nav-item.active .nav-icon-4,
-.footer-nav-item.active .nav-icon-5 {
-  background: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 2px 8px rgba(255, 255, 255, 0.3);
-}
-
-/* Page Container for Content */
-.page-container {
-  max-width: 600px;
-  margin: 0 auto;
-  padding: 20px 30px;
-  background: #FAFAFA;
-  min-height: calc(100vh - 170px);
-}
-
-/* 既存の認証関連スタイル（互換性維持） */
+/* 認証コンテナ */
 .auth-container {
   min-height: 100vh;
   display: flex;
@@ -254,6 +359,7 @@ body {
   font-weight: 600;
 }
 
+/* フォームスタイル */
 .form-group {
   margin-bottom: 20px;
 }
@@ -346,106 +452,74 @@ body {
   border: 1px solid #f87171;
 }
 
-/* Responsive Design */
-@media (max-width: 480px) {
-  .header-content {
-    padding: 55px 20px 10px 20px;
-  }
-  
-  .user-name {
-    font-size: 14px;
-  }
-  
-  .header-actions {
-    gap: 8px;
-  }
-  
-  .notification-icon,
-  .profile-avatar,
-  .logout-icon {
-    width: 22px;
-    height: 22px;
-  }
-  
-  .main-content {
-    padding-top: 75px;
-    padding-bottom: 75px;
-  }
-  
-  .page-container {
-    padding: 16px 20px;
-  }
-  
-  .common-footer {
-    padding-left: 20px;
-    padding-right: 20px;
-    padding-top: 15px;
-    padding-bottom: 15px;
-  }
-  
-  /* Slightly smaller icons on very small screens */
-  .nav-icon-1 {
-    width: 17px;
-    height: 17px;
-  }
-  
-  .nav-icon-2 {
-    width: 16px;
-    height: 16px;
-  }
-  
-  .nav-icon-3 {
-    width: 17px;
-    height: 16px;
-  }
-  
-  .nav-icon-4 {
-    width: 17px;
-    height: 15px;
-  }
-  
-  .nav-icon-5 {
-    width: 15px;
-    height: 17px;
-  }
+/* 売上データ表示 */
+.sales-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
-@media (min-width: 481px) and (max-width: 768px) {
-  .page-container {
-    padding: 20px 25px;
-  }
+.sales-item {
+  background: #f9fafb;
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
 }
 
-@media (min-width: 769px) {
-  .header-content {
-    max-width: 800px;
-    padding: 55px 40px 15px 40px;
+.sales-header {
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 8px;
+  font-size: 16px;
+}
+
+.sales-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.sales-details span {
+  background: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid #e5e7eb;
+}
+
+/* ステータスセクション */
+.status-section {
+  text-align: left;
+}
+
+.status-section h2 {
+  color: #1f2937;
+  font-size: 18px;
+  margin-bottom: 12px;
+}
+
+/* レスポンシブデザイン */
+@media (max-width: 768px) {
+  .container {
+    padding: 16px;
   }
   
-  .user-name {
-    font-size: 16px;
+  .header-section {
+    flex-direction: column;
+    align-items: stretch;
   }
   
-  .header-actions {
-    gap: 16px;
+  .user-info {
+    justify-content: space-between;
   }
   
-  .page-container {
-    max-width: 800px;
-    padding: 30px 40px;
+  .auth-card {
+    padding: 24px;
   }
   
-  .main-content {
-    padding-top: 95px;
-    padding-bottom: 85px;
-  }
-  
-  .common-footer {
-    max-width: 800px;
-    margin: 0 auto;
-    left: 50%;
-    transform: translateX(-50%);
-    border-radius: 20px 20px 0 0;
+  .sales-details {
+    flex-direction: column;
   }
 }
 
