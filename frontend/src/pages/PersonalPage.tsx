@@ -15,20 +15,27 @@ interface PersonalPageProps {
   onLogout?: () => void;
 }
 
+// 🆕 拡張: 日報インターフェースにドリンク・シャンパン情報を追加
 interface DailyReport {
   id: number;
   date: string;
   total_sales: number;
   cash_sales: number;
   card_sales: number;
+  drink_count: number;          // 🆕 追加
+  champagne_type: string;       // 🆕 追加
+  champagne_price: number;      // 🆕 追加
   is_approved: boolean;
 }
 
+// 🆕 拡張: 月次サマリーにドリンク・シャンパン集計を追加
 interface MonthlySummary {
   total_reports: number;
   total_sales: number;
   average_sales: number;
   approved_count: number;
+  total_drinks: number;         // 🆕 追加
+  total_champagne_count: number; // 🆕 追加
 }
 
 interface GoalSettings {
@@ -60,64 +67,85 @@ const PersonalPage: React.FC<PersonalPageProps> = ({ user, onPageChange, onLogou
     fetchPersonalData();
   }, []);
 
+  // 🆕 改善: ドリンク・シャンパン数の集計を追加
   const fetchPersonalData = async () => {
-  try {
-    const token = localStorage.getItem('token');
-    const store_id = user.store_id;
-    
-    console.log('🔍 デバッグ:', { token: token?.slice(0, 20) + '...', store_id, user_id: user.id });
-    
-    if (!token || !store_id) {
-      console.error('❌ トークンまたはstore_idが見つかりません');
-      setLoading(false);
-      return;
-    }
-
-    // 自分の日報一覧を取得
-    const reportsResponse = await fetch(
-      `http://localhost:8002/api/stores/${store_id}/daily-reports?employee_id=${user.id}`,
-      {
-        headers: { 
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
+    try {
+      const token = localStorage.getItem('token');
+      const store_id = user.store_id;
+      
+      console.log('🔍 デバッグ:', { token: token?.slice(0, 20) + '...', store_id, user_id: user.id });
+      
+      if (!token || !store_id) {
+        console.error('❌ トークンまたはstore_idが見つかりません');
+        setLoading(false);
+        return;
       }
-    );
 
-    console.log('📡 レスポンスステータス:', reportsResponse.status);
+      // 自分の日報一覧を取得
+      const reportsResponse = await fetch(
+        `http://localhost:8002/api/stores/${store_id}/daily-reports?employee_id=${user.id}`,
+        {
+          headers: { 
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+        }
+      );
 
-    if (reportsResponse.ok) {
-      const reports = await reportsResponse.json();
-      console.log('✅ 日報データ取得成功:', reports.length, '件');
-      setDailyReports(reports);
-      
-      // 月次サマリーを計算
-      const currentMonth = new Date().getMonth() + 1;
-      const currentYear = new Date().getFullYear();
-      const thisMonthReports = reports.filter((report: DailyReport) => {
-        const reportDate = new Date(report.date);
-        return reportDate.getMonth() + 1 === currentMonth && reportDate.getFullYear() === currentYear;
-      });
-      
-      const totalSales = thisMonthReports.reduce((sum: number, r: DailyReport) => sum + r.total_sales, 0);
-      const approvedCount = thisMonthReports.filter((r: DailyReport) => r.is_approved).length;
-      
-      setMonthlySummary({
-        total_reports: thisMonthReports.length,
-        total_sales: totalSales,
-        average_sales: thisMonthReports.length > 0 ? totalSales / thisMonthReports.length : 0,
-        approved_count: approvedCount
-      });
-    } else {
-      const errorData = await reportsResponse.json();
-      console.error('❌ APIエラー:', errorData);
+      console.log('📡 レスポンスステータス:', reportsResponse.status);
+
+      if (reportsResponse.ok) {
+        const reports = await reportsResponse.json();
+        console.log('✅ 日報データ取得成功:', reports.length, '件');
+        console.log('📊 サンプルデータ:', reports[0]); // データ構造確認用
+        setDailyReports(reports);
+        
+        // 月次サマリーを計算
+        const currentMonth = new Date().getMonth() + 1;
+        const currentYear = new Date().getFullYear();
+        const thisMonthReports = reports.filter((report: DailyReport) => {
+          const reportDate = new Date(report.date);
+          return reportDate.getMonth() + 1 === currentMonth && reportDate.getFullYear() === currentYear;
+        });
+        
+        const totalSales = thisMonthReports.reduce((sum: number, r: DailyReport) => sum + r.total_sales, 0);
+        const approvedCount = thisMonthReports.filter((r: DailyReport) => r.is_approved).length;
+        
+        // 🆕 ドリンク数の集計
+        const totalDrinks = thisMonthReports.reduce((sum: number, r: DailyReport) => {
+          return sum + (r.drink_count || 0);
+        }, 0);
+        
+        // 🆕 シャンパン本数の集計（champagne_priceが0より大きい場合は1本とカウント）
+        const totalChampagneCount = thisMonthReports.filter((r: DailyReport) => 
+          (r.champagne_price || 0) > 0
+        ).length;
+        
+        console.log('📊 集計結果:', {
+          totalSales,
+          totalDrinks,
+          totalChampagneCount,
+          reportCount: thisMonthReports.length
+        });
+        
+        setMonthlySummary({
+          total_reports: thisMonthReports.length,
+          total_sales: totalSales,
+          average_sales: thisMonthReports.length > 0 ? totalSales / thisMonthReports.length : 0,
+          approved_count: approvedCount,
+          total_drinks: totalDrinks,              // 🆕 追加
+          total_champagne_count: totalChampagneCount  // 🆕 追加
+        });
+      } else {
+        const errorData = await reportsResponse.json();
+        console.error('❌ APIエラー:', errorData);
+      }
+    } catch (error) {
+      console.error('❌ データ取得エラー:', error);
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error('❌ データ取得エラー:', error);
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   const achievementRate = monthlySummary ? (monthlySummary.total_sales / goalSettings.sales) * 100 : 0;
 
@@ -128,7 +156,7 @@ const PersonalPage: React.FC<PersonalPageProps> = ({ user, onPageChange, onLogou
     return reportDate.getMonth() + 1 === currentMonth && reportDate.getFullYear() === currentYear;
   });
 
-  // 過去7日間のデータ取得
+  // 🆕 改善: 過去7日間のデータに実データを反映
   const getLast7DaysData = () => {
     const last7Days = [];
     const today = new Date();
@@ -143,8 +171,8 @@ const PersonalPage: React.FC<PersonalPageProps> = ({ user, onPageChange, onLogou
         date: dateStr,
         dayLabel: date.getDate() + '日',
         sales: dayReport?.total_sales || 0,
-        drinks: 0,
-        catch: 0
+        drinks: dayReport?.drink_count || 0,  // 🆕 実データ反映
+        catch: 0  // キャッチ数は将来的に実装
       });
     }
     
@@ -163,8 +191,8 @@ const PersonalPage: React.FC<PersonalPageProps> = ({ user, onPageChange, onLogou
 
   const workDays = thisMonthReports.length;
   const currentSales = monthlySummary?.total_sales || 0;
-  const totalDrinks = 0;
-  const totalCatch = 0;
+  const totalDrinks = monthlySummary?.total_drinks || 0;  // 🆕 実データ使用
+  const totalCatch = 0;  // キャッチ数は将来的に実装
 
   const updateGoalSettings = () => {
     setShowGoalSettings(false);
@@ -367,7 +395,8 @@ const PersonalPage: React.FC<PersonalPageProps> = ({ user, onPageChange, onLogou
                   borderRadius: '8px',
                   boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
                   zIndex: 10,
-                  minWidth: '120px'
+                  minWidth: '120px',
+                  marginTop: '4px'
                 }}>
                   {chartOptions.map((option) => (
                     <div
@@ -469,7 +498,7 @@ const PersonalPage: React.FC<PersonalPageProps> = ({ user, onPageChange, onLogou
           </div>
         </div>
 
-        {/* ドリンク数 */}
+        {/* 🆕 改善: ドリンク数に実データを反映 */}
         <div style={{
           backgroundColor: 'white',
           borderRadius: '12px',

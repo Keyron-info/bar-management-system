@@ -231,71 +231,97 @@ const DailyReportPage: React.FC<DailyReportPageProps> = ({ user }) => {
     setReceipts(prev => prev.filter(receipt => receipt.id !== receiptId));
   };
 
-  const submitDailyReport = async () => {
-    setLoading(true);
-    try {
-      const token = localStorage.getItem('token');
-      const store_id = user.store_id;
-      
-      if (!store_id) {
-        alert('店舗IDが見つかりません');
-        setLoading(false);
-        return;
-      }
+  // DailyReportPage.tsx の submitDailyReport 関数を以下に置き換えてください
 
-      if (!user.id) {
-        alert('ユーザーIDが見つかりません');
-        setLoading(false);
-        return;
-      }
-
-      const reportData = {
-        store_id: store_id,
-        employee_id: user.id,
-        date: selectedDate,
-        total_sales: totalSales,
-        alcohol_cost: alcoholExpense,
-        other_expenses: otherExpenses,
-        card_sales: cardSales,
-        drink_count: 0,
-        champagne_type: '',
-        champagne_price: 0,
-        work_start_time: '18:00',
-        work_end_time: '02:00',
-        break_minutes: 0,
-        notes: `伝票数: ${receipts.length}件`
-      };
-
-      console.log('📤 送信データ:', reportData);
-
-      const response = await fetch(`http://localhost:8002/api/stores/${store_id}/daily-reports`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(reportData)
-      });
-
-      if (response.ok) {
-        alert('日報が正常に提出されました！店長に通知が送信されます。');
-        
-        setReceipts([]);
-        setAlcoholExpense(0);
-        setOtherExpenses(0);
-        
-        window.location.reload();
-      } else {
-        const errorData = await response.json();
-        alert(`提出エラー: ${errorData.detail || '不明なエラー'}`);
-      }
-    } catch (error) {
-      console.error('日報提出エラー:', error);
-      alert('提出中にエラーが発生しました');
-    } finally {
+const submitDailyReport = async () => {
+  setLoading(true);
+  try {
+    const token = localStorage.getItem('token');
+    const store_id = user.store_id;
+    
+    if (!store_id) {
+      alert('店舗IDが見つかりません');
       setLoading(false);
+      return;
     }
-  };
+
+    if (!user.id) {
+      alert('ユーザーIDが見つかりません');
+      setLoading(false);
+      return;
+    }
+
+    // 🆕 伝票からドリンク数とシャンパン情報を集計
+    let totalDrinkCount = 0;
+    let totalChampagnePrice = 0;
+    let champagneTypes: string[] = [];
+
+    receipts.forEach(receipt => {
+      // ドリンク数を合計
+      if (receipt.drinks && receipt.drinks.length > 0) {
+        receipt.drinks.forEach(drink => {
+          totalDrinkCount += drink.drinkCount || 0;
+        });
+      }
+
+      // シャンパン情報を集計
+      if (receipt.champagnes && receipt.champagnes.length > 0) {
+        receipt.champagnes.forEach(champagne => {
+          totalChampagnePrice += champagne.amount || 0;
+          if (champagne.name && !champagneTypes.includes(champagne.name)) {
+            champagneTypes.push(champagne.name);
+          }
+        });
+      }
+    });
+
+    const reportData = {
+      store_id: store_id,
+      employee_id: user.id,
+      date: selectedDate,
+      total_sales: totalSales,
+      alcohol_cost: alcoholExpense,
+      other_expenses: otherExpenses,
+      card_sales: cardSales,
+      drink_count: totalDrinkCount,  // 🆕 実際のドリンク数
+      champagne_type: champagneTypes.join(', '),  // 🆕 シャンパン名
+      champagne_price: totalChampagnePrice,  // 🆕 シャンパン合計金額
+      work_start_time: '18:00',
+      work_end_time: '02:00',
+      break_minutes: 0,
+      notes: `伝票数: ${receipts.length}件, ドリンク: ${totalDrinkCount}杯, シャンパン: ¥${totalChampagnePrice.toLocaleString()}`
+    };
+
+    console.log('📤 送信データ:', reportData);
+
+    const response = await fetch(`http://localhost:8002/api/stores/${store_id}/daily-reports`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(reportData)
+    });
+
+    if (response.ok) {
+      alert('日報が正常に提出されました！店長に通知が送信されます。');
+      
+      setReceipts([]);
+      setAlcoholExpense(0);
+      setOtherExpenses(0);
+      
+      window.location.reload();
+    } else {
+      const errorData = await response.json();
+      alert(`提出エラー: ${errorData.detail || '不明なエラー'}`);
+    }
+  } catch (error) {
+    console.error('日報提出エラー:', error);
+    alert('提出中にエラーが発生しました');
+  } finally {
+    setLoading(false);
+  }
+};
 
   const getEmployeeName = (employeeId: number) => {
     const employee = storeEmployees.find(emp => emp.id === employeeId);
