@@ -432,25 +432,48 @@ def verify_store_code(
     }
 # ====== スーパーアドミン専用エンドポイント ======
 
+# backend_SaaS/main_saas.py
+# 既存の @app.get("/api/admin/dashboard") を以下に置き換えてください
+
 @app.get("/api/admin/dashboard")
 def get_super_admin_dashboard(
     admin: SystemAdmin = Depends(require_super_admin),
     db: Session = Depends(get_db)
 ):
-    """スーパーアドミンダッシュボード"""
-    # 統計データ取得
+    """スーパーアドミンダッシュボード統計（拡張版）"""
+    
+    # 基本統計
     total_orgs = db.query(Organization).filter(Organization.is_active == True).count()
     total_stores = db.query(Store).filter(Store.is_active == True).count()
     total_employees = db.query(Employee).filter(Employee.is_active == True).count()
     
+    # 🆕 アクティブ/非アクティブ店舗数
+    active_stores = db.query(Store).filter(Store.is_active == True).count()
+    inactive_stores = db.query(Store).filter(Store.is_active == False).count()
+    
     # サブスクリプション統計
     active_subs = db.query(Subscription).filter(Subscription.status == SubscriptionStatus.ACTIVE).count()
     trial_subs = db.query(Subscription).filter(Subscription.status == SubscriptionStatus.TRIAL).count()
+    suspended_subs = db.query(Subscription).filter(Subscription.status == SubscriptionStatus.SUSPENDED).count()
     
-    # 月次売上合計（全組織）
+    # 月次売上合計（サブスクリプション料金）
     monthly_revenue = db.query(func.sum(Subscription.monthly_fee)).filter(
         Subscription.status == SubscriptionStatus.ACTIVE
     ).scalar() or 0.0
+    
+    # 🆕 今月の新規店舗数
+    current_month_start = date.today().replace(day=1)
+    new_stores_this_month = db.query(Store).filter(
+        Store.created_at >= current_month_start
+    ).count()
+    
+    # 🆕 全店舗の月間売上合計（実売上）
+    total_monthly_sales = db.query(func.sum(DailyReport.total_sales)).filter(
+        DailyReport.date >= current_month_start
+    ).scalar() or 0.0
+    
+    # 🆕 平均月間売上（店舗あたり）
+    average_sales_per_store = total_monthly_sales / active_stores if active_stores > 0 else 0
     
     # 最近の組織
     recent_orgs = db.query(Organization).filter(
@@ -458,12 +481,25 @@ def get_super_admin_dashboard(
     ).order_by(Organization.created_at.desc()).limit(5).all()
     
     return {
+        # 基本統計
         "total_organizations": total_orgs,
-        "total_stores": total_stores,
+        "total_stores": total_stores + inactive_stores,  # 全店舗数（アクティブ+非アクティブ）
         "total_employees": total_employees,
-        "total_monthly_revenue": monthly_revenue,
+        "total_monthly_revenue": monthly_revenue,  # サブスクリプション収益
+        
+        # 🆕 拡張統計
+        "active_stores": active_stores,
+        "inactive_stores": inactive_stores,
+        "new_stores_this_month": new_stores_this_month,
+        "total_monthly_sales": total_monthly_sales,  # 実売上合計
+        "average_sales_per_store": average_sales_per_store,
+        
+        # サブスクリプション詳細
         "active_subscriptions": active_subs,
         "trial_subscriptions": trial_subs,
+        "suspended_subscriptions": suspended_subs,
+        
+        # 最近の組織
         "recent_organizations": [
             {
                 "id": org.id,
@@ -472,6 +508,192 @@ def get_super_admin_dashboard(
                 "contact_email": org.contact_email,
                 "created_at": org.created_at.isoformat()
             } for org in recent_orgs
+        ]
+    }
+
+# ====== スーパーアドミン専用：店舗管理エンドポイント ======
+
+@app.get("/api/admin/stores")
+def admin_list_all_stores(
+    skip: int = 0,
+    limit: int = 100,
+    is_active: Optional[bool] = None,
+    organization_id: Optional[int] = None,
+    admin: SystemAdmin = Depends(require_super_admin),
+    db: Session = Depends(get_db)
+):
+    """スーパーアドミン専用：全店舗一覧取得"""
+    query = db.query(Store).join(Organization)
+    
+    if is_active is not None:
+        query = query.filter(Store.is_active == is_active)
+    if organization_id:
+        query = query.filter(Store.organization_id == organization_id)
+    
+    stores = query.order_by(Store.created_at.desc()).offset(skip).limit(limit).all()
+    
+    result = []
+    for store in stores:
+        # 組織情報を取得
+        organization = db.query(Organization).filter(Organization.id == store.organization_id).first()
+        
+        # サブスクリプション情報を取得
+        subscription = db.query(Subscription).filter(
+            Subscription.organization_id == store.organization_id
+        ).first()
+        
+        # 従業員数を取得
+        employee_count = db.query(func.count(Employee.id)).filter(
+            Employee.store_id == store.id,
+            Employee.is_active == True
+        ).scalar() or 0
+        
+        # 今月の売上を取得
+        current_month = date.today().replace(day=1)
+        monthly_sales = db.query(func.sum(DailyReport.total_sales)).filter(
+            DailyReport.store_id == store.id,
+            DailyReport.date >= current_month
+        ).scalar() or 0
+        
+        result.append({
+            "id": store.id,
+            "organization_id": store.organization_id,
+            "organization_name": organization.name if organization else "不明",
+            "store_code": store.store_code,
+            "store_name": store.store_name,
+            "store_type": store.store_type,
+            "address": store.address,
+            "phone": store.phone,
+            "is_active": store.is_active,
+            "employee_count": employee_count,
+            "monthly_sales": monthly_sales,
+            "subscription_status": subscription.status if subscription else "none",
+            "subscription_plan": subscription.plan_name if subscription else "なし",
+            "created_at": store.created_at.isoformat(),
+            "updated_at": store.updated_at.isoformat()
+        })
+    
+    return result
+
+@app.put("/api/admin/stores/{store_id}/toggle-active")
+def admin_toggle_store_active(
+    store_id: int,
+    request: Request,
+    admin: SystemAdmin = Depends(require_super_admin),
+    db: Session = Depends(get_db)
+):
+    """スーパーアドミン専用：店舗のアクティブ状態を切り替え"""
+    store = db.query(Store).filter(Store.id == store_id).first()
+    if not store:
+        raise HTTPException(status_code=404, detail="店舗が見つかりません")
+    
+    # アクティブ状態を切り替え
+    store.is_active = not store.is_active
+    store.updated_at = datetime.utcnow()
+    
+    db.commit()
+    
+    # 監査ログ記録
+    log_user_action(
+        db, admin, "toggle_store_active", "store",
+        resource_id=store.id,
+        changes={"is_active": store.is_active},
+        request=request
+    )
+    
+    return {
+        "id": store.id,
+        "store_code": store.store_code,
+        "store_name": store.store_name,
+        "is_active": store.is_active,
+        "updated_at": store.updated_at.isoformat()
+    }
+
+@app.get("/api/admin/stores/{store_id}/details")
+def admin_get_store_details(
+    store_id: int,
+    admin: SystemAdmin = Depends(require_super_admin),
+    db: Session = Depends(get_db)
+):
+    """スーパーアドミン専用：店舗詳細情報取得"""
+    store = db.query(Store).filter(Store.id == store_id).first()
+    if not store:
+        raise HTTPException(status_code=404, detail="店舗が見つかりません")
+    
+    # 組織情報
+    organization = db.query(Organization).filter(Organization.id == store.organization_id).first()
+    
+    # サブスクリプション情報
+    subscription = db.query(Subscription).filter(
+        Subscription.organization_id == store.organization_id
+    ).first()
+    
+    # 従業員一覧
+    employees = db.query(Employee).filter(
+        Employee.store_id == store.id,
+        Employee.is_active == True
+    ).all()
+    
+    # 売上統計（過去6ヶ月）
+    six_months_ago = date.today() - timedelta(days=180)
+    sales_data = db.query(
+        func.date_trunc('month', DailyReport.date).label('month'),
+        func.sum(DailyReport.total_sales).label('total')
+    ).filter(
+        DailyReport.store_id == store.id,
+        DailyReport.date >= six_months_ago
+    ).group_by('month').order_by('month').all()
+    
+    return {
+        "store": {
+            "id": store.id,
+            "store_code": store.store_code,
+            "store_name": store.store_name,
+            "store_type": store.store_type,
+            "address": store.address,
+            "phone": store.phone,
+            "timezone": store.timezone,
+            "currency": store.currency,
+            "business_hours_start": store.business_hours_start,
+            "business_hours_end": store.business_hours_end,
+            "is_active": store.is_active,
+            "created_at": store.created_at.isoformat(),
+            "updated_at": store.updated_at.isoformat()
+        },
+        "organization": {
+            "id": organization.id,
+            "name": organization.name,
+            "domain": organization.domain,
+            "contact_email": organization.contact_email,
+            "phone": organization.phone,
+            "address": organization.address
+        } if organization else None,
+        "subscription": {
+            "id": subscription.id,
+            "plan_name": subscription.plan_name,
+            "status": subscription.status,
+            "max_stores": subscription.max_stores,
+            "max_employees_per_store": subscription.max_employees_per_store,
+            "monthly_fee": subscription.monthly_fee,
+            "trial_end_date": subscription.trial_end_date.isoformat() if subscription.trial_end_date else None,
+            "next_billing_date": subscription.next_billing_date.isoformat() if subscription.next_billing_date else None
+        } if subscription else None,
+        "employees": [
+            {
+                "id": emp.id,
+                "employee_code": emp.employee_code,
+                "name": emp.name,
+                "email": emp.email,
+                "role": emp.role,
+                "hire_date": emp.hire_date.isoformat() if emp.hire_date else None,
+                "employment_type": emp.employment_type
+            } for emp in employees
+        ],
+        "sales_history": [
+            {
+                "month": item.month.isoformat() if hasattr(item.month, 'isoformat') else str(item.month),
+                "total_sales": float(item.total)
+            } for item in sales_data
         ]
     }
 
