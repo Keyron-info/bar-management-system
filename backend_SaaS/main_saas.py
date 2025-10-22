@@ -9,24 +9,15 @@ from contextlib import asynccontextmanager
 import uvicorn
 import os
 
-# インポート部分（上部）に追加
-from database_saas import (
-    get_db, create_tables, SystemAdmin, Organization, Store, Employee, 
-    Subscription, InviteCode, DailyReport, Receipt, AuditLog,
-    PersonalGoal,  # ← 追加
-    generate_store_code, generate_employee_code, generate_invite_code,
-    create_super_admin, UserRole, SubscriptionStatus, InviteStatus
-)
-
-from schemas_saas import (
-    # ... 既存のインポート ...
-    PersonalGoalInput, PersonalGoalResponse,  # ← 追加
-)
+# Google OAuth認証用インポート
+from google.oauth2 import id_token
+from google.auth.transport import requests as google_requests
 
 # SaaS対応インポート
 from database_saas import (
     get_db, create_tables, SystemAdmin, Organization, Store, Employee, 
     Subscription, InviteCode, DailyReport, Receipt, AuditLog,
+    PersonalGoal,
     generate_store_code, generate_employee_code, generate_invite_code,
     create_super_admin, UserRole, SubscriptionStatus, InviteStatus
 )
@@ -58,6 +49,9 @@ from schemas_saas import (
     # フィルター・ページネーション
     PaginationParams, PaginatedResponse, EmployeeFilter, DailyReportFilter,
     
+    # 個人目標関連
+    PersonalGoalInput, PersonalGoalResponse,
+    
     # 後方互換性
     LegacyTokenResponse, LegacyUserResponse,
     
@@ -73,6 +67,10 @@ from auth_saas import (
     ACCESS_TOKEN_EXPIRE_MINUTES
 )
 
+# Googleクライアント設定
+GOOGLE_CLIENT_ID = "650805213837-gr5gm541euvep495jahcnm3ku0r6vv72.apps.googleusercontent.com"
+
+# ★★★ ここでFastAPIアプリを作成 ★★★
 app = FastAPI(
     title="バー管理システム SaaS API", 
     version="3.0.0",
@@ -152,7 +150,7 @@ def startup_event():
         create_tables()
         print("データベーステーブル作成完了")
         
-        # 開発用スーパーアドミン作成（エラーハンドリング強化）
+        # 開発用スーパーアドミン作成
         print("スーパーアドミンを作成中...")
         try:
             admin = create_super_admin(
@@ -177,6 +175,7 @@ def startup_event():
     except Exception as e:
         print(f"起動時エラー: {e}")
         print("アプリケーションは起動しますが、一部機能が制限される可能性があります")
+
 
 # ====== ヘルスチェック・基本エンドポイント ======
 
@@ -284,6 +283,187 @@ def employee_login(
             "created_at": employee.created_at.isoformat()
         }
     }
+
+# 🆕 ====== Google OAuth認証エンドポイント ======
+
+@app.post("/api/auth/google/employee")
+def google_employee_login(
+    token: str = Form(...),
+    store_code: str = Form(...),
+    db: Session = Depends(get_db)
+):
+    """Google OAuth - 従業員ログイン"""
+    try:
+        # Googleトークンを検証
+        idinfo = id_token.verify_oauth2_token(
+            token, 
+            google_requests.Request(), 
+            GOOGLE_CLIENT_ID
+        )
+        
+        # メールアドレスを取得
+        email = idinfo.get('email')
+        name = idinfo.get('name', email.split('@')[0] if email else "ユーザー")
+        
+        if not email:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Googleアカウントからメールアドレスを取得できませんでした"
+            )
+        
+        # 店舗を検索
+        store = db.query(Store).filter(Store.store_code == store_code).first()
+        if not store:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="指定された店舗コードが見つかりません"
+            )
+        
+        # メールアドレスで従業員を検索
+        employee = db.query(Employee).filter(
+            Employee.email == email,
+            Employee.store_id == store.id
+        ).first()
+        
+        # 従業員が見つからない場合は新規登録
+        if not employee:
+            # 従業員コード生成
+            employee_code = generate_employee_code(store.store_code)
+            
+            # 新規従業員として登録
+            employee = Employee(
+                store_id=store.id,
+                employee_code=employee_code,
+                name=name,
+                email=email,
+                password_hash=get_password_hash("google_oauth_user"),  # ダミーパスワード
+                role=UserRole.STAFF,  # デフォルトはスタッフ
+                hire_date=date.today(),
+                is_active=True
+            )
+            db.add(employee)
+            db.commit()
+            db.refresh(employee)
+        
+        # 非アクティブチェック
+        if not employee.is_active:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="このアカウントは無効化されています"
+            )
+        
+        # JWTトークン作成
+        access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        access_token = create_access_token(
+            data={
+                "user_id": employee.id,
+                "user_type": "employee",
+                "email": employee.email,
+                "store_id": employee.store_id
+            },
+            expires_delta=access_token_expires
+        )
+        
+        # レスポンス
+        return {
+            "access_token": access_token,
+            "token_type": "bearer",
+            "user": {
+                "id": employee.id,
+                "email": employee.email,
+                "name": employee.name,
+                "role": employee.role,
+                "store_id": employee.store_id,
+                "employee_code": employee.employee_code
+            },
+            "store": {
+                "id": store.id,
+                "store_code": store.store_code,
+                "store_name": store.store_name
+            }
+        }
+        
+    except ValueError as e:
+        # トークン検証失敗
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"無効なGoogleトークンです: {str(e)}"
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"認証エラー: {str(e)}"
+        )
+
+
+@app.post("/api/auth/google/admin")
+def google_admin_login(
+    token: str = Form(...),
+    db: Session = Depends(get_db)
+):
+    """Google OAuth - スーパーアドミンログイン"""
+    try:
+        # Googleトークンを検証
+        idinfo = id_token.verify_oauth2_token(
+            token, 
+            google_requests.Request(), 
+            GOOGLE_CLIENT_ID
+        )
+        
+        # メールアドレスを取得
+        email = idinfo.get('email')
+        
+        if not email:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Googleアカウントからメールアドレスを取得できませんでした"
+            )
+        
+        # 管理者を検索
+        admin = db.query(SystemAdmin).filter(
+            SystemAdmin.email == email,
+            SystemAdmin.is_active == True
+        ).first()
+        
+        if not admin:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="このGoogleアカウントは管理者として登録されていません"
+            )
+        
+        # JWTトークン作成
+        access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        access_token = create_access_token(
+            data={"user_id": admin.id, "user_type": "admin", "email": admin.email},
+            expires_delta=access_token_expires
+        )
+        
+        return {
+            "access_token": access_token,
+            "token_type": "bearer",
+            "admin": {
+                "id": admin.id,
+                "email": admin.email,
+                "name": admin.name,
+                "is_super_admin": admin.is_super_admin,
+                "can_create_organizations": admin.can_create_organizations,
+                "can_manage_subscriptions": admin.can_manage_subscriptions,
+                "can_access_all_data": admin.can_access_all_data,
+                "is_active": admin.is_active
+            }
+        }
+        
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"無効なGoogleトークンです: {str(e)}"
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"認証エラー: {str(e)}"
+        )
+    
 
 # 後方互換性のためのレガシーログインエンドポイント
 @app.post("/api/auth/login")
