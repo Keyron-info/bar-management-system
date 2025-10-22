@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { API_BASE_URL } from '../config';
 import { Mail, Lock, User, Building2, ArrowLeft, CheckCircle } from 'lucide-react';
 
 interface RegisterPageProps {
@@ -24,7 +25,7 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ onRegisterSuccess, onBackTo
     setMessage('');
 
     try {
-      const response = await fetch(`http://localhost:8002/api/auth/verify-store-code/${storeCode}`);
+      const response = await fetch(`${API_BASE_URL}/api/auth/verify-store-code/${storeCode}`);
       const data = await response.json();
 
       if (response.ok) {
@@ -75,7 +76,7 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ onRegisterSuccess, onBackTo
     setMessage('');
 
     try {
-      const response = await fetch('http://localhost:8002/api/auth/employee/register', {
+      const response = await fetch('${API_BASE_URL}/api/auth/employee/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

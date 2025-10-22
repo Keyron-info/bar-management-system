@@ -63,14 +63,14 @@ const StorePage: React.FC<StorePageProps> = ({ user }) => {
       
       if (!token || !store_id) return;
 
-      const dashboardResponse = await fetch(`http://localhost:8002/api/stores/${store_id}/dashboard`, {
+      const dashboardResponse = await fetch(`${API_BASE_URL}/api/stores/${store_id}/dashboard`, {
         headers: { 
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
       });
 
-      const reportsResponse = await fetch(`http://localhost:8002/api/stores/${store_id}/daily-reports`, {
+      const reportsResponse = await fetch(`${API_BASE_URL}/api/stores/${store_id}/daily-reports`, {
         headers: { 
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_BASE_URL } from '../config';
 import { User, Mail, Shield, Bell, Lock, ChevronRight, LogOut, Users, Plus, Edit, Eye, EyeOff, X, Check, AlertCircle, Copy, Trash2, Clock } from 'lucide-react';
 import './SettingsPage.css';
 
@@ -90,7 +91,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user, onLogout }) => {
       const userData = JSON.parse(userDataStr);
       const storeId = userData.store_id;
       
-      const response = await fetch(`http://localhost:8002/api/stores/${storeId}/invite-codes`, {
+      const response = await fetch(`${API_BASE_URL}/api/stores/${storeId}/invite-codes`, {
         headers: getAuthHeaders()
       });
       
@@ -120,7 +121,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user, onLogout }) => {
       const userData = JSON.parse(userDataStr);
       const storeId = userData.store_id;
       
-      const response = await fetch(`http://localhost:8002/api/stores/${storeId}/invite-codes`, {
+      const response = await fetch(`${API_BASE_URL}/api/stores/${storeId}/invite-codes`, {
         method: 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify(newInvite)
@@ -174,7 +175,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user, onLogout }) => {
       const userData = JSON.parse(userDataStr);
       const storeId = userData.store_id;
       
-      const response = await fetch(`http://localhost:8002/api/stores/${storeId}/employees`, {
+      const response = await fetch(`${API_BASE_URL}/api/stores/${storeId}/employees`, {
         headers: getAuthHeaders()
       });
       
@@ -199,7 +200,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user, onLogout }) => {
   // 従業員アクティブ状態の切り替え
   const toggleEmployeeStatus = async (employeeId: number, isActive: boolean) => {
     try {
-      const response = await fetch(`http://localhost:8002/api/employees/${employeeId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/employees/${employeeId}`, {
         method: 'PATCH',
         headers: getAuthHeaders(),
         body: JSON.stringify({ is_active: !isActive })

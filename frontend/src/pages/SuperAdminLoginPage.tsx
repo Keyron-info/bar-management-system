@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { API_BASE_URL } from '../config';
 import { GoogleLogin, GoogleOAuthProvider } from '@react-oauth/google';
 import { Shield, Mail, Lock, AlertCircle } from 'lucide-react';
 
@@ -24,7 +25,7 @@ const SuperAdminLoginPage: React.FC<SuperAdminLoginProps> = ({ onLoginSuccess })
     setError('');
 
     try {
-      const response = await fetch('http://localhost:8002/api/auth/admin/login', {
+      const response = await fetch('${API_BASE_URL}/api/auth/admin/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -61,7 +62,7 @@ const SuperAdminLoginPage: React.FC<SuperAdminLoginProps> = ({ onLoginSuccess })
       const formData = new FormData();
       formData.append('token', credentialResponse.credential);
 
-      const response = await fetch('http://localhost:8002/api/auth/google/admin', {
+      const response = await fetch('${API_BASE_URL}/api/auth/google/admin', {
         method: 'POST',
         body: formData,
       });

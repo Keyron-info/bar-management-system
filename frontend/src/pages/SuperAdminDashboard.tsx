@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_BASE_URL } from '../config';
 import { Building2, Store, Users, DollarSign, LogOut, Plus, Search, Eye, Power, X, TrendingUp, Calendar } from 'lucide-react';
 
 interface SuperAdminDashboardProps {
@@ -107,7 +108,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ admin, onLogo
   const fetchDashboardData = async () => {
     try {
       const token = localStorage.getItem('admin_token');
-      const response = await fetch('http://localhost:8002/api/admin/dashboard', {
+      const response = await fetch('${API_BASE_URL}/api/admin/dashboard', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 
@@ -124,7 +125,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ admin, onLogo
     setLoading(true);
     try {
       const token = localStorage.getItem('admin_token');
-      const response = await fetch('http://localhost:8002/api/admin/stores', {
+      const response = await fetch('${API_BASE_URL}/api/admin/stores', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 
@@ -143,7 +144,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ admin, onLogo
   const fetchStoreDetails = async (storeId: number) => {
     try {
       const token = localStorage.getItem('admin_token');
-      const response = await fetch(`http://localhost:8002/api/admin/stores/${storeId}/details`, {
+      const response = await fetch(`${API_BASE_URL}/api/admin/stores/${storeId}/details`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 
@@ -160,7 +161,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ admin, onLogo
   const toggleStoreActive = async (storeId: number) => {
     try {
       const token = localStorage.getItem('admin_token');
-      const response = await fetch(`http://localhost:8002/api/admin/stores/${storeId}/toggle-active`, {
+      const response = await fetch(`${API_BASE_URL}/api/admin/stores/${storeId}/toggle-active`, {
         method: 'PUT',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -181,7 +182,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ admin, onLogo
     
     try {
       const token = localStorage.getItem('admin_token');
-      const response = await fetch('http://localhost:8002/api/admin/stores/setup', {
+      const response = await fetch('${API_BASE_URL}/api/admin/stores/setup', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

@@ -74,8 +74,8 @@ const ReportHistoryPage: React.FC<ReportHistoryPageProps> = ({ user }) => {
 
       // 従業員の場合は自分の日報のみ、店長・オーナーは全員の日報を取得
       const url = user.role === 'manager' || user.role === 'owner'
-        ? `http://localhost:8002/api/stores/${store_id}/daily-reports`
-        : `http://localhost:8002/api/stores/${store_id}/daily-reports?employee_id=${user.id}`;
+        ? `${API_BASE_URL}/api/stores/${store_id}/daily-reports`
+        : `${API_BASE_URL}/api/stores/${store_id}/daily-reports?employee_id=${user.id}`;
 
       const response = await fetch(url, {
         headers: {
@@ -105,7 +105,7 @@ const ReportHistoryPage: React.FC<ReportHistoryPageProps> = ({ user }) => {
       
       if (!token || !store_id) return;
 
-      const response = await fetch(`http://localhost:8002/api/stores/${store_id}/employees`, {
+      const response = await fetch(`${API_BASE_URL}/api/stores/${store_id}/employees`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -163,7 +163,7 @@ const ReportHistoryPage: React.FC<ReportHistoryPageProps> = ({ user }) => {
       const store_id = user.store_id;
       
       const response = await fetch(
-        `http://localhost:8002/api/stores/${store_id}/daily-reports/${reportId}/approve`,
+        `${API_BASE_URL}/api/stores/${store_id}/daily-reports/${reportId}/approve`,
         {
           method: 'PATCH',
           headers: {

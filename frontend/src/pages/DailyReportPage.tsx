@@ -81,7 +81,7 @@ const DailyReportPage: React.FC<DailyReportPageProps> = ({ user }) => {
         return;
       }
 
-      const response = await fetch(`http://localhost:8002/api/stores/${store_id}/employees`, {
+      const response = await fetch(`${API_BASE_URL}/api/stores/${store_id}/employees`, {
         headers: { 
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -294,7 +294,7 @@ const submitDailyReport = async () => {
 
     console.log('📤 送信データ:', reportData);
 
-    const response = await fetch(`http://localhost:8002/api/stores/${store_id}/daily-reports`, {
+    const response = await fetch(`${API_BASE_URL}/api/stores/${store_id}/daily-reports`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,

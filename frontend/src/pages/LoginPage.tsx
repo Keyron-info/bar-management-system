@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { API_BASE_URL } from '../config';
 import { GoogleLogin, GoogleOAuthProvider } from '@react-oauth/google';
 import { Mail, Lock, Building2 } from 'lucide-react';
 import './Loginpage.css';
@@ -33,7 +34,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess, onShowRegister })
       formBody.append('password', password);
       formBody.append('store_code', storeCode);
 
-      const response = await fetch('http://localhost:8002/api/auth/employee/login', {
+      const response = await fetch('${API_BASE_URL}/api/auth/employee/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
@@ -79,7 +80,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess, onShowRegister })
       formData.append('token', credentialResponse.credential);
       formData.append('store_code', storeCode);
 
-      const response = await fetch('http://localhost:8002/api/auth/google/employee', {
+      const response = await fetch('${API_BASE_URL}/api/auth/google/employee', {
         method: 'POST',
         body: formData,
       });

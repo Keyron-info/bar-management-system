@@ -83,7 +83,7 @@ const PersonalPage: React.FC<PersonalPageProps> = ({ user, onPageChange, onLogou
 
       // 自分の日報一覧を取得
       const reportsResponse = await fetch(
-        `http://localhost:8002/api/stores/${store_id}/daily-reports?employee_id=${user.id}`,
+        `${API_BASE_URL}/api/stores/${store_id}/daily-reports?employee_id=${user.id}`,
         {
           headers: { 
             'Authorization': `Bearer ${token}`,
