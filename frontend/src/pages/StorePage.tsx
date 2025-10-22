@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_BASE_URL } from '../config';
 import { Settings, X, Target, TrendingUp, Users, FileText } from 'lucide-react';
 import ReportHistoryPage from './ReportHistoryPage';
 

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_BASE_URL } from '../config';
 import { Calendar, Plus, Settings, X, Receipt, Calculator, DollarSign, User, Edit, ChevronDown, Wine, Trash2 } from 'lucide-react';
 
 interface User {
