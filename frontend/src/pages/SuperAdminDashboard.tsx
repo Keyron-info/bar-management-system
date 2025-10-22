@@ -108,7 +108,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ admin, onLogo
   const fetchDashboardData = async () => {
     try {
       const token = localStorage.getItem('admin_token');
-      const response = await fetch('${API_BASE_URL}/api/admin/dashboard', {
+      const response = await fetch(`${API_BASE_URL}/api/admin/dashboard', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 
@@ -125,7 +125,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ admin, onLogo
     setLoading(true);
     try {
       const token = localStorage.getItem('admin_token');
-      const response = await fetch('${API_BASE_URL}/api/admin/stores', {
+      const response = await fetch(`${API_BASE_URL}/api/admin/stores', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 
@@ -182,7 +182,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ admin, onLogo
     
     try {
       const token = localStorage.getItem('admin_token');
-      const response = await fetch('${API_BASE_URL}/api/admin/stores/setup', {
+      const response = await fetch(`${API_BASE_URL}/api/admin/stores/setup', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

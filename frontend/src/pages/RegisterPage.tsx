@@ -76,7 +76,7 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ onRegisterSuccess, onBackTo
     setMessage('');
 
     try {
-      const response = await fetch('${API_BASE_URL}/api/auth/employee/register', {
+      const response = await fetch(`${API_BASE_URL}/api/auth/employee/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
