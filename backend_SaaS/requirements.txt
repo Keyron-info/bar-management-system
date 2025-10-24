@@ -1,4 +1,4 @@
-# SaaS版バー管理システム 必要パッケージ
+# SaaS版バー管理システム 必要パッケージ (PostgreSQL対応)
 
 # Web フレームワーク
 fastapi==0.104.1
@@ -7,6 +7,7 @@ uvicorn[standard]==0.24.0
 # データベース
 sqlalchemy==2.0.23
 alembic==1.12.1
+psycopg2-binary==2.9.9  # PostgreSQL用ドライバー（追加）
 
 # 認証・セキュリティ
 passlib[bcrypt]==1.7.4
