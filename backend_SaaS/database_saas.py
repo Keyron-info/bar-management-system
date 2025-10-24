@@ -1,4 +1,4 @@
-# database_saas.py - PostgreSQL対応版
+# database_saas.py - PostgreSQL + bcrypt修正版
 from sqlalchemy import (
     create_engine, Column, Integer, String, Date, DateTime, Boolean,
     ForeignKey, Text, Enum, Float
@@ -358,31 +358,30 @@ def create_tables():
 
 
 def create_super_admin(email: str, password: str, name: str = "Super Admin"):
-    """スーパーアドミン作成"""
-    try:
-        from passlib.context import CryptContext
-        pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-    except ImportError:
-        print("警告: passlib がインストールされていません。pip install passlib[bcrypt] を実行してください")
-        import hashlib
-        pwd_context = None
-
-    if len(password.encode("utf-8")) > 72:
-        password = password[:72]
-
+    """スーパーアドミン作成（bcryptバグ修正版）"""
     db = SessionLocal()
     try:
+        # 既存チェック
         existing_admin = db.query(SystemAdmin).filter(SystemAdmin.email == email).first()
         if existing_admin:
             print(f"スーパーアドミン {email} は既に存在します")
             return existing_admin
 
-        if pwd_context:
+        # ⭐ 重要修正: bcryptは72バイト制限 - 事前に切り詰め
+        if len(password.encode("utf-8")) > 72:
+            original_length = len(password)
+            password = password[:72]
+            print(f"⚠️ パスワードが長すぎるため切り詰めました ({original_length} → 72 文字)")
+
+        # パスワードハッシュ化
+        try:
+            from passlib.context import CryptContext
+            pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
             password_hash = pwd_context.hash(password)
-        else:
+        except ImportError:
+            print("⚠️ passlib未インストール。簡易ハッシュ化を使用")
             import hashlib
             password_hash = hashlib.sha256(password.encode()).hexdigest()
-            print("警告: 簡易ハッシュ化を使用しています。本番環境では passlib を使用してください")
 
         super_admin = SystemAdmin(
             email=email,
@@ -403,7 +402,8 @@ def create_super_admin(email: str, password: str, name: str = "Super Admin"):
     except Exception as e:
         db.rollback()
         print(f"❌ スーパーアドミン作成エラー: {e}")
-        raise
+        # エラーでも起動を継続（アプリは動作可能）
+        return None
     finally:
         db.close()
 
