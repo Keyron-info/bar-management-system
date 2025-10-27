@@ -649,7 +649,7 @@ def get_super_admin_dashboard(
     
     # 🆕 全店舗の月間売上合計（実売上）
     total_monthly_sales = db.query(func.sum(DailyReport.total_sales)).filter(
-        DailyReport.date >= current_month_start
+        DailyReport.report_date >= current_month_start
     ).scalar() or 0.0
     
     # 🆕 平均月間売上（店舗あたり）
