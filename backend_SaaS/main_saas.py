@@ -80,7 +80,7 @@ app = FastAPI(
 # CORS設定（本番環境対応）
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # 開発段階では全てのオリジンを許可
+    allow_origins=["*", "https://bar-management-system-two.vercel.app"],  # 開発段階では全てのオリジンを許可
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
