@@ -80,7 +80,11 @@ app = FastAPI(
 # CORS設定（本番環境対応）
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*", "https://bar-management-system-two.vercel.app"],  # 開発段階では全てのオリジンを許可
+    allow_origins=[
+        "https://bar-management-system-two.vercel.app",
+        "http://localhost:3000",
+        "http://localhost:5173"
+    ],
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
@@ -180,11 +184,6 @@ def startup_event():
 # ====== ヘルスチェック・基本エンドポイント ======
 
 @app.get("/")
-async def root():
-    return JSONResponse(
-        content={"message": "バー管理システム SaaS API が正常に動作しています", "version": "3.0.0"},
-        media_type="application/json; charset=utf-8"
-    )
 async def root():
     return JSONResponse(
         content={"message": "バー管理システム SaaS API が正常に動作しています", "version": "3.0.0"},
