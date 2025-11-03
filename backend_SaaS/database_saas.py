@@ -1,7 +1,7 @@
 # database_saas.py - PostgreSQL + bcrypt修正版
 from sqlalchemy import (
     create_engine, Column, Integer, String, Date, DateTime, Boolean,
-    ForeignKey, Text, Enum, Float
+    ForeignKey, Text, Enum, Float, text
 )
 from sqlalchemy.orm import declarative_base, sessionmaker, relationship
 from datetime import datetime
