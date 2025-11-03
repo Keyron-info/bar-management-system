@@ -9,6 +9,8 @@ import secrets
 import string
 import enum
 import os
+from sqlalchemy.pool import QueuePool
+import time
 
 # ==============================
 # DB 接続設定 (PostgreSQL対応)
@@ -34,13 +36,62 @@ if DATABASE_URL.startswith("sqlite"):
     connect_args = {"check_same_thread": False}
 
 # エンジン作成
-engine = create_engine(
-    DATABASE_URL,
-    connect_args=connect_args,
-    future=True,
-    pool_pre_ping=True,  # 接続の健全性チェック（PostgreSQL推奨）
-    echo=False  # SQLログ出力（デバッグ時はTrueに）
-)
+# PostgreSQL接続設定の強化
+engine_kwargs = {
+    "future": True,
+    "echo": False,
+    "pool_pre_ping": True,
+}
+
+# PostgreSQLの場合のみ追加設定
+if DATABASE_URL.startswith("postgresql"):
+    engine_kwargs.update({
+        "poolclass": QueuePool,
+        "pool_size": 5,
+        "max_overflow": 10,
+        "pool_timeout": 30,
+        "pool_recycle": 3600,
+        "connect_args": {
+            "connect_timeout": 10,
+            "keepalives": 1,
+            "keepalives_idle": 30,
+            "keepalives_interval": 10,
+            "keepalives_count": 5,
+            "sslmode": "require",
+        }
+    })
+else:
+    # SQLiteの場合
+    engine_kwargs["connect_args"] = connect_args
+
+# リトライ機能付きエンジン作成
+def create_db_engine_with_retry(max_retries=3, retry_delay=2):
+    for attempt in range(max_retries):
+        try:
+            print(f"データベース接続試行 {attempt + 1}/{max_retries}")
+            engine = create_engine(DATABASE_URL, **engine_kwargs)
+            
+            # 接続テスト
+            with engine.connect() as conn:
+                conn.execute("SELECT 1")
+            
+            print("✅ データベース接続成功")
+            return engine
+            
+        except Exception as e:
+            print(f"❌ 接続エラー (試行 {attempt + 1}/{max_retries}): {e}")
+            
+            if attempt < max_retries - 1:
+                print(f"⏳ {retry_delay}秒後に再試行...")
+                time.sleep(retry_delay)
+            else:
+                print("❌ 全ての接続試行が失敗しました")
+                # フォールバック: 基本設定でエンジン作成
+                print("基本設定でエンジンを作成します...")
+                return create_engine(DATABASE_URL, pool_pre_ping=True)
+
+# エンジン作成
+engine = create_db_engine_with_retry()
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
