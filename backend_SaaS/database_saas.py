@@ -73,7 +73,7 @@ def create_db_engine_with_retry(max_retries=3, retry_delay=2):
             
             # 接続テスト
             with engine.connect() as conn:
-                conn.execute("SELECT 1")
+                conn.execute(text("SELECT 1"))
             
             print("✅ データベース接続成功")
             return engine
@@ -86,7 +86,7 @@ def create_db_engine_with_retry(max_retries=3, retry_delay=2):
                 time.sleep(retry_delay)
             else:
                 print("❌ 全ての接続試行が失敗しました")
-                # フォールバック: 基本設定でエンジン作成
+                # フォールバック
                 print("基本設定でエンジンを作成します...")
                 return create_engine(DATABASE_URL, pool_pre_ping=True)
 
