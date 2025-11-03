@@ -7,15 +7,16 @@ uvicorn[standard]==0.24.0
 # データベース
 sqlalchemy==2.0.23
 alembic==1.12.1
-psycopg2-binary==2.9.9  # PostgreSQL用ドライバー
+psycopg2-binary==2.9.9
 
 # 認証・セキュリティ
+# bcrypt 4.0.1を使用（Rustビルド不要）
+bcrypt==4.0.1
 passlib[bcrypt]==1.7.4
-bcrypt==4.1.2  # 最新版に更新（bcryptバグ修正）
 python-jose[cryptography]==3.3.0
 python-multipart==0.0.6
 
-# Google OAuth (追加)
+# Google OAuth
 google-auth==2.25.2
 google-auth-oauthlib==1.2.0
 google-auth-httplib2==0.2.0
