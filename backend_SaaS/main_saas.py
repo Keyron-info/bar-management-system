@@ -78,16 +78,24 @@ app = FastAPI(
 )
 
 # CORS設定（本番環境対応）
+# backend_SaaS/main_saas.py の CORS設定部分を以下に置き換えてください
+# (33行目あたり)
+
+# CORS設定（本番環境対応 - 改善版）
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "https://bar-management-system-two.vercel.app",
         "http://localhost:3000",
-        "http://localhost:5173"
+        "http://localhost:5173",
+        "http://localhost:5174",
+        "http://127.0.0.1:5173",
+        "http://127.0.0.1:5174"
     ],
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allow_headers=["*"],
+    allow_methods=["*"],  # すべてのメソッドを許可（より確実）
+    allow_headers=["*"],  # すべてのヘッダーを許可
+    expose_headers=["*"],  # すべてのレスポンスヘッダーを公開
 )
 
 # セキュリティヘッダーミドルウェア
