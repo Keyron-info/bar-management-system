@@ -318,11 +318,13 @@ def check_rate_limit(request: Request, db: Session, user_id: int, user_type: str
 
 # ====== 監査ログ関数 ======
 
+# auth_saas.py の log_user_action 関数を以下に置き換え
+
 def log_user_action(
     db: Session,
     user: Union[SystemAdmin, Employee],
     action: str,
-    resource_type: str,
+    resource_type: str,  # ← 引数名はそのまま
     resource_id: Optional[int] = None,
     changes: Optional[dict] = None,
     request: Optional[Request] = None
@@ -334,31 +336,23 @@ def log_user_action(
         user_id = user.id
         user_type = "admin"
         user_email = user.email
-        organization_id = None
-        store_id = None
     else:
         user_id = user.id
         user_type = "employee"
         user_email = user.email
-        store = db.query(Store).filter(Store.id == user.store_id).first()
-        organization_id = store.organization_id if store else None
-        store_id = user.store_id
     
     ip_address = get_client_ip(request) if request else None
-    user_agent = request.headers.get("User-Agent") if request else None
     
+    # ★★★ 修正箇所: AuditLogの正しいカラム名を使用 ★★★
     audit_log = AuditLog(
         user_id=user_id,
         user_type=user_type,
         user_email=user_email,
         action=action,
-        resource_type=resource_type,
-        resource_id=resource_id,
-        changes=json.dumps(changes, ensure_ascii=False) if changes else None,
+        entity_type=resource_type,  # ← resource_type → entity_type
+        entity_id=resource_id if resource_id else 0,  # ← resource_id → entity_id (0をデフォルト値に)
+        details=json.dumps(changes, ensure_ascii=False) if changes else None,  # ← changes → details
         ip_address=ip_address,
-        user_agent=user_agent,
-        organization_id=organization_id,
-        store_id=store_id
     )
     
     db.add(audit_log)
