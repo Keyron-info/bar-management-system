@@ -78,41 +78,54 @@ app = FastAPI(
 )
 
 # CORS設定（本番環境対応）
-# backend_SaaS/main_saas.py の CORS設定部分を以下に置き換えてください
-# (33行目あたり)
+# backend_SaaS/main_saas.py
+# 28行目から60行目あたりのCORS設定を以下に完全置き換え
 
-# CORS設定（本番環境対応 - 改善版）
+# ★★★ CORS設定（本番環境対応 - 完全版）★★★
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "https://bar-management-system-two.vercel.app",
-        "http://localhost:3000",
-        "http://localhost:5173",
-        "http://localhost:5174",
-        "http://127.0.0.1:5173",
-        "http://127.0.0.1:5174"
-    ],
+    allow_origins=["*"],  # 開発中は全て許可
     allow_credentials=True,
-    allow_methods=["*"],  # すべてのメソッドを許可（より確実）
-    allow_headers=["*"],  # すべてのヘッダーを許可
-    expose_headers=["*"],  # すべてのレスポンスヘッダーを公開
+    allow_methods=["*"],
+    allow_headers=["*"],
+    expose_headers=["*"],
 )
+
+# プリフライトリクエストの明示的処理
+@app.options("/{path:path}")
+async def handle_options(path: str):
+    """すべてのOPTIONSリクエストを処理"""
+    return JSONResponse(
+        content={},
+        headers={
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS, PATCH",
+            "Access-Control-Allow-Headers": "*",
+            "Access-Control-Allow-Credentials": "true",
+            "Access-Control-Max-Age": "86400",
+        }
+    )
 
 # セキュリティヘッダーミドルウェア
 @app.middleware("http")
 async def add_security_headers(request: Request, call_next):
     response = await call_next(request)
     
-    # セキュリティヘッダーを追加
-    security_headers = create_security_headers()
-    for header, value in security_headers.items():
-        response.headers[header] = value
+    # CORSヘッダーを強制的に追加
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Credentials"] = "true"
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, PATCH"
+    response.headers["Access-Control-Allow-Headers"] = "*"
     
     # UTF-8レスポンス
     if response.headers.get("content-type", "").startswith("application/json"):
         response.headers["content-type"] = "application/json; charset=utf-8"
     
     return response
+
+
+# ========== 以下は既存のコードをそのまま残す ==========
+# check_dependencies() 関数から続く...
 
 # 依存関係チェック関数
 def check_dependencies():
