@@ -1046,11 +1046,10 @@ def setup_store_complete(
         db.flush()
         
         # 5. 初期招待コード作成
-        initial_invite = generate_invite_code()
         invite_code = InviteCode(
             store_id=store.id,
-            invite_code=initial_invite,
-            invited_role=UserRole.MANAGER,
+            code=initial_invite,  # ✅
+            role=UserRole.MANAGER,  # ✅
             expires_at=datetime.utcnow() + timedelta(days=7),
             max_uses=5
         )
@@ -1382,9 +1381,8 @@ def create_invite_code(
     
     invite_code = InviteCode(
         store_id=store_id,
-        invite_code=invite_code_str,
-        invited_role=invite_data.invited_role,
-        invited_email=invite_data.invited_email,
+        code=invite_code_str,  # ✅
+        role=invite_data.invited_role,  # ✅
         expires_at=datetime.utcnow() + timedelta(hours=invite_data.expires_in_hours),
         max_uses=invite_data.max_uses
     )
@@ -1404,8 +1402,8 @@ def create_invite_code(
     return {
         "id": invite_code.id,
         "store_id": invite_code.store_id,
-        "invite_code": invite_code.invite_code,
-        "invited_role": invite_code.invited_role,
+        "invite_code": invite_code.code,  
+        "invited_role": invite_code.role,  
         "invited_email": invite_code.invited_email,
         "status": invite_code.status,
         "expires_at": invite_code.expires_at.isoformat(),
@@ -1433,8 +1431,8 @@ def list_invite_codes(
     return [
         {
             "id": code.id,
-            "invite_code": code.invite_code,
-            "invited_role": code.invited_role,
+            "invite_code": code.code,  # ✅ 修正
+            "invited_role": code.role,  # ✅ 修正
             "invited_email": code.invited_email,
             "status": code.status,
             "expires_at": code.expires_at.isoformat(),
@@ -1453,7 +1451,7 @@ def use_invite_code(
     """招待コードを使用して従業員登録"""
     # 招待コード検証
     invite_code = db.query(InviteCode).filter(
-        InviteCode.invite_code == invite_data.invite_code,
+        InviteCode.code == invite_data.invite_code,  
         InviteCode.status == InviteStatus.PENDING,
         InviteCode.expires_at > datetime.utcnow(),
         InviteCode.current_uses < InviteCode.max_uses
@@ -1488,7 +1486,7 @@ def use_invite_code(
         name=invite_data.employee_data.name,
         email=invite_data.employee_data.email,
         password_hash=get_password_hash(invite_data.employee_data.password),
-        role=invite_code.invited_role,  # 招待コードで指定された役割
+        role=invite_code.role,  # 招待コードで指定された役割
         hire_date=date.today(),
         hourly_wage=invite_data.employee_data.hourly_wage,
         employment_type=invite_data.employee_data.employment_type,
