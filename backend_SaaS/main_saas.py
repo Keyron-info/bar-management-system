@@ -1046,6 +1046,7 @@ def setup_store_complete(
         db.flush()
         
         # 5. 初期招待コード作成
+        initial_invite = generate_invite_code()
         invite_code = InviteCode(
             store_id=store.id,
             code=initial_invite,  # ✅
