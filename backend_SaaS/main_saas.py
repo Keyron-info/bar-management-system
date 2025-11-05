@@ -752,7 +752,7 @@ def admin_list_all_stores(
         current_month = date.today().replace(day=1)
         monthly_sales = db.query(func.sum(DailyReport.total_sales)).filter(
             DailyReport.store_id == store.id,
-            DailyReport.date >= current_month
+            DailyReport.report_date >= current_month
         ).scalar() or 0
         
         result.append({
@@ -837,11 +837,11 @@ def admin_get_store_details(
     # 売上統計（過去6ヶ月）
     six_months_ago = date.today() - timedelta(days=180)
     sales_data = db.query(
-        func.date_trunc('month', DailyReport.date).label('month'),
+        func.date_trunc('month', DailyReport.report_date).label('month'),
         func.sum(DailyReport.total_sales).label('total')
     ).filter(
         DailyReport.store_id == store.id,
-        DailyReport.date >= six_months_ago
+        DailyReport.report_date >= six_months_ago
     ).group_by('month').order_by('month').all()
     
     return {
@@ -1193,14 +1193,14 @@ def get_store_dashboard(
     today = date.today()
     today_sales = db.query(func.sum(DailyReport.total_sales)).filter(
         DailyReport.store_id == store_id,
-        DailyReport.date == today
+        DailyReport.report_date == today
     ).scalar() or 0
     
     # 今月の売上
     current_month = today.replace(day=1)
     month_sales = db.query(func.sum(DailyReport.total_sales)).filter(
         DailyReport.store_id == store_id,
-        DailyReport.date >= current_month
+        DailyReport.report_date >= current_month
     ).scalar() or 0
     
     # アクティブ従業員数
@@ -1534,7 +1534,7 @@ def create_daily_report(
     existing_report = db.query(DailyReport).filter(
         DailyReport.store_id == store_id,
         DailyReport.employee_id == current_user.id,
-        DailyReport.date == report_data.date
+        DailyReport.report_date == report_data.date
     ).first()
     
     if existing_report:
@@ -1617,13 +1617,13 @@ def list_daily_reports(
         query = query.filter(DailyReport.employee_id == employee_id)
     
     if date_from:
-        query = query.filter(DailyReport.date >= date_from)
+        query = query.filter(DailyReport.report_date >= date_from)
     if date_to:
-        query = query.filter(DailyReport.date <= date_to)
+        query = query.filter(DailyReport.report_date <= date_to)
     if is_approved is not None:
         query = query.filter(DailyReport.is_approved == is_approved)
     
-    reports = query.order_by(DailyReport.date.desc()).offset(skip).limit(limit).all()
+    reports = query.order_by(DailyReport.report_date.desc()).offset(skip).limit(limit).all()
     
     return [
         {
