@@ -639,24 +639,42 @@ const ShiftPage: React.FC<ShiftPageProps> = ({ user }) => {
                 </div>
                 <button 
                   className="approve-request-btn"
-                  onClick={() => {
-                    // シフトに変換
-                    const shift: Shift = {
-                      id: Date.now().toString(),
-                      employee_id: request.employee_id,
-                      employee_name: request.employee_name,
-                      date: request.date,
-                      start_time: request.start_time,
-                      end_time: request.end_time,
-                      status: 'scheduled',
-                      notes: request.notes
-                    };
-                    const updatedShifts = [...shifts, shift];
-                    saveShifts(updatedShifts);
-                    // 希望を削除
-                    const updatedRequests = shiftRequests.filter(r => r.id !== request.id);
-                    saveShiftRequests(updatedRequests);
-                    alert('シフトを作成しました');
+                  onClick={async () => {
+                    // APIでシフトを作成
+                    try {
+                      const token = localStorage.getItem('token');
+                      const store_id = user.store_id;
+                      if (!token || !store_id) return;
+
+                      const response = await fetch(`${API_BASE_URL}/api/stores/${store_id}/shifts`, {
+                        method: 'POST',
+                        headers: {
+                          'Authorization': `Bearer ${token}`,
+                          'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                          employee_id: request.employee_id,
+                          shift_date: request.date,
+                          start_time: request.start_time,
+                          end_time: request.end_time,
+                          notes: request.notes || ''
+                        })
+                      });
+
+                      if (response.ok) {
+                        // 希望をローカルから削除（UIを更新）
+                        setShiftRequests(prev => prev.filter(r => r.id !== request.id));
+                        // シフト一覧を再取得
+                        fetchShifts();
+                        alert('シフトを作成しました');
+                      } else {
+                        const error = await response.json();
+                        alert(error.detail || 'シフト作成に失敗しました');
+                      }
+                    } catch (error) {
+                      console.error('シフト作成エラー:', error);
+                      alert('シフト作成中にエラーが発生しました');
+                    }
                   }}
                   title="シフトとして追加"
                 >
