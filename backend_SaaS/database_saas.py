@@ -200,7 +200,7 @@ class Employee(Base):
     
     role = Column(Enum(UserRole), default=UserRole.STAFF, nullable=False)
     position = Column(String(100))
-    hire_date = Column(Date, nullable=False)
+    hire_date = Column(Date, nullable=True)  # NULLを許可（後から設定可能）
     termination_date = Column(Date)
     
     hourly_wage = Column(Integer, default=0)

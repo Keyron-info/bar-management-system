@@ -580,6 +580,7 @@ def register_employee(
             password_hash=get_password_hash(register_data.password),
             role=UserRole.STAFF,  # デフォルトはスタッフ
             is_active=True,
+            hire_date=date.today(),  # 🆕 デフォルトで今日の日付を設定
             employment_type="part_time"
         )
         
