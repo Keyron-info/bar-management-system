@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { API_BASE_URL } from '../config';
-import { Calendar, Plus, Settings, X, Receipt, Calculator, DollarSign, User, Edit, ChevronDown, Wine, Trash2 } from 'lucide-react';
+import { Calendar, Plus, Settings, X, Receipt, Calculator, DollarSign, User, Edit, ChevronDown, Wine, Trash2, Users } from 'lucide-react';
 
 interface User {
   id: number;
@@ -29,6 +29,13 @@ interface ChampagneItem {
   amount: number;
 }
 
+interface CatchItem {
+  id: string;
+  employeeId: number;
+  employeeName: string;
+  catchCount: number;
+}
+
 interface ReceiptItem {
   id: string;
   totalAmount: number | string;
@@ -36,6 +43,7 @@ interface ReceiptItem {
   assignedEmployeeId: number;
   drinks: DrinkItem[];
   champagnes: ChampagneItem[];
+  catches: CatchItem[];
 }
 
 interface DailyReportPageProps {
@@ -58,12 +66,14 @@ const DailyReportPage: React.FC<DailyReportPageProps> = ({ user }) => {
     assignedEmployeeId: number;
     drinks: DrinkItem[];
     champagnes: ChampagneItem[];
+    catches: CatchItem[];
   }>({
     totalAmount: '',
     isCardPayment: false,
     assignedEmployeeId: user.id,
     drinks: [],
-    champagnes: []
+    champagnes: [],
+    catches: []
   });
 
   useEffect(() => {
@@ -186,6 +196,55 @@ const DailyReportPage: React.FC<DailyReportPageProps> = ({ user }) => {
     }));
   };
 
+  // 🆕 キャッチ追加
+  const addCatchEntry = () => {
+    if (storeEmployees.length === 0) {
+      alert('従業員データを読み込み中です。少々お待ちください。');
+      return;
+    }
+    
+    const newCatch: CatchItem = {
+      id: Date.now().toString(),
+      employeeId: storeEmployees[0]?.id || user.id,
+      employeeName: storeEmployees[0]?.name || user.name,
+      catchCount: 0
+    };
+    setNewReceipt(prev => ({
+      ...prev,
+      catches: [...prev.catches, newCatch]
+    }));
+  };
+
+  // 🆕 キャッチ削除
+  const removeCatchEntry = (catchId: string) => {
+    setNewReceipt(prev => ({
+      ...prev,
+      catches: prev.catches.filter(c => c.id !== catchId)
+    }));
+  };
+
+  // 🆕 キャッチ更新
+  const updateCatchEntry = (catchId: string, field: 'employeeId' | 'catchCount', value: number | string) => {
+    setNewReceipt(prev => ({
+      ...prev,
+      catches: prev.catches.map(catchItem => {
+        if (catchItem.id === catchId) {
+          if (field === 'employeeId') {
+            const employee = storeEmployees.find(e => e.id === Number(value));
+            return {
+              ...catchItem,
+              employeeId: Number(value),
+              employeeName: employee?.name || catchItem.employeeName
+            };
+          } else {
+            return { ...catchItem, catchCount: Number(value) };
+          }
+        }
+        return catchItem;
+      })
+    }));
+  };
+
   const totalSales = receipts.reduce((sum, receipt) => {
     const amount = typeof receipt.totalAmount === 'string' ? 
       parseFloat(receipt.totalAmount) || 0 : receipt.totalAmount;
@@ -223,7 +282,8 @@ const DailyReportPage: React.FC<DailyReportPageProps> = ({ user }) => {
       isCardPayment: false,
       assignedEmployeeId: user.id,
       drinks: [],
-      champagnes: []
+      champagnes: [],
+      catches: []
     });
     setShowReceiptForm(false);
   };
@@ -252,10 +312,11 @@ const submitDailyReport = async () => {
       return;
     }
 
-    // 🆕 伝票からドリンク数とシャンパン情報を集計
+    // 🆕 伝票からドリンク数、シャンパン情報、キャッチ数を集計
     let totalDrinkCount = 0;
     let totalChampagnePrice = 0;
     let champagneTypes: string[] = [];
+    let totalCatchCount = 0;
 
     receipts.forEach(receipt => {
       // ドリンク数を合計
@@ -274,6 +335,13 @@ const submitDailyReport = async () => {
           }
         });
       }
+
+      // キャッチ数を合計
+      if (receipt.catches && receipt.catches.length > 0) {
+        receipt.catches.forEach(catchItem => {
+          totalCatchCount += catchItem.catchCount || 0;
+        });
+      }
     });
 
     const reportData = {
@@ -287,10 +355,11 @@ const submitDailyReport = async () => {
       drink_count: totalDrinkCount,  // 🆕 実際のドリンク数
       champagne_type: champagneTypes.join(', '),  // 🆕 シャンパン名
       champagne_price: totalChampagnePrice,  // 🆕 シャンパン合計金額
+      catch_count: totalCatchCount,  // 🆕 キャッチ数
       work_start_time: '18:00',
       work_end_time: '02:00',
       break_minutes: 0,
-      notes: `伝票数: ${receipts.length}件, ドリンク: ${totalDrinkCount}杯, シャンパン: ¥${totalChampagnePrice.toLocaleString()}`
+      notes: `伝票数: ${receipts.length}件, ドリンク: ${totalDrinkCount}杯, シャンパン: ¥${totalChampagnePrice.toLocaleString()}, キャッチ: ${totalCatchCount}回`
     };
 
     console.log('📤 送信データ:', reportData);
@@ -658,6 +727,11 @@ const submitDailyReport = async () => {
                     {receipt.champagnes.length > 0 && (
                       <div style={{ fontSize: '13px', color: '#888', marginTop: '4px' }}>
                         🍾 シャンパン: {receipt.champagnes.map(c => `${c.name}(¥${c.amount.toLocaleString()})`).join(', ')}
+                      </div>
+                    )}
+                    {receipt.catches && receipt.catches.length > 0 && (
+                      <div style={{ fontSize: '13px', color: '#888', marginTop: '4px' }}>
+                        🎯 キャッチ: {receipt.catches.map(c => `${c.employeeName}(${c.catchCount}回)`).join(', ')}
                       </div>
                     )}
                   </div>
@@ -1110,6 +1184,141 @@ const submitDailyReport = async () => {
                         <button
                           type="button"
                           onClick={() => removeChampagneEntry(champagne.id)}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            color: '#e74c3c',
+                            cursor: 'pointer',
+                            padding: '4px',
+                            display: 'flex',
+                            alignItems: 'center'
+                          }}
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* 🆕 キャッチセクション */}
+              <div style={{ marginBottom: '20px' }}>
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '12px'
+                }}>
+                  <label style={{ 
+                    fontWeight: '500',
+                    color: '#000',
+                    fontSize: '14px'
+                  }}>
+                    キャッチ記録
+                  </label>
+                  <button
+                    type="button"
+                    onClick={addCatchEntry}
+                    style={{
+                      background: 'white',
+                      color: '#10b981',
+                      border: '1px solid #10b981',
+                      padding: '6px 12px',
+                      borderRadius: '6px',
+                      fontSize: '13px',
+                      fontWeight: '500',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}
+                  >
+                    <Users size={14} />
+                    追加
+                  </button>
+                </div>
+
+                {newReceipt.catches.length === 0 ? (
+                  <div style={{
+                    padding: '20px',
+                    backgroundColor: '#fafafa',
+                    borderRadius: '8px',
+                    textAlign: 'center',
+                    color: '#999',
+                    fontSize: '14px'
+                  }}>
+                    キャッチがある場合は「追加」ボタンで記録できます
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    {newReceipt.catches.map((catchItem) => (
+                      <div key={catchItem.id} style={{
+                        display: 'flex',
+                        gap: '10px',
+                        alignItems: 'center',
+                        padding: '12px',
+                        backgroundColor: '#f0fdf4',
+                        borderRadius: '8px',
+                        border: '1px solid #bbf7d0'
+                      }}>
+                        {storeEmployees.length > 0 ? (
+                          <select
+                            value={catchItem.employeeId}
+                            onChange={(e) => updateCatchEntry(catchItem.id, 'employeeId', e.target.value)}
+                            style={{
+                              flex: 1,
+                              padding: '8px 12px',
+                              border: '1px solid #e1e8ed',
+                              borderRadius: '6px',
+                              fontSize: '14px',
+                              color: '#000',
+                              backgroundColor: 'white',
+                              outline: 'none'
+                            }}
+                          >
+                            {storeEmployees.map((emp) => (
+                              <option key={emp.id} value={emp.id}>
+                                {emp.name}
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          <div style={{
+                            flex: 1,
+                            padding: '8px 12px',
+                            border: '1px solid #e1e8ed',
+                            borderRadius: '6px',
+                            fontSize: '14px',
+                            color: '#999',
+                            backgroundColor: '#f5f5f5'
+                          }}>
+                            従業員を読み込み中...
+                          </div>
+                        )}
+                        
+                        <input
+                          type="number"
+                          value={catchItem.catchCount || ''}
+                          onChange={(e) => updateCatchEntry(catchItem.id, 'catchCount', e.target.value)}
+                          placeholder="回数"
+                          style={{
+                            width: '80px',
+                            padding: '8px 12px',
+                            border: '1px solid #e1e8ed',
+                            borderRadius: '6px',
+                            fontSize: '14px',
+                            color: '#000',
+                            backgroundColor: 'white',
+                            outline: 'none',
+                            textAlign: 'center'
+                          }}
+                        />
+                        <span style={{ fontSize: '14px', color: '#666', minWidth: '20px' }}>回</span>
+                        
+                        <button
+                          type="button"
+                          onClick={() => removeCatchEntry(catchItem.id)}
                           style={{
                             background: 'none',
                             border: 'none',

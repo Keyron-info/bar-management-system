@@ -17,7 +17,8 @@ from google.auth.transport import requests as google_requests
 from database_saas import (
     get_db, create_tables, SystemAdmin, Organization, Store, Employee, 
     Subscription, InviteCode, DailyReport, Receipt, AuditLog,
-    PersonalGoal,
+    PersonalGoal, StoreGoal, Shift, ShiftRequest, Notification,
+    ShiftStatus, ShiftRequestType, NotificationType,
     generate_store_code, generate_employee_code, generate_invite_code,
     create_super_admin, UserRole, SubscriptionStatus, InviteStatus
 )
@@ -51,6 +52,16 @@ from schemas_saas import (
     
     # 個人目標関連
     PersonalGoalInput, PersonalGoalResponse,
+    
+    # 店舗目標関連
+    StoreGoalInput, StoreGoalResponse,
+    
+    # シフト関連
+    ShiftCreate, ShiftUpdate, ShiftResponse,
+    ShiftRequestCreate, ShiftRequestResponse,
+    
+    # 通知関連
+    NotificationCreate, NotificationResponse, NotificationMarkRead,
     
     # 後方互換性
     LegacyTokenResponse, LegacyUserResponse,
@@ -1234,7 +1245,7 @@ def get_store_dashboard(
         "recent_reports": [
             {
                 "id": report.id,
-                "date": report.date.isoformat(),
+                "date": report.report_date.isoformat(),
                 "employee_id": report.employee_id,
                 "total_sales": report.total_sales,
                 "is_approved": report.is_approved,
@@ -1544,7 +1555,7 @@ def create_daily_report(
     daily_report = DailyReport(
         store_id=store_id,
         employee_id=current_user.id,
-        date=report_data.date,
+        report_date=report_data.date,
         total_sales=report_data.total_sales,
         alcohol_cost=report_data.alcohol_cost,
         other_expenses=report_data.other_expenses,
@@ -1552,6 +1563,7 @@ def create_daily_report(
         drink_count=report_data.drink_count,
         champagne_type=report_data.champagne_type,
         champagne_price=report_data.champagne_price,
+        catch_count=report_data.catch_count,  # 🆕 キャッチ数
         work_start_time=report_data.work_start_time,
         work_end_time=report_data.work_end_time,
         break_minutes=report_data.break_minutes,
@@ -1574,7 +1586,7 @@ def create_daily_report(
         "id": daily_report.id,
         "store_id": daily_report.store_id,
         "employee_id": daily_report.employee_id,
-        "date": daily_report.date.isoformat(),
+        "date": daily_report.report_date.isoformat(),
         "total_sales": daily_report.total_sales,
         "alcohol_cost": daily_report.alcohol_cost,
         "other_expenses": daily_report.other_expenses,
@@ -1582,6 +1594,7 @@ def create_daily_report(
         "drink_count": daily_report.drink_count,
         "champagne_type": daily_report.champagne_type,
         "champagne_price": daily_report.champagne_price,
+        "catch_count": daily_report.catch_count or 0,  # 🆕 キャッチ数
         "work_start_time": daily_report.work_start_time,
         "work_end_time": daily_report.work_end_time,
         "break_minutes": daily_report.break_minutes,
@@ -1630,7 +1643,7 @@ def list_daily_reports(
             "id": report.id,
             "store_id": report.store_id,
             "employee_id": report.employee_id,
-            "date": report.date.isoformat(),
+            "date": report.report_date.isoformat(),
             "total_sales": report.total_sales,
             "alcohol_cost": report.alcohol_cost,
             "other_expenses": report.other_expenses,
@@ -1638,6 +1651,7 @@ def list_daily_reports(
             "drink_count": report.drink_count,
             "champagne_type": report.champagne_type,
             "champagne_price": report.champagne_price,
+            "catch_count": report.catch_count or 0,  # 🆕 キャッチ数
             "work_start_time": report.work_start_time,
             "work_end_time": report.work_end_time,
             "break_minutes": report.break_minutes,
@@ -1816,6 +1830,851 @@ async def http_exception_handler(request: Request, exc: HTTPException):
         }
     )
 
+
+# ====== 🆕 個人サマリーAPI ======
+
+@app.get("/api/employees/me/summary")
+def get_employee_summary(
+    month: Optional[str] = None,  # YYYY-MM形式
+    current_user = Depends(get_current_employee),
+    db: Session = Depends(get_db)
+):
+    """
+    個人のサマリー情報を取得
+    - 今月の目標と実績
+    - 達成率
+    - 日別内訳
+    """
+    # 月の指定がない場合は現在の月
+    if month:
+        try:
+            year = int(month.split("-")[0])
+            month_num = int(month.split("-")[1])
+        except:
+            year = datetime.now().year
+            month_num = datetime.now().month
+    else:
+        year = datetime.now().year
+        month_num = datetime.now().month
+    
+    # 月の開始日・終了日
+    from calendar import monthrange
+    start_date = date(year, month_num, 1)
+    _, last_day = monthrange(year, month_num)
+    end_date = date(year, month_num, last_day)
+    
+    # 目標を取得
+    goal = db.query(PersonalGoal).filter(
+        PersonalGoal.employee_id == current_user.id,
+        PersonalGoal.year == year,
+        PersonalGoal.month == month_num
+    ).first()
+    
+    # デフォルト目標
+    sales_goal = goal.sales_goal if goal else 500000
+    drinks_goal = goal.drinks_goal if goal else 100
+    catch_goal = goal.catch_goal if goal else 50
+    
+    # 実績を集計
+    reports = db.query(DailyReport).filter(
+        DailyReport.employee_id == current_user.id,
+        DailyReport.report_date >= start_date,
+        DailyReport.report_date <= end_date
+    ).all()
+    
+    total_sales = sum(r.total_sales for r in reports)
+    total_drinks = sum(r.drink_count for r in reports)
+    total_catch = sum(r.catch_count or 0 for r in reports)
+    total_customers = sum(r.number_of_customers for r in reports)
+    total_champagne = sum(r.champagne_sales for r in reports)
+    work_days = len(reports)
+    
+    # 達成率計算
+    sales_rate = (total_sales / sales_goal * 100) if sales_goal > 0 else 0
+    drinks_rate = (total_drinks / drinks_goal * 100) if drinks_goal > 0 else 0
+    catch_rate = (total_catch / catch_goal * 100) if catch_goal > 0 else 0
+    
+    # 日別内訳
+    daily_breakdown = [
+        {
+            "date": r.report_date.isoformat(),
+            "sales": r.total_sales,
+            "drinks": r.drink_count,
+            "catch": r.catch_count or 0,
+            "customers": r.number_of_customers
+        } for r in sorted(reports, key=lambda x: x.report_date)
+    ]
+    
+    return {
+        "employee": {
+            "id": current_user.id,
+            "name": current_user.name,
+            "employee_code": current_user.employee_code
+        },
+        "period": {
+            "year": year,
+            "month": month_num,
+            "start_date": start_date.isoformat(),
+            "end_date": end_date.isoformat()
+        },
+        "goals": {
+            "sales_goal": sales_goal,
+            "drinks_goal": drinks_goal,
+            "catch_goal": catch_goal
+        },
+        "actual": {
+            "total_sales": total_sales,
+            "total_drinks": total_drinks,
+            "total_catch": total_catch,
+            "total_customers": total_customers,
+            "total_champagne": total_champagne,
+            "work_days": work_days
+        },
+        "achievement_rate": {
+            "sales": round(sales_rate, 1),
+            "drinks": round(drinks_rate, 1),
+            "catch": round(catch_rate, 1)
+        },
+        "daily_breakdown": daily_breakdown
+    }
+
+
+# ====== 🆕 店舗ランキングAPI ======
+
+@app.get("/api/stores/{store_id}/ranking")
+def get_store_ranking(
+    store_id: int,
+    month: Optional[str] = None,  # YYYY-MM形式
+    current_user = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    店舗内のランキングを取得
+    - 売上ランキング
+    - ドリンクランキング
+    - キャッチランキング
+    """
+    # 店舗アクセス権限チェック
+    if isinstance(current_user, Employee) and current_user.store_id != store_id:
+        raise HTTPException(status_code=403, detail="他店舗のランキングは閲覧できません")
+    
+    # 月の指定がない場合は現在の月
+    if month:
+        try:
+            year = int(month.split("-")[0])
+            month_num = int(month.split("-")[1])
+        except:
+            year = datetime.now().year
+            month_num = datetime.now().month
+    else:
+        year = datetime.now().year
+        month_num = datetime.now().month
+    
+    # 月の開始日・終了日
+    from calendar import monthrange
+    start_date = date(year, month_num, 1)
+    _, last_day = monthrange(year, month_num)
+    end_date = date(year, month_num, last_day)
+    
+    # 店舗の従業員一覧
+    employees = db.query(Employee).filter(
+        Employee.store_id == store_id,
+        Employee.is_active == True
+    ).all()
+    
+    employee_stats = []
+    
+    for emp in employees:
+        # 従業員ごとの実績を集計
+        reports = db.query(DailyReport).filter(
+            DailyReport.employee_id == emp.id,
+            DailyReport.report_date >= start_date,
+            DailyReport.report_date <= end_date
+        ).all()
+        
+        total_sales = sum(r.total_sales for r in reports)
+        total_drinks = sum(r.drink_count for r in reports)
+        total_catch = sum(r.catch_count or 0 for r in reports)
+        total_customers = sum(r.number_of_customers for r in reports)
+        work_days = len(reports)
+        avg_sales_per_day = total_sales // work_days if work_days > 0 else 0
+        
+        employee_stats.append({
+            "employee_id": emp.id,
+            "employee_code": emp.employee_code,
+            "name": emp.name,
+            "total_sales": total_sales,
+            "total_drinks": total_drinks,
+            "total_catch": total_catch,
+            "total_customers": total_customers,
+            "work_days": work_days,
+            "avg_sales_per_day": avg_sales_per_day
+        })
+    
+    # 売上順にソート
+    sales_ranking = sorted(employee_stats, key=lambda x: x["total_sales"], reverse=True)
+    for i, emp in enumerate(sales_ranking):
+        emp["sales_rank"] = i + 1
+    
+    # ドリンク順にソート
+    drinks_ranking = sorted(employee_stats, key=lambda x: x["total_drinks"], reverse=True)
+    for i, emp in enumerate(drinks_ranking):
+        emp["drinks_rank"] = i + 1
+    
+    # キャッチ順にソート
+    catch_ranking = sorted(employee_stats, key=lambda x: x["total_catch"], reverse=True)
+    for i, emp in enumerate(catch_ranking):
+        emp["catch_rank"] = i + 1
+    
+    # ランキング情報をマージ
+    ranking_map = {emp["employee_id"]: emp for emp in sales_ranking}
+    for emp in drinks_ranking:
+        ranking_map[emp["employee_id"]]["drinks_rank"] = emp["drinks_rank"]
+    for emp in catch_ranking:
+        ranking_map[emp["employee_id"]]["catch_rank"] = emp["catch_rank"]
+    
+    # 売上ランキング順で返す
+    final_ranking = sorted(ranking_map.values(), key=lambda x: x["sales_rank"])
+    
+    return {
+        "store_id": store_id,
+        "period": {
+            "year": year,
+            "month": month_num,
+            "start_date": start_date.isoformat(),
+            "end_date": end_date.isoformat()
+        },
+        "ranking": final_ranking,
+        "top_sales": final_ranking[0] if final_ranking else None,
+        "top_drinks": max(final_ranking, key=lambda x: x["total_drinks"]) if final_ranking else None,
+        "top_catch": max(final_ranking, key=lambda x: x["total_catch"]) if final_ranking else None
+    }
+
+
+# ====== 🆕 伝票追加API ======
+
+@app.post("/api/daily-reports/{report_id}/receipts")
+def add_receipt_to_report(
+    report_id: int,
+    receipt_data: dict,
+    request: Request,
+    current_user = Depends(get_current_employee),
+    db: Session = Depends(get_db)
+):
+    """日報に伝票を追加"""
+    # 日報を取得
+    report = db.query(DailyReport).filter(DailyReport.id == report_id).first()
+    if not report:
+        raise HTTPException(status_code=404, detail="日報が見つかりません")
+    
+    # 権限チェック（自分の日報か、マネージャー以上）
+    if report.employee_id != current_user.id:
+        if current_user.role.value not in ['manager', 'owner']:
+            raise HTTPException(status_code=403, detail="他の従業員の日報には伝票を追加できません")
+    
+    try:
+        # 伝票を作成
+        new_receipt = Receipt(
+            daily_report_id=report_id,
+            customer_name=receipt_data.get("customer_name", ""),
+            employee_name=receipt_data.get("employee_name", current_user.name),
+            drink_count=receipt_data.get("drink_count", 0),
+            champagne_type=receipt_data.get("champagne_type", ""),
+            champagne_price=receipt_data.get("champagne_price", 0),
+            amount=receipt_data.get("amount", 0),
+            is_card=receipt_data.get("is_card", False),
+            receipt_number=receipt_data.get("receipt_number"),
+            table_number=receipt_data.get("table_number"),
+            service_charge=receipt_data.get("service_charge", 0)
+        )
+        
+        db.add(new_receipt)
+        db.commit()
+        db.refresh(new_receipt)
+        
+        # 監査ログ記録
+        log_user_action(
+            db, current_user, "add_receipt", "receipt",
+            resource_id=new_receipt.id,
+            changes={"daily_report_id": report_id, "amount": receipt_data.get("amount", 0)},
+            request=request
+        )
+        
+        return {
+            "id": new_receipt.id,
+            "daily_report_id": new_receipt.daily_report_id,
+            "customer_name": new_receipt.customer_name,
+            "employee_name": new_receipt.employee_name,
+            "drink_count": new_receipt.drink_count,
+            "champagne_type": new_receipt.champagne_type,
+            "champagne_price": new_receipt.champagne_price,
+            "amount": new_receipt.amount,
+            "is_card": new_receipt.is_card,
+            "receipt_number": new_receipt.receipt_number,
+            "table_number": new_receipt.table_number,
+            "service_charge": new_receipt.service_charge,
+            "created_at": new_receipt.created_at.isoformat(),
+            "message": "伝票を追加しました"
+        }
+        
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"伝票追加に失敗: {str(e)}")
+
+
+@app.get("/api/daily-reports/{report_id}/receipts")
+def get_report_receipts(
+    report_id: int,
+    current_user = Depends(get_current_employee),
+    db: Session = Depends(get_db)
+):
+    """日報の伝票一覧を取得"""
+    # 日報を取得
+    report = db.query(DailyReport).filter(DailyReport.id == report_id).first()
+    if not report:
+        raise HTTPException(status_code=404, detail="日報が見つかりません")
+    
+    # 権限チェック
+    if report.employee_id != current_user.id:
+        if current_user.role.value not in ['manager', 'owner']:
+            raise HTTPException(status_code=403, detail="他の従業員の伝票は閲覧できません")
+    
+    receipts = db.query(Receipt).filter(Receipt.daily_report_id == report_id).all()
+    
+    return [
+        {
+            "id": r.id,
+            "daily_report_id": r.daily_report_id,
+            "customer_name": r.customer_name,
+            "employee_name": r.employee_name,
+            "drink_count": r.drink_count,
+            "champagne_type": r.champagne_type,
+            "champagne_price": r.champagne_price,
+            "amount": r.amount,
+            "is_card": r.is_card,
+            "receipt_number": r.receipt_number,
+            "table_number": r.table_number,
+            "service_charge": r.service_charge,
+            "created_at": r.created_at.isoformat()
+        } for r in receipts
+    ]
+
+
+@app.delete("/api/daily-reports/{report_id}/receipts/{receipt_id}")
+def delete_receipt(
+    report_id: int,
+    receipt_id: int,
+    current_user = Depends(get_current_employee),
+    db: Session = Depends(get_db)
+):
+    """伝票を削除"""
+    receipt = db.query(Receipt).filter(
+        Receipt.id == receipt_id,
+        Receipt.daily_report_id == report_id
+    ).first()
+    
+    if not receipt:
+        raise HTTPException(status_code=404, detail="伝票が見つかりません")
+    
+    # 日報の所有者チェック
+    report = db.query(DailyReport).filter(DailyReport.id == report_id).first()
+    if report.employee_id != current_user.id:
+        if current_user.role.value not in ['manager', 'owner']:
+            raise HTTPException(status_code=403, detail="他の従業員の伝票は削除できません")
+    
+    try:
+        db.delete(receipt)
+        db.commit()
+        return {"message": "伝票を削除しました"}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"伝票削除に失敗: {str(e)}")
+
+
+# ====== 🆕 月次統計API ======
+
+@app.get("/api/stats/monthly")
+def get_monthly_stats(
+    year: int,
+    month: int,
+    store_id: Optional[int] = None,
+    current_user = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """月次統計を取得"""
+    from calendar import monthrange
+    
+    # 店舗IDの決定
+    if store_id:
+        if isinstance(current_user, Employee) and current_user.store_id != store_id:
+            raise HTTPException(status_code=403, detail="他店舗の統計は閲覧できません")
+    elif isinstance(current_user, Employee):
+        store_id = current_user.store_id
+    else:
+        # 管理者の場合、全店舗の統計
+        store_id = None
+    
+    # 月の開始日・終了日
+    start_date = date(year, month, 1)
+    _, last_day = monthrange(year, month)
+    end_date = date(year, month, last_day)
+    
+    # クエリ
+    query = db.query(DailyReport).filter(
+        DailyReport.report_date >= start_date,
+        DailyReport.report_date <= end_date
+    )
+    
+    if store_id:
+        query = query.filter(DailyReport.store_id == store_id)
+    
+    reports = query.all()
+    
+    if not reports:
+        return {
+            "year": year,
+            "month": month,
+            "total_sales": 0,
+            "total_customers": 0,
+            "total_work_hours": 0,
+            "avg_sales_per_day": 0,
+            "avg_customers_per_day": 0,
+            "best_day": None,
+            "worst_day": None,
+            "weekday_sales": 0,
+            "weekend_sales": 0,
+            "weekday_count": 0,
+            "weekend_count": 0
+        }
+    
+    # 集計
+    total_sales = sum(r.total_sales for r in reports)
+    total_customers = sum(r.number_of_customers for r in reports)
+    total_work_hours = sum(r.work_hours or 0 for r in reports)
+    
+    # 日数
+    report_days = len(set(r.report_date for r in reports))
+    avg_sales_per_day = total_sales // report_days if report_days > 0 else 0
+    avg_customers_per_day = total_customers / report_days if report_days > 0 else 0
+    
+    # 最高・最低売上日
+    daily_sales = {}
+    for r in reports:
+        date_str = r.report_date.isoformat()
+        if date_str not in daily_sales:
+            daily_sales[date_str] = 0
+        daily_sales[date_str] += r.total_sales
+    
+    best_day = max(daily_sales.items(), key=lambda x: x[1]) if daily_sales else None
+    worst_day = min(daily_sales.items(), key=lambda x: x[1]) if daily_sales else None
+    
+    # 平日・週末別集計
+    weekday_sales = 0
+    weekend_sales = 0
+    weekday_count = 0
+    weekend_count = 0
+    
+    for r in reports:
+        if r.report_date.weekday() < 5:  # 月〜金
+            weekday_sales += r.total_sales
+            weekday_count += 1
+        else:  # 土日
+            weekend_sales += r.total_sales
+            weekend_count += 1
+    
+    return {
+        "year": year,
+        "month": month,
+        "total_sales": total_sales,
+        "total_customers": total_customers,
+        "total_work_hours": round(total_work_hours, 1),
+        "avg_sales_per_day": avg_sales_per_day,
+        "avg_customers_per_day": round(avg_customers_per_day, 1),
+        "best_day": {"date": best_day[0], "sales": best_day[1]} if best_day else None,
+        "worst_day": {"date": worst_day[0], "sales": worst_day[1]} if worst_day else None,
+        "weekday_sales": weekday_sales,
+        "weekend_sales": weekend_sales,
+        "weekday_count": weekday_count,
+        "weekend_count": weekend_count,
+        "avg_weekday_sales": weekday_sales // weekday_count if weekday_count > 0 else 0,
+        "avg_weekend_sales": weekend_sales // weekend_count if weekend_count > 0 else 0
+    }
+
+
+# ====== 🆕 パスワードリセットAPI ======
+
+# パスワードリセットトークンの一時保存（本番ではRedis等を使用）
+password_reset_tokens = {}
+
+@app.post("/api/auth/password-reset/request")
+def request_password_reset(
+    email: str,
+    db: Session = Depends(get_db)
+):
+    """パスワードリセットをリクエスト"""
+    import secrets
+    
+    # 従業員を検索
+    employee = db.query(Employee).filter(Employee.email == email).first()
+    
+    # セキュリティ上、存在しない場合も同じレスポンスを返す
+    if employee:
+        # リセットトークン生成
+        reset_token = secrets.token_urlsafe(32)
+        password_reset_tokens[reset_token] = {
+            "user_id": employee.id,
+            "email": email,
+            "expires_at": datetime.utcnow() + timedelta(hours=1)
+        }
+        
+        # TODO: 本番環境ではメール送信
+        # send_password_reset_email(email, reset_token)
+        
+        print(f"🔑 パスワードリセットトークン生成: {reset_token} (メール: {email})")
+    
+    return {
+        "message": "パスワードリセットのメールを送信しました（登録されているメールアドレスの場合）",
+        # 開発用にトークンを返す（本番では削除）
+        "dev_token": reset_token if employee else None
+    }
+
+
+@app.post("/api/auth/password-reset/verify")
+def verify_reset_token(
+    token: str,
+    db: Session = Depends(get_db)
+):
+    """パスワードリセットトークンを検証"""
+    if token not in password_reset_tokens:
+        raise HTTPException(status_code=400, detail="無効なトークンです")
+    
+    token_data = password_reset_tokens[token]
+    
+    if datetime.utcnow() > token_data["expires_at"]:
+        del password_reset_tokens[token]
+        raise HTTPException(status_code=400, detail="トークンの有効期限が切れています")
+    
+    return {
+        "valid": True,
+        "email": token_data["email"]
+    }
+
+
+@app.post("/api/auth/password-reset/confirm")
+def confirm_password_reset(
+    token: str,
+    new_password: str,
+    db: Session = Depends(get_db)
+):
+    """パスワードをリセット"""
+    if token not in password_reset_tokens:
+        raise HTTPException(status_code=400, detail="無効なトークンです")
+    
+    token_data = password_reset_tokens[token]
+    
+    if datetime.utcnow() > token_data["expires_at"]:
+        del password_reset_tokens[token]
+        raise HTTPException(status_code=400, detail="トークンの有効期限が切れています")
+    
+    # パスワード強度チェック
+    is_valid, msg = validate_password_strength(new_password)
+    if not is_valid:
+        raise HTTPException(status_code=400, detail=msg)
+    
+    # 従業員を取得してパスワード更新
+    employee = db.query(Employee).filter(Employee.id == token_data["user_id"]).first()
+    if not employee:
+        raise HTTPException(status_code=404, detail="ユーザーが見つかりません")
+    
+    employee.password_hash = get_password_hash(new_password)
+    employee.updated_at = datetime.utcnow()
+    db.commit()
+    
+    # トークンを削除
+    del password_reset_tokens[token]
+    
+    return {"message": "パスワードを更新しました"}
+
+
+# ====== 🆕 プロフィール更新API ======
+
+@app.get("/api/employees/me/profile")
+def get_my_profile(
+    current_user = Depends(get_current_employee),
+    db: Session = Depends(get_db)
+):
+    """自分のプロフィールを取得"""
+    store = db.query(Store).filter(Store.id == current_user.store_id).first()
+    
+    return {
+        "id": current_user.id,
+        "employee_code": current_user.employee_code,
+        "name": current_user.name,
+        "email": current_user.email,
+        "role": current_user.role.value if hasattr(current_user.role, 'value') else current_user.role,
+        "position": current_user.position,
+        "phone": current_user.phone,
+        "hire_date": current_user.hire_date.isoformat() if current_user.hire_date else None,
+        "hourly_wage": current_user.hourly_wage,
+        "employment_type": current_user.employment_type,
+        "emergency_contact_name": current_user.emergency_contact_name,
+        "emergency_contact_phone": current_user.emergency_contact_phone,
+        "store": {
+            "id": store.id,
+            "store_code": store.store_code,
+            "store_name": store.store_name
+        } if store else None,
+        "last_login": current_user.last_login.isoformat() if current_user.last_login else None,
+        "created_at": current_user.created_at.isoformat(),
+        "updated_at": current_user.updated_at.isoformat()
+    }
+
+
+@app.put("/api/employees/me/profile")
+def update_my_profile(
+    profile_data: dict,
+    request: Request,
+    current_user = Depends(get_current_employee),
+    db: Session = Depends(get_db)
+):
+    """自分のプロフィールを更新"""
+    try:
+        # 更新可能なフィールド
+        allowed_fields = ["name", "phone", "emergency_contact_name", "emergency_contact_phone"]
+        
+        changes = {}
+        for field in allowed_fields:
+            if field in profile_data:
+                setattr(current_user, field, profile_data[field])
+                changes[field] = profile_data[field]
+        
+        current_user.updated_at = datetime.utcnow()
+        db.commit()
+        
+        # 監査ログ記録
+        log_user_action(
+            db, current_user, "update_profile", "employee",
+            resource_id=current_user.id,
+            changes=changes,
+            request=request
+        )
+        
+        return {
+            "message": "プロフィールを更新しました",
+            "updated_fields": list(changes.keys())
+        }
+        
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"プロフィール更新に失敗: {str(e)}")
+
+
+@app.put("/api/employees/me/password")
+def change_my_password(
+    password_data: dict,
+    request: Request,
+    current_user = Depends(get_current_employee),
+    db: Session = Depends(get_db)
+):
+    """自分のパスワードを変更"""
+    current_password = password_data.get("current_password")
+    new_password = password_data.get("new_password")
+    
+    if not current_password or not new_password:
+        raise HTTPException(status_code=400, detail="現在のパスワードと新しいパスワードを入力してください")
+    
+    # 現在のパスワードを検証
+    if not verify_password(current_password, current_user.password_hash):
+        raise HTTPException(status_code=400, detail="現在のパスワードが正しくありません")
+    
+    # 新しいパスワードの強度チェック
+    is_valid, msg = validate_password_strength(new_password)
+    if not is_valid:
+        raise HTTPException(status_code=400, detail=msg)
+    
+    try:
+        current_user.password_hash = get_password_hash(new_password)
+        current_user.updated_at = datetime.utcnow()
+        db.commit()
+        
+        # 監査ログ記録
+        log_user_action(
+            db, current_user, "change_password", "employee",
+            resource_id=current_user.id,
+            request=request
+        )
+        
+        return {"message": "パスワードを変更しました"}
+        
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"パスワード変更に失敗: {str(e)}")
+
+
+# ====== 🆕 CSV/Excelエクスポート API ======
+
+@app.get("/api/exports/daily-reports")
+def export_daily_reports(
+    format: str = "csv",  # csv または json
+    date_from: Optional[date] = None,
+    date_to: Optional[date] = None,
+    current_user = Depends(get_current_employee),
+    db: Session = Depends(get_db)
+):
+    """日報データをエクスポート"""
+    from fastapi.responses import StreamingResponse
+    import csv
+    import io
+    
+    # 権限チェック
+    if current_user.role.value not in ['manager', 'owner']:
+        raise HTTPException(status_code=403, detail="エクスポート権限がありません")
+    
+    # 日付範囲のデフォルト（今月）
+    if not date_from:
+        date_from = date.today().replace(day=1)
+    if not date_to:
+        date_to = date.today()
+    
+    # 日報を取得
+    reports = db.query(DailyReport).filter(
+        DailyReport.store_id == current_user.store_id,
+        DailyReport.report_date >= date_from,
+        DailyReport.report_date <= date_to
+    ).order_by(DailyReport.report_date).all()
+    
+    # 従業員情報を取得
+    employee_ids = list(set(r.employee_id for r in reports))
+    employees = {e.id: e.name for e in db.query(Employee).filter(Employee.id.in_(employee_ids)).all()}
+    
+    if format == "json":
+        return [
+            {
+                "日付": r.report_date.isoformat(),
+                "従業員名": employees.get(r.employee_id, ""),
+                "総売上": r.total_sales,
+                "客数": r.number_of_customers,
+                "ドリンク売上": r.drink_sales,
+                "ドリンク数": r.drink_count,
+                "シャンパン売上": r.champagne_sales,
+                "キャッチ数": r.catch_count or 0,
+                "現金売上": r.cash_sales,
+                "カード売上": r.card_sales,
+                "勤務開始": r.work_start_time,
+                "勤務終了": r.work_end_time,
+                "承認済み": "○" if r.is_approved else "×"
+            } for r in reports
+        ]
+    
+    # CSV形式
+    output = io.StringIO()
+    writer = csv.writer(output)
+    
+    # ヘッダー
+    writer.writerow([
+        "日付", "従業員名", "総売上", "客数", "ドリンク売上", "ドリンク数",
+        "シャンパン売上", "キャッチ数", "現金売上", "カード売上",
+        "勤務開始", "勤務終了", "承認済み"
+    ])
+    
+    # データ
+    for r in reports:
+        writer.writerow([
+            r.report_date.isoformat(),
+            employees.get(r.employee_id, ""),
+            r.total_sales,
+            r.number_of_customers,
+            r.drink_sales,
+            r.drink_count,
+            r.champagne_sales,
+            r.catch_count or 0,
+            r.cash_sales,
+            r.card_sales,
+            r.work_start_time,
+            r.work_end_time,
+            "○" if r.is_approved else "×"
+        ])
+    
+    output.seek(0)
+    
+    return StreamingResponse(
+        iter([output.getvalue()]),
+        media_type="text/csv",
+        headers={
+            "Content-Disposition": f"attachment; filename=daily_reports_{date_from}_{date_to}.csv"
+        }
+    )
+
+
+@app.get("/api/exports/employees")
+def export_employees(
+    format: str = "csv",
+    current_user = Depends(get_current_employee),
+    db: Session = Depends(get_db)
+):
+    """従業員データをエクスポート"""
+    from fastapi.responses import StreamingResponse
+    import csv
+    import io
+    
+    # 権限チェック
+    if current_user.role.value not in ['manager', 'owner']:
+        raise HTTPException(status_code=403, detail="エクスポート権限がありません")
+    
+    employees = db.query(Employee).filter(
+        Employee.store_id == current_user.store_id
+    ).order_by(Employee.employee_code).all()
+    
+    if format == "json":
+        return [
+            {
+                "従業員コード": e.employee_code,
+                "名前": e.name,
+                "メール": e.email,
+                "役割": e.role.value if hasattr(e.role, 'value') else e.role,
+                "電話": e.phone or "",
+                "入社日": e.hire_date.isoformat() if e.hire_date else "",
+                "時給": e.hourly_wage,
+                "雇用形態": e.employment_type,
+                "アクティブ": "○" if e.is_active else "×"
+            } for e in employees
+        ]
+    
+    # CSV形式
+    output = io.StringIO()
+    writer = csv.writer(output)
+    
+    # ヘッダー
+    writer.writerow([
+        "従業員コード", "名前", "メール", "役割", "電話",
+        "入社日", "時給", "雇用形態", "アクティブ"
+    ])
+    
+    # データ
+    for e in employees:
+        writer.writerow([
+            e.employee_code,
+            e.name,
+            e.email,
+            e.role.value if hasattr(e.role, 'value') else e.role,
+            e.phone or "",
+            e.hire_date.isoformat() if e.hire_date else "",
+            e.hourly_wage,
+            e.employment_type,
+            "○" if e.is_active else "×"
+        ])
+    
+    output.seek(0)
+    
+    return StreamingResponse(
+        iter([output.getvalue()]),
+        media_type="text/csv",
+        headers={
+            "Content-Disposition": f"attachment; filename=employees_{date.today()}.csv"
+        }
+    )
+
+
 # ====== 個人目標管理エンドポイント ======
 
 @app.post("/api/personal-goals", response_model=PersonalGoalResponse)
@@ -1942,6 +2801,522 @@ def get_personal_goal_history(
     ).all()
     
     return goals
+
+
+# ====== 店舗目標管理エンドポイント ======
+
+@app.post("/api/stores/{store_id}/goals", response_model=StoreGoalResponse)
+def save_store_goal(
+    store_id: int,
+    goal_data: StoreGoalInput,
+    request: Request,
+    current_user = Depends(get_current_employee),
+    db: Session = Depends(get_db)
+):
+    """店舗目標を保存または更新（店長・オーナーのみ）"""
+    # 権限チェック
+    if current_user.role.value not in ['manager', 'owner']:
+        raise HTTPException(status_code=403, detail="店舗目標の設定権限がありません")
+    
+    if current_user.store_id != store_id:
+        raise HTTPException(status_code=403, detail="他店舗の目標は設定できません")
+    
+    try:
+        existing_goal = db.query(StoreGoal).filter(
+            StoreGoal.store_id == store_id,
+            StoreGoal.year == goal_data.year,
+            StoreGoal.month == goal_data.month
+        ).first()
+        
+        if existing_goal:
+            existing_goal.monthly_sales_goal = goal_data.monthly_sales_goal
+            existing_goal.weekday_sales_goal = goal_data.weekday_sales_goal
+            existing_goal.weekend_sales_goal = goal_data.weekend_sales_goal
+            existing_goal.updated_at = datetime.utcnow()
+            db.commit()
+            db.refresh(existing_goal)
+            return existing_goal
+        else:
+            new_goal = StoreGoal(
+                store_id=store_id,
+                year=goal_data.year,
+                month=goal_data.month,
+                monthly_sales_goal=goal_data.monthly_sales_goal,
+                weekday_sales_goal=goal_data.weekday_sales_goal,
+                weekend_sales_goal=goal_data.weekend_sales_goal
+            )
+            db.add(new_goal)
+            db.commit()
+            db.refresh(new_goal)
+            return new_goal
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"店舗目標の保存に失敗: {str(e)}")
+
+
+@app.get("/api/stores/{store_id}/goals", response_model=StoreGoalResponse)
+def get_store_goal(
+    store_id: int,
+    year: Optional[int] = None,
+    month: Optional[int] = None,
+    current_user = Depends(get_current_employee),
+    db: Session = Depends(get_db)
+):
+    """店舗目標を取得"""
+    if current_user.store_id != store_id:
+        raise HTTPException(status_code=403, detail="他店舗の目標は閲覧できません")
+    
+    if not year:
+        year = datetime.now().year
+    if not month:
+        month = datetime.now().month
+    
+    goal = db.query(StoreGoal).filter(
+        StoreGoal.store_id == store_id,
+        StoreGoal.year == year,
+        StoreGoal.month == month
+    ).first()
+    
+    if not goal:
+        return StoreGoalResponse(
+            id=0,
+            store_id=store_id,
+            year=year,
+            month=month,
+            monthly_sales_goal=3000000,
+            weekday_sales_goal=100000,
+            weekend_sales_goal=200000,
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow()
+        )
+    
+    return goal
+
+
+# ====== シフト管理エンドポイント ======
+
+@app.post("/api/stores/{store_id}/shifts", response_model=ShiftResponse)
+def create_shift(
+    store_id: int,
+    shift_data: ShiftCreate,
+    request: Request,
+    current_user = Depends(get_current_employee),
+    db: Session = Depends(get_db)
+):
+    """シフトを作成（店長・オーナーのみ）"""
+    if current_user.role.value not in ['manager', 'owner']:
+        raise HTTPException(status_code=403, detail="シフト作成権限がありません")
+    
+    if current_user.store_id != store_id:
+        raise HTTPException(status_code=403, detail="他店舗のシフトは作成できません")
+    
+    # 従業員の存在確認
+    employee = db.query(Employee).filter(
+        Employee.id == shift_data.employee_id,
+        Employee.store_id == store_id
+    ).first()
+    if not employee:
+        raise HTTPException(status_code=404, detail="従業員が見つかりません")
+    
+    try:
+        new_shift = Shift(
+            store_id=store_id,
+            employee_id=shift_data.employee_id,
+            shift_date=shift_data.shift_date,
+            start_time=shift_data.start_time,
+            end_time=shift_data.end_time,
+            notes=shift_data.notes,
+            created_by_id=current_user.id
+        )
+        db.add(new_shift)
+        db.commit()
+        db.refresh(new_shift)
+        
+        # 通知を作成
+        notification = Notification(
+            store_id=store_id,
+            employee_id=shift_data.employee_id,
+            notification_type=NotificationType.SHIFT_ASSIGNED,
+            title="新しいシフトが割り当てられました",
+            message=f"{shift_data.shift_date.strftime('%Y年%m月%d日')} {shift_data.start_time}〜{shift_data.end_time}",
+            related_entity_type="shift",
+            related_entity_id=new_shift.id
+        )
+        db.add(notification)
+        db.commit()
+        
+        return ShiftResponse(
+            id=new_shift.id,
+            store_id=new_shift.store_id,
+            employee_id=new_shift.employee_id,
+            employee_name=employee.name,
+            shift_date=new_shift.shift_date,
+            start_time=new_shift.start_time,
+            end_time=new_shift.end_time,
+            status=new_shift.status.value,
+            notes=new_shift.notes,
+            created_at=new_shift.created_at,
+            updated_at=new_shift.updated_at
+        )
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"シフト作成に失敗: {str(e)}")
+
+
+@app.get("/api/stores/{store_id}/shifts", response_model=List[ShiftResponse])
+def get_shifts(
+    store_id: int,
+    year: Optional[int] = None,
+    month: Optional[int] = None,
+    employee_id: Optional[int] = None,
+    current_user = Depends(get_current_employee),
+    db: Session = Depends(get_db)
+):
+    """シフト一覧を取得"""
+    if current_user.store_id != store_id:
+        raise HTTPException(status_code=403, detail="他店舗のシフトは閲覧できません")
+    
+    query = db.query(Shift).filter(Shift.store_id == store_id)
+    
+    if year and month:
+        from calendar import monthrange
+        start_date = date(year, month, 1)
+        _, last_day = monthrange(year, month)
+        end_date = date(year, month, last_day)
+        query = query.filter(Shift.shift_date >= start_date, Shift.shift_date <= end_date)
+    
+    if employee_id:
+        query = query.filter(Shift.employee_id == employee_id)
+    
+    shifts = query.order_by(Shift.shift_date, Shift.start_time).all()
+    
+    # 従業員名を取得
+    employee_ids = list(set(s.employee_id for s in shifts))
+    employees = {e.id: e.name for e in db.query(Employee).filter(Employee.id.in_(employee_ids)).all()}
+    
+    return [
+        ShiftResponse(
+            id=s.id,
+            store_id=s.store_id,
+            employee_id=s.employee_id,
+            employee_name=employees.get(s.employee_id, ""),
+            shift_date=s.shift_date,
+            start_time=s.start_time,
+            end_time=s.end_time,
+            status=s.status.value,
+            notes=s.notes,
+            created_at=s.created_at,
+            updated_at=s.updated_at
+        ) for s in shifts
+    ]
+
+
+@app.put("/api/stores/{store_id}/shifts/{shift_id}", response_model=ShiftResponse)
+def update_shift(
+    store_id: int,
+    shift_id: int,
+    shift_data: ShiftUpdate,
+    request: Request,
+    current_user = Depends(get_current_employee),
+    db: Session = Depends(get_db)
+):
+    """シフトを更新"""
+    if current_user.role.value not in ['manager', 'owner']:
+        raise HTTPException(status_code=403, detail="シフト更新権限がありません")
+    
+    shift = db.query(Shift).filter(Shift.id == shift_id, Shift.store_id == store_id).first()
+    if not shift:
+        raise HTTPException(status_code=404, detail="シフトが見つかりません")
+    
+    try:
+        if shift_data.employee_id is not None:
+            shift.employee_id = shift_data.employee_id
+        if shift_data.shift_date is not None:
+            shift.shift_date = shift_data.shift_date
+        if shift_data.start_time is not None:
+            shift.start_time = shift_data.start_time
+        if shift_data.end_time is not None:
+            shift.end_time = shift_data.end_time
+        if shift_data.status is not None:
+            shift.status = ShiftStatus[shift_data.status.upper()]
+        if shift_data.notes is not None:
+            shift.notes = shift_data.notes
+        
+        shift.updated_at = datetime.utcnow()
+        db.commit()
+        db.refresh(shift)
+        
+        employee = db.query(Employee).filter(Employee.id == shift.employee_id).first()
+        
+        return ShiftResponse(
+            id=shift.id,
+            store_id=shift.store_id,
+            employee_id=shift.employee_id,
+            employee_name=employee.name if employee else "",
+            shift_date=shift.shift_date,
+            start_time=shift.start_time,
+            end_time=shift.end_time,
+            status=shift.status.value,
+            notes=shift.notes,
+            created_at=shift.created_at,
+            updated_at=shift.updated_at
+        )
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"シフト更新に失敗: {str(e)}")
+
+
+@app.delete("/api/stores/{store_id}/shifts/{shift_id}")
+def delete_shift(
+    store_id: int,
+    shift_id: int,
+    current_user = Depends(get_current_employee),
+    db: Session = Depends(get_db)
+):
+    """シフトを削除"""
+    if current_user.role.value not in ['manager', 'owner']:
+        raise HTTPException(status_code=403, detail="シフト削除権限がありません")
+    
+    shift = db.query(Shift).filter(Shift.id == shift_id, Shift.store_id == store_id).first()
+    if not shift:
+        raise HTTPException(status_code=404, detail="シフトが見つかりません")
+    
+    try:
+        db.delete(shift)
+        db.commit()
+        return {"message": "シフトを削除しました"}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"シフト削除に失敗: {str(e)}")
+
+
+# ====== シフト希望エンドポイント ======
+
+@app.post("/api/stores/{store_id}/shift-requests", response_model=ShiftRequestResponse)
+def create_shift_request(
+    store_id: int,
+    request_data: ShiftRequestCreate,
+    request: Request,
+    current_user = Depends(get_current_employee),
+    db: Session = Depends(get_db)
+):
+    """シフト希望を提出"""
+    if current_user.store_id != store_id:
+        raise HTTPException(status_code=403, detail="他店舗にシフト希望は出せません")
+    
+    try:
+        new_request = ShiftRequest(
+            store_id=store_id,
+            employee_id=current_user.id,
+            request_date=request_data.request_date,
+            start_time=request_data.start_time,
+            end_time=request_data.end_time,
+            request_type=ShiftRequestType[request_data.request_type.upper()],
+            notes=request_data.notes
+        )
+        db.add(new_request)
+        db.commit()
+        db.refresh(new_request)
+        
+        return ShiftRequestResponse(
+            id=new_request.id,
+            store_id=new_request.store_id,
+            employee_id=new_request.employee_id,
+            employee_name=current_user.name,
+            request_date=new_request.request_date,
+            start_time=new_request.start_time,
+            end_time=new_request.end_time,
+            request_type=new_request.request_type.value,
+            notes=new_request.notes,
+            is_approved=new_request.is_approved,
+            approved_by_id=new_request.approved_by_id,
+            approved_at=new_request.approved_at,
+            created_at=new_request.created_at
+        )
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"シフト希望の提出に失敗: {str(e)}")
+
+
+@app.get("/api/stores/{store_id}/shift-requests", response_model=List[ShiftRequestResponse])
+def get_shift_requests(
+    store_id: int,
+    year: Optional[int] = None,
+    month: Optional[int] = None,
+    current_user = Depends(get_current_employee),
+    db: Session = Depends(get_db)
+):
+    """シフト希望一覧を取得"""
+    if current_user.store_id != store_id:
+        raise HTTPException(status_code=403, detail="他店舗のシフト希望は閲覧できません")
+    
+    query = db.query(ShiftRequest).filter(ShiftRequest.store_id == store_id)
+    
+    # 一般スタッフは自分の希望のみ
+    if current_user.role.value == 'staff':
+        query = query.filter(ShiftRequest.employee_id == current_user.id)
+    
+    if year and month:
+        from calendar import monthrange
+        start_date = date(year, month, 1)
+        _, last_day = monthrange(year, month)
+        end_date = date(year, month, last_day)
+        query = query.filter(ShiftRequest.request_date >= start_date, ShiftRequest.request_date <= end_date)
+    
+    requests = query.order_by(ShiftRequest.request_date).all()
+    
+    employee_ids = list(set(r.employee_id for r in requests))
+    employees = {e.id: e.name for e in db.query(Employee).filter(Employee.id.in_(employee_ids)).all()}
+    
+    return [
+        ShiftRequestResponse(
+            id=r.id,
+            store_id=r.store_id,
+            employee_id=r.employee_id,
+            employee_name=employees.get(r.employee_id, ""),
+            request_date=r.request_date,
+            start_time=r.start_time,
+            end_time=r.end_time,
+            request_type=r.request_type.value,
+            notes=r.notes,
+            is_approved=r.is_approved,
+            approved_by_id=r.approved_by_id,
+            approved_at=r.approved_at,
+            created_at=r.created_at
+        ) for r in requests
+    ]
+
+
+# ====== 通知エンドポイント ======
+
+@app.get("/api/notifications", response_model=List[NotificationResponse])
+def get_notifications(
+    unread_only: bool = False,
+    limit: int = 50,
+    current_user = Depends(get_current_employee),
+    db: Session = Depends(get_db)
+):
+    """自分宛の通知一覧を取得"""
+    query = db.query(Notification).filter(Notification.employee_id == current_user.id)
+    
+    if unread_only:
+        query = query.filter(Notification.is_read == False)
+    
+    notifications = query.order_by(Notification.created_at.desc()).limit(limit).all()
+    
+    return [
+        NotificationResponse(
+            id=n.id,
+            store_id=n.store_id,
+            employee_id=n.employee_id,
+            notification_type=n.notification_type.value,
+            title=n.title,
+            message=n.message,
+            is_read=n.is_read,
+            read_at=n.read_at,
+            related_entity_type=n.related_entity_type,
+            related_entity_id=n.related_entity_id,
+            created_at=n.created_at
+        ) for n in notifications
+    ]
+
+
+@app.put("/api/notifications/{notification_id}/read")
+def mark_notification_read(
+    notification_id: int,
+    current_user = Depends(get_current_employee),
+    db: Session = Depends(get_db)
+):
+    """通知を既読にする"""
+    notification = db.query(Notification).filter(
+        Notification.id == notification_id,
+        Notification.employee_id == current_user.id
+    ).first()
+    
+    if not notification:
+        raise HTTPException(status_code=404, detail="通知が見つかりません")
+    
+    notification.is_read = True
+    notification.read_at = datetime.utcnow()
+    db.commit()
+    
+    return {"message": "既読にしました"}
+
+
+@app.put("/api/notifications/read-all")
+def mark_all_notifications_read(
+    current_user = Depends(get_current_employee),
+    db: Session = Depends(get_db)
+):
+    """全ての通知を既読にする"""
+    db.query(Notification).filter(
+        Notification.employee_id == current_user.id,
+        Notification.is_read == False
+    ).update({"is_read": True, "read_at": datetime.utcnow()})
+    db.commit()
+    
+    return {"message": "全て既読にしました"}
+
+
+@app.get("/api/notifications/unread-count")
+def get_unread_count(
+    current_user = Depends(get_current_employee),
+    db: Session = Depends(get_db)
+):
+    """未読通知数を取得"""
+    count = db.query(Notification).filter(
+        Notification.employee_id == current_user.id,
+        Notification.is_read == False
+    ).count()
+    
+    return {"unread_count": count}
+
+
+@app.post("/api/stores/{store_id}/notifications", response_model=NotificationResponse)
+def create_notification(
+    store_id: int,
+    notification_data: NotificationCreate,
+    current_user = Depends(get_current_employee),
+    db: Session = Depends(get_db)
+):
+    """通知を作成（店長・オーナーのみ）"""
+    if current_user.role.value not in ['manager', 'owner']:
+        raise HTTPException(status_code=403, detail="通知作成権限がありません")
+    
+    if current_user.store_id != store_id:
+        raise HTTPException(status_code=403, detail="他店舗には通知を送れません")
+    
+    try:
+        new_notification = Notification(
+            store_id=store_id,
+            employee_id=notification_data.employee_id,
+            notification_type=NotificationType[notification_data.notification_type.upper()],
+            title=notification_data.title,
+            message=notification_data.message,
+            related_entity_type=notification_data.related_entity_type,
+            related_entity_id=notification_data.related_entity_id
+        )
+        db.add(new_notification)
+        db.commit()
+        db.refresh(new_notification)
+        
+        return NotificationResponse(
+            id=new_notification.id,
+            store_id=new_notification.store_id,
+            employee_id=new_notification.employee_id,
+            notification_type=new_notification.notification_type.value,
+            title=new_notification.title,
+            message=new_notification.message,
+            is_read=new_notification.is_read,
+            read_at=new_notification.read_at,
+            related_entity_type=new_notification.related_entity_type,
+            related_entity_id=new_notification.related_entity_id,
+            created_at=new_notification.created_at
+        )
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"通知作成に失敗: {str(e)}")
+
 
 if __name__ == "__main__":
     print("=== バー管理システム SaaS API ===")

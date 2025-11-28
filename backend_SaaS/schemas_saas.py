@@ -265,6 +265,7 @@ class DailyReportCreate(BaseModel):
     drink_count: int = 0
     champagne_type: str = ""
     champagne_price: int = 0
+    catch_count: int = 0  # 🆕 キャッチ数
     work_start_time: str = Field(..., pattern="^([01]?[0-9]|2[0-3]):[0-5][0-9]$")
     work_end_time: str = Field(..., pattern="^([01]?[0-9]|2[0-3]):[0-5][0-9]$")
     break_minutes: int = Field(default=0, ge=0, le=480)
@@ -295,6 +296,7 @@ class DailyReportResponse(BaseModel):
     drink_count: int
     champagne_type: str
     champagne_price: int
+    catch_count: int = 0  # 🆕 キャッチ数
     work_start_time: str
     work_end_time: str
     break_minutes: int
@@ -585,3 +587,146 @@ class PersonalGoalResponse(BaseModel):
     
     class Config:
         from_attributes = True
+
+
+# ====== 店舗目標関連スキーマ ======
+
+class StoreGoalInput(BaseModel):
+    """店舗目標入力用スキーマ"""
+    year: int
+    month: int
+    monthly_sales_goal: int = 3000000
+    weekday_sales_goal: int = 100000
+    weekend_sales_goal: int = 200000
+
+class StoreGoalResponse(BaseModel):
+    """店舗目標レスポンス用スキーマ"""
+    id: int
+    store_id: int
+    year: int
+    month: int
+    monthly_sales_goal: int
+    weekday_sales_goal: int
+    weekend_sales_goal: int
+    created_at: datetime
+    updated_at: datetime
+    
+    class Config:
+        from_attributes = True
+
+
+# ====== シフト関連スキーマ ======
+
+class ShiftStatus(str, Enum):
+    SCHEDULED = "scheduled"
+    CONFIRMED = "confirmed"
+    COMPLETED = "completed"
+    CANCELLED = "cancelled"
+
+class ShiftRequestType(str, Enum):
+    AVAILABLE = "available"
+    UNAVAILABLE = "unavailable"
+    PREFERRED = "preferred"
+
+class ShiftCreate(BaseModel):
+    """シフト作成用スキーマ"""
+    employee_id: int
+    shift_date: date
+    start_time: str = Field(..., pattern="^([01]?[0-9]|2[0-3]):[0-5][0-9]$")
+    end_time: str = Field(..., pattern="^([01]?[0-9]|2[0-3]):[0-5][0-9]$")
+    notes: Optional[str] = None
+
+class ShiftUpdate(BaseModel):
+    """シフト更新用スキーマ"""
+    employee_id: Optional[int] = None
+    shift_date: Optional[date] = None
+    start_time: Optional[str] = Field(None, pattern="^([01]?[0-9]|2[0-3]):[0-5][0-9]$")
+    end_time: Optional[str] = Field(None, pattern="^([01]?[0-9]|2[0-3]):[0-5][0-9]$")
+    status: Optional[ShiftStatus] = None
+    notes: Optional[str] = None
+
+class ShiftResponse(BaseModel):
+    """シフトレスポンス用スキーマ"""
+    id: int
+    store_id: int
+    employee_id: int
+    employee_name: Optional[str] = None
+    shift_date: date
+    start_time: str
+    end_time: str
+    status: str
+    notes: Optional[str] = None
+    created_at: datetime
+    updated_at: datetime
+    
+    class Config:
+        from_attributes = True
+
+class ShiftRequestCreate(BaseModel):
+    """シフト希望作成用スキーマ"""
+    request_date: date
+    start_time: Optional[str] = Field(None, pattern="^([01]?[0-9]|2[0-3]):[0-5][0-9]$")
+    end_time: Optional[str] = Field(None, pattern="^([01]?[0-9]|2[0-3]):[0-5][0-9]$")
+    request_type: ShiftRequestType = ShiftRequestType.AVAILABLE
+    notes: Optional[str] = None
+
+class ShiftRequestResponse(BaseModel):
+    """シフト希望レスポンス用スキーマ"""
+    id: int
+    store_id: int
+    employee_id: int
+    employee_name: Optional[str] = None
+    request_date: date
+    start_time: Optional[str] = None
+    end_time: Optional[str] = None
+    request_type: str
+    notes: Optional[str] = None
+    is_approved: bool
+    approved_by_id: Optional[int] = None
+    approved_at: Optional[datetime] = None
+    created_at: datetime
+    
+    class Config:
+        from_attributes = True
+
+
+# ====== 通知関連スキーマ ======
+
+class NotificationType(str, Enum):
+    SHIFT_ASSIGNED = "shift_assigned"
+    SHIFT_CHANGED = "shift_changed"
+    REPORT_APPROVED = "report_approved"
+    REPORT_REJECTED = "report_rejected"
+    GOAL_ACHIEVED = "goal_achieved"
+    ANNOUNCEMENT = "announcement"
+    REMINDER = "reminder"
+
+class NotificationCreate(BaseModel):
+    """通知作成用スキーマ"""
+    employee_id: int
+    notification_type: NotificationType
+    title: str = Field(..., min_length=1, max_length=200)
+    message: str
+    related_entity_type: Optional[str] = None
+    related_entity_id: Optional[int] = None
+
+class NotificationResponse(BaseModel):
+    """通知レスポンス用スキーマ"""
+    id: int
+    store_id: int
+    employee_id: int
+    notification_type: str
+    title: str
+    message: str
+    is_read: bool
+    read_at: Optional[datetime] = None
+    related_entity_type: Optional[str] = None
+    related_entity_id: Optional[int] = None
+    created_at: datetime
+    
+    class Config:
+        from_attributes = True
+
+class NotificationMarkRead(BaseModel):
+    """通知既読マーク用スキーマ"""
+    notification_ids: List[int]

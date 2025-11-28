@@ -711,3 +711,215 @@
     padding: 6px 12px;
   }
 }
+
+/* ===== 招待セクション + 新規追加スタイル ===== */
+
+.invite-section {
+  background: linear-gradient(135deg, #f8f9ff 0%, #fff5f9 100%);
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 24px;
+  border: 1px solid #e1e8ed;
+}
+
+.section-header h4 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 8px 0;
+}
+
+.section-description {
+  font-size: 14px;
+  color: #666;
+  margin: 0 0 20px 0;
+}
+
+.invite-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form-row {
+  display: flex;
+  gap: 16px;
+}
+
+.form-row .form-group {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+.invite-codes-section,
+.members-section {
+  margin-top: 24px;
+}
+
+.invite-codes-section .section-header,
+.members-section .section-header {
+  margin-bottom: 16px;
+}
+
+.invite-codes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.invite-code-card {
+  background: white;
+  border: 2px solid #e1e8ed;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.invite-code-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.invite-code-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 13px;
+  color: #666;
+}
+
+.detail-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.icon-button {
+  background: #f8f9fa;
+  border: none;
+  border-radius: 8px;
+  padding: 8px;
+  cursor: pointer;
+  color: #666;
+  transition: all 0.2s ease;
+}
+
+.icon-button:hover {
+  background: #e9ecef;
+  color: #9333EA;
+}
+
+.empty-state-small {
+  text-align: center;
+  color: #999;
+  padding: 24px;
+  font-size: 14px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+/* ===== プロフィール編集モーダル ===== */
+
+.profile-edit-modal {
+  background: white;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow: hidden;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+}
+
+.profile-edit-modal .modal-content {
+  padding: 24px;
+  overflow-y: auto;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid #e1e8ed;
+}
+
+.modal-actions .submit-button {
+  background: linear-gradient(135deg, #9333EA, #F0E);
+}
+
+.modal-actions .submit-button:disabled {
+  background: #bdc3c7;
+  cursor: not-allowed;
+}
+
+/* パスワード入力 */
+.password-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-input-wrapper .form-input {
+  padding-right: 48px;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  color: #666;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.password-toggle:hover {
+  color: #9333EA;
+}
+
+.password-hint {
+  font-size: 12px;
+  color: #888;
+  margin-top: 6px;
+}
+
+.password-match {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  margin-top: 8px;
+}
+
+.password-match.match {
+  color: #27ae60;
+}
+
+.password-match.no-match {
+  color: #e74c3c;
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 600px) {
+  .form-row {
+    flex-direction: column;
+  }
+  
+  .invite-section {
+    padding: 16px;
+  }
+  
+  .invite-code-details {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .profile-edit-modal {
+    margin: 10px;
+    max-height: calc(100vh - 20px);
+  }
+}

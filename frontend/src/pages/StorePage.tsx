@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { API_BASE_URL } from '../config';
-import { Settings, X, Target, TrendingUp, Users, FileText } from 'lucide-react';
+import { Settings, X, Target, TrendingUp, Users, FileText, Download } from 'lucide-react';
 import ReportHistoryPage from './ReportHistoryPage';
 
 interface User {
@@ -21,6 +21,8 @@ interface EmployeeReport {
   total_sales: number;
   report_count: number;
   approved_count: number;
+  total_drinks: number;
+  total_catch: number;
 }
 
 interface StoreGoalSettings {
@@ -36,6 +38,12 @@ interface StoreSummary {
   pending_reports: number;
 }
 
+interface DailySalesData {
+  date: string;
+  day: string;
+  sales: number;
+}
+
 const StorePage: React.FC<StorePageProps> = ({ user }) => {
   // 🆕 タブ状態
   const [activeTab, setActiveTab] = useState<'overview' | 'history'>('overview');
@@ -49,13 +57,89 @@ const StorePage: React.FC<StorePageProps> = ({ user }) => {
     weekendTarget: 300000,
     totalMonthlyTarget: 2000000
   });
+  const [dailySalesData, setDailySalesData] = useState<DailySalesData[]>([]);
+  const [savingGoal, setSavingGoal] = useState(false);
 
   useEffect(() => {
     // 🆕 修正: owner も manager と同じくアクセス可能
     if (user.role === 'manager' || user.role === 'owner') {
       fetchStoreData();
+      loadStoreGoals();
     }
   }, [user.role]);
+
+  // 店舗目標をバックエンドAPIから読み込み
+  const loadStoreGoals = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const store_id = user.store_id;
+      if (!token || !store_id) return;
+
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = now.getMonth() + 1;
+
+      const response = await fetch(`${API_BASE_URL}/api/stores/${store_id}/goals?year=${year}&month=${month}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setStoreGoalSettings({
+          weekdayTarget: data.weekday_sales_goal || 150000,
+          weekendTarget: data.weekend_sales_goal || 300000,
+          totalMonthlyTarget: data.monthly_sales_goal || 2000000
+        });
+      }
+    } catch (error) {
+      console.error('目標読み込みエラー:', error);
+    }
+  };
+
+  // 店舗目標をバックエンドAPIに保存
+  const saveStoreGoalsToStorage = async () => {
+    setSavingGoal(true);
+    try {
+      const token = localStorage.getItem('token');
+      const store_id = user.store_id;
+      if (!token || !store_id) return;
+
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = now.getMonth() + 1;
+
+      const response = await fetch(`${API_BASE_URL}/api/stores/${store_id}/goals`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          year,
+          month,
+          monthly_sales_goal: storeGoalSettings.totalMonthlyTarget,
+          weekday_sales_goal: storeGoalSettings.weekdayTarget,
+          weekend_sales_goal: storeGoalSettings.weekendTarget
+        })
+      });
+
+      if (response.ok) {
+        alert('店舗目標を保存しました！');
+        setShowTargetSettings(false);
+      } else {
+        const error = await response.json();
+        alert(error.detail || '保存中にエラーが発生しました');
+      }
+    } catch (error) {
+      console.error('目標保存エラー:', error);
+      alert('保存中にエラーが発生しました');
+    } finally {
+      setSavingGoal(false);
+    }
+  };
 
   const fetchStoreData = async () => {
     try {
@@ -78,6 +162,22 @@ const StorePage: React.FC<StorePageProps> = ({ user }) => {
         },
       });
 
+      // 🆕 従業員一覧を取得して名前をマッピング
+      const employeesResponse = await fetch(`${API_BASE_URL}/api/stores/${store_id}/employees`, {
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+      });
+
+      let employeeNames: Record<number, string> = {};
+      if (employeesResponse.ok) {
+        const employees = await employeesResponse.json();
+        employees.forEach((emp: any) => {
+          employeeNames[emp.id] = emp.name;
+        });
+      }
+
       if (dashboardResponse.ok) {
         const dashboard = await dashboardResponse.json();
         setStoreSummary({
@@ -91,21 +191,55 @@ const StorePage: React.FC<StorePageProps> = ({ user }) => {
       if (reportsResponse.ok) {
         const reports = await reportsResponse.json();
         
+        // 🆕 過去7日間の売上データを集計
+        const last7Days: DailySalesData[] = [];
+        const today = new Date();
+        
+        for (let i = 6; i >= 0; i--) {
+          const date = new Date(today);
+          date.setDate(today.getDate() - i);
+          const dateStr = date.toISOString().split('T')[0];
+          
+          const daySales = reports
+            .filter((r: any) => r.date === dateStr)
+            .reduce((sum: number, r: any) => sum + (r.total_sales || 0), 0);
+          
+          last7Days.push({
+            date: dateStr,
+            day: `${date.getDate()}日`,
+            sales: daySales
+          });
+        }
+        setDailySalesData(last7Days);
+        
+        // 🆕 従業員別の集計を更新（ドリンク・キャッチも含む）
         const employeeMap = new Map<number, EmployeeReport>();
         
-        reports.forEach((report: any) => {
+        // 今月のレポートのみフィルタ
+        const currentMonth = new Date().getMonth() + 1;
+        const currentYear = new Date().getFullYear();
+        const thisMonthReports = reports.filter((r: any) => {
+          const reportDate = new Date(r.date);
+          return reportDate.getMonth() + 1 === currentMonth && reportDate.getFullYear() === currentYear;
+        });
+        
+        thisMonthReports.forEach((report: any) => {
           if (!employeeMap.has(report.employee_id)) {
             employeeMap.set(report.employee_id, {
               employee_id: report.employee_id,
-              employee_name: `従業員${report.employee_id}`,
+              employee_name: employeeNames[report.employee_id] || `従業員${report.employee_id}`,
               total_sales: 0,
               report_count: 0,
-              approved_count: 0
+              approved_count: 0,
+              total_drinks: 0,
+              total_catch: 0
             });
           }
           
           const empReport = employeeMap.get(report.employee_id)!;
-          empReport.total_sales += report.total_sales;
+          empReport.total_sales += report.total_sales || 0;
+          empReport.total_drinks += report.drink_count || 0;
+          empReport.total_catch += report.catch_count || 0;
           empReport.report_count++;
           if (report.is_approved) {
             empReport.approved_count++;
@@ -127,23 +261,106 @@ const StorePage: React.FC<StorePageProps> = ({ user }) => {
   const totalStoreSales = storeSummary?.month_sales || 0;
   const achievementRate = (totalStoreSales / storeGoalSettings.totalMonthlyTarget) * 100;
 
-  const dailySalesData = [
-    { day: '17日', sales: 180000 },
-    { day: '18日', sales: 220000 },
-    { day: '19日', sales: 160000 },
-    { day: '20日', sales: 280000 },
-    { day: '21日', sales: 320000 },
-    { day: '22日', sales: 190000 },
-    { day: '23日', sales: 240000 }
+  // 🆕 実データを使用（空の場合はデフォルト表示）
+  const displaySalesData = dailySalesData.length > 0 ? dailySalesData : [
+    { date: '', day: '-', sales: 0 },
+    { date: '', day: '-', sales: 0 },
+    { date: '', day: '-', sales: 0 },
+    { date: '', day: '-', sales: 0 },
+    { date: '', day: '-', sales: 0 },
+    { date: '', day: '-', sales: 0 },
+    { date: '', day: '-', sales: 0 }
   ];
 
-  const maxDailySales = Math.max(...dailySalesData.map(d => d.sales));
-  const weekdayAchievementRate = 78;
-  const weekendAchievementRate = 85;
+  const maxDailySales = Math.max(...displaySalesData.map(d => d.sales), 1);
+  
+  // 🆕 平日・週末の達成率を実データから計算
+  const calculateDayTypeAchievement = () => {
+    if (dailySalesData.length === 0) return { weekday: 0, weekend: 0 };
+    
+    let weekdaySales = 0;
+    let weekdayCount = 0;
+    let weekendSales = 0;
+    let weekendCount = 0;
+    
+    dailySalesData.forEach(item => {
+      const date = new Date(item.date);
+      const dayOfWeek = date.getDay();
+      
+      if (dayOfWeek === 0 || dayOfWeek === 6) {
+        weekendSales += item.sales;
+        weekendCount++;
+      } else {
+        weekdaySales += item.sales;
+        weekdayCount++;
+      }
+    });
+    
+    const avgWeekday = weekdayCount > 0 ? weekdaySales / weekdayCount : 0;
+    const avgWeekend = weekendCount > 0 ? weekendSales / weekendCount : 0;
+    
+    return {
+      weekday: storeGoalSettings.weekdayTarget > 0 
+        ? Math.round((avgWeekday / storeGoalSettings.weekdayTarget) * 100) 
+        : 0,
+      weekend: storeGoalSettings.weekendTarget > 0 
+        ? Math.round((avgWeekend / storeGoalSettings.weekendTarget) * 100) 
+        : 0
+    };
+  };
+  
+  const dayTypeAchievement = calculateDayTypeAchievement();
+  const weekdayAchievementRate = dayTypeAchievement.weekday;
+  const weekendAchievementRate = dayTypeAchievement.weekend;
 
   const saveTargetSettings = () => {
-    console.log('店舗目標設定を保存:', storeGoalSettings);
-    setShowTargetSettings(false);
+    saveStoreGoalsToStorage();
+  };
+
+  // 🆕 日報データをCSVエクスポート
+  const handleExportCSV = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert('認証エラー');
+        return;
+      }
+      
+      // 今月の開始日と終了日を計算
+      const now = new Date();
+      const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+      const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+      
+      const dateFrom = firstDay.toISOString().split('T')[0];
+      const dateTo = lastDay.toISOString().split('T')[0];
+      
+      const response = await fetch(
+        `${API_BASE_URL}/api/exports/daily-reports?format=csv&date_from=${dateFrom}&date_to=${dateTo}`,
+        {
+          headers: { 
+            'Authorization': `Bearer ${token}`,
+          }
+        }
+      );
+      
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `daily_reports_${dateFrom}_${dateTo}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      } else {
+        const error = await response.json();
+        alert(error.detail || 'エクスポートに失敗しました');
+      }
+    } catch (error) {
+      console.error('エクスポートエラー:', error);
+      alert('エクスポート中にエラーが発生しました');
+    }
   };
 
   // 🆕 権限チェック: owner も許可
@@ -172,6 +389,34 @@ const StorePage: React.FC<StorePageProps> = ({ user }) => {
       minHeight: '100vh',
       fontFamily: '"Noto Sans JP", sans-serif'
     }}>
+      {/* 🆕 エクスポートボタン */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'flex-end',
+        marginBottom: '15px'
+      }}>
+        <button
+          onClick={handleExportCSV}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '10px 16px',
+            background: 'linear-gradient(135deg, #27ae60, #2ecc71)',
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            fontSize: '14px',
+            fontWeight: '500',
+            cursor: 'pointer',
+            boxShadow: '0 2px 8px rgba(39, 174, 96, 0.3)'
+          }}
+        >
+          <Download size={16} />
+          日報CSVダウンロード
+        </button>
+      </div>
+
       {/* 🆕 タブナビゲーション */}
       <div style={{
         display: 'flex',
@@ -367,7 +612,7 @@ const StorePage: React.FC<StorePageProps> = ({ user }) => {
                 alignItems: 'end',
                 gap: '12px'
               }}>
-                {dailySalesData.map((item, index) => {
+                {displaySalesData.map((item, index) => {
                   const height = maxDailySales > 0 ? (item.sales / maxDailySales) * 80 : 20;
                   
                   return (
@@ -379,12 +624,14 @@ const StorePage: React.FC<StorePageProps> = ({ user }) => {
                       flex: 1
                     }}>
                       <div style={{ fontSize: '10px', color: '#666', textAlign: 'center' }}>
-                        {Math.floor(item.sales / 10000)}万
+                        {item.sales > 0 ? `${Math.floor(item.sales / 10000)}万` : '-'}
                       </div>
                       <div style={{
                         width: '20px',
                         height: `${Math.max(height, 20)}px`,
-                        background: 'linear-gradient(180deg, #9333EA 0%, #F0E 100%)',
+                        background: item.sales > 0 
+                          ? 'linear-gradient(180deg, #9333EA 0%, #F0E 100%)' 
+                          : '#e1e8ed',
                         borderRadius: '4px',
                         minHeight: '20px'
                       }} />
@@ -495,7 +742,7 @@ const StorePage: React.FC<StorePageProps> = ({ user }) => {
                           {employee.employee_name}
                         </div>
                         <div style={{ fontSize: '12px', color: '#666' }}>
-                          日報: {employee.report_count}件 | 承認済: {employee.approved_count}件
+                          日報: {employee.report_count}件 | 🍹{employee.total_drinks}杯 | 🎯{employee.total_catch}回
                         </div>
                       </div>
                     </div>
@@ -666,19 +913,35 @@ const StorePage: React.FC<StorePageProps> = ({ user }) => {
                   justifyContent: 'flex-end'
                 }}>
                   <button 
-                    onClick={saveTargetSettings}
+                    onClick={() => setShowTargetSettings(false)}
                     style={{
-                      background: 'linear-gradient(135deg, #9333EA, #F0E)',
+                      background: 'white',
+                      color: '#666',
+                      border: '1px solid #e1e8ed',
+                      padding: '12px 24px',
+                      borderRadius: '8px',
+                      fontSize: '16px',
+                      fontWeight: '500',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    キャンセル
+                  </button>
+                  <button 
+                    onClick={saveTargetSettings}
+                    disabled={savingGoal}
+                    style={{
+                      background: savingGoal ? '#ccc' : 'linear-gradient(135deg, #9333EA, #F0E)',
                       color: 'white',
                       border: 'none',
                       padding: '12px 24px',
                       borderRadius: '8px',
                       fontSize: '16px',
                       fontWeight: '600',
-                      cursor: 'pointer'
+                      cursor: savingGoal ? 'not-allowed' : 'pointer'
                     }}
                   >
-                    保存
+                    {savingGoal ? '保存中...' : '保存'}
                   </button>
                 </div>
               </div>

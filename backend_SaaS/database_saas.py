@@ -185,7 +185,6 @@ class Store(Base):
     employees = relationship("Employee", back_populates="store", cascade="all, delete-orphan")
     daily_reports = relationship("DailyReport", back_populates="store", cascade="all, delete-orphan")
     invite_codes = relationship("InviteCode", back_populates="store", cascade="all, delete-orphan")
-    personal_goals = relationship("PersonalGoal", back_populates="store", cascade="all, delete-orphan")
 
 
 class Employee(Base):
@@ -288,7 +287,14 @@ class DailyReport(Base):
     total_sales = Column(Integer, default=0)
     number_of_customers = Column(Integer, default=0)
     drink_sales = Column(Integer, default=0)
+    drink_count = Column(Integer, default=0)  # 🆕 ドリンク杯数
     champagne_sales = Column(Integer, default=0)
+    champagne_type = Column(String(200), default="")  # 🆕 シャンパン種類
+    champagne_price = Column(Integer, default=0)  # 🆕 シャンパン金額
+    catch_count = Column(Integer, default=0)  # 🆕 キャッチ数
+    alcohol_cost = Column(Integer, default=0)  # 🆕 酒代
+    other_expenses = Column(Integer, default=0)  # 🆕 その他経費
+    break_minutes = Column(Integer, default=0)  # 🆕 休憩時間
     
     cash_sales = Column(Integer, default=0)
     card_sales = Column(Integer, default=0)
@@ -335,21 +341,122 @@ class PersonalGoal(Base):
     """個人目標テーブル"""
     __tablename__ = "personal_goals"
     id = Column(Integer, primary_key=True, index=True)
-    store_id = Column(Integer, ForeignKey("stores.id"), nullable=False)
     employee_id = Column(Integer, ForeignKey("employees.id"), nullable=False)
     
-    goal_type = Column(String(50), nullable=False)
-    target_value = Column(Integer, nullable=False)
-    target_month = Column(Date, nullable=False, index=True)
+    # 年月指定
+    year = Column(Integer, nullable=False)
+    month = Column(Integer, nullable=False)
     
-    current_value = Column(Integer, default=0)
-    achievement_rate = Column(Float, default=0.0)
+    # 目標値
+    sales_goal = Column(Integer, default=500000)  # 売上目標
+    drinks_goal = Column(Integer, default=100)    # ドリンク目標
+    catch_goal = Column(Integer, default=50)      # キャッチ目標
     
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
-    store = relationship("Store", back_populates="personal_goals")
     employee = relationship("Employee", back_populates="personal_goals")
+
+
+class StoreGoal(Base):
+    """店舗目標テーブル"""
+    __tablename__ = "store_goals"
+    id = Column(Integer, primary_key=True, index=True)
+    store_id = Column(Integer, ForeignKey("stores.id"), nullable=False)
+    
+    year = Column(Integer, nullable=False)
+    month = Column(Integer, nullable=False)
+    
+    monthly_sales_goal = Column(Integer, default=3000000)  # 月間売上目標
+    weekday_sales_goal = Column(Integer, default=100000)   # 平日売上目標
+    weekend_sales_goal = Column(Integer, default=200000)   # 週末売上目標
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class ShiftStatus(enum.Enum):
+    SCHEDULED = "scheduled"
+    CONFIRMED = "confirmed"
+    COMPLETED = "completed"
+    CANCELLED = "cancelled"
+
+
+class ShiftRequestType(enum.Enum):
+    AVAILABLE = "available"
+    UNAVAILABLE = "unavailable"
+    PREFERRED = "preferred"
+
+
+class Shift(Base):
+    """シフトテーブル"""
+    __tablename__ = "shifts"
+    id = Column(Integer, primary_key=True, index=True)
+    store_id = Column(Integer, ForeignKey("stores.id"), nullable=False)
+    employee_id = Column(Integer, ForeignKey("employees.id"), nullable=False)
+    
+    shift_date = Column(Date, nullable=False, index=True)
+    start_time = Column(String(10), nullable=False)
+    end_time = Column(String(10), nullable=False)
+    
+    status = Column(Enum(ShiftStatus), default=ShiftStatus.SCHEDULED, nullable=False)
+    notes = Column(Text)
+    
+    created_by_id = Column(Integer, ForeignKey("employees.id"))
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class ShiftRequest(Base):
+    """シフト希望テーブル"""
+    __tablename__ = "shift_requests"
+    id = Column(Integer, primary_key=True, index=True)
+    store_id = Column(Integer, ForeignKey("stores.id"), nullable=False)
+    employee_id = Column(Integer, ForeignKey("employees.id"), nullable=False)
+    
+    request_date = Column(Date, nullable=False, index=True)
+    start_time = Column(String(10))
+    end_time = Column(String(10))
+    
+    request_type = Column(Enum(ShiftRequestType), default=ShiftRequestType.AVAILABLE, nullable=False)
+    notes = Column(Text)
+    
+    is_approved = Column(Boolean, default=False)
+    approved_by_id = Column(Integer, ForeignKey("employees.id"))
+    approved_at = Column(DateTime)
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class NotificationType(enum.Enum):
+    SHIFT_ASSIGNED = "shift_assigned"
+    SHIFT_CHANGED = "shift_changed"
+    REPORT_APPROVED = "report_approved"
+    REPORT_REJECTED = "report_rejected"
+    GOAL_ACHIEVED = "goal_achieved"
+    ANNOUNCEMENT = "announcement"
+    REMINDER = "reminder"
+
+
+class Notification(Base):
+    """通知テーブル"""
+    __tablename__ = "notifications"
+    id = Column(Integer, primary_key=True, index=True)
+    store_id = Column(Integer, ForeignKey("stores.id"), nullable=False)
+    employee_id = Column(Integer, ForeignKey("employees.id"), nullable=False)
+    
+    notification_type = Column(Enum(NotificationType), nullable=False)
+    title = Column(String(200), nullable=False)
+    message = Column(Text, nullable=False)
+    
+    is_read = Column(Boolean, default=False)
+    read_at = Column(DateTime)
+    
+    related_entity_type = Column(String(50))  # shift, report, etc.
+    related_entity_id = Column(Integer)
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
 
 
 class AuditLog(Base):

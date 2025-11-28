@@ -16,7 +16,7 @@ interface PersonalPageProps {
   onLogout?: () => void;
 }
 
-// 🆕 拡張: 日報インターフェースにドリンク・シャンパン情報を追加
+// 🆕 拡張: 日報インターフェースにドリンク・シャンパン・キャッチ情報を追加
 interface DailyReport {
   id: number;
   date: string;
@@ -26,10 +26,11 @@ interface DailyReport {
   drink_count: number;          // 🆕 追加
   champagne_type: string;       // 🆕 追加
   champagne_price: number;      // 🆕 追加
+  catch_count: number;          // 🆕 キャッチ数追加
   is_approved: boolean;
 }
 
-// 🆕 拡張: 月次サマリーにドリンク・シャンパン集計を追加
+// 🆕 拡張: 月次サマリーにドリンク・シャンパン・キャッチ集計を追加
 interface MonthlySummary {
   total_reports: number;
   total_sales: number;
@@ -37,6 +38,7 @@ interface MonthlySummary {
   approved_count: number;
   total_drinks: number;         // 🆕 追加
   total_champagne_count: number; // 🆕 追加
+  total_catch: number;          // 🆕 キャッチ追加
 }
 
 interface GoalSettings {
@@ -57,6 +59,7 @@ const PersonalPage: React.FC<PersonalPageProps> = ({ user, onPageChange, onLogou
   const [showGoalSettings, setShowGoalSettings] = useState(false);
   const [chartType, setChartType] = useState<'sales' | 'drinks' | 'catch'>('sales');
   const [showChartDropdown, setShowChartDropdown] = useState(false);
+  const [savingGoal, setSavingGoal] = useState(false);
 
   const chartOptions = [
     { key: 'sales', label: '売上', unit: '円' },
@@ -66,7 +69,87 @@ const PersonalPage: React.FC<PersonalPageProps> = ({ user, onPageChange, onLogou
 
   useEffect(() => {
     fetchPersonalData();
+    fetchPersonalGoal();
   }, []);
+
+  // 🆕 個人目標をAPIから取得
+  const fetchPersonalGoal = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
+      const currentYear = new Date().getFullYear();
+      const currentMonth = new Date().getMonth() + 1;
+
+      const response = await fetch(
+        `${API_BASE_URL}/api/personal-goals?year=${currentYear}&month=${currentMonth}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('✅ 目標データ取得成功:', data);
+        setGoalSettings({
+          sales: data.sales_goal || 500000,
+          drinks: data.drinks_goal || 100,
+          catch: data.catch_goal || 50
+        });
+      }
+    } catch (error) {
+      console.error('❌ 目標取得エラー:', error);
+    }
+  };
+
+  // 🆕 個人目標をAPIに保存
+  const savePersonalGoal = async () => {
+    setSavingGoal(true);
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert('認証エラー: ログインしてください');
+        return;
+      }
+
+      const currentYear = new Date().getFullYear();
+      const currentMonth = new Date().getMonth() + 1;
+
+      const response = await fetch(`${API_BASE_URL}/api/personal-goals`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          year: currentYear,
+          month: currentMonth,
+          sales_goal: goalSettings.sales,
+          drinks_goal: goalSettings.drinks,
+          catch_goal: goalSettings.catch
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('✅ 目標保存成功:', data);
+        alert('目標を保存しました！');
+        setShowGoalSettings(false);
+      } else {
+        const error = await response.json();
+        console.error('❌ 目標保存エラー:', error);
+        alert(`保存エラー: ${error.detail || '不明なエラー'}`);
+      }
+    } catch (error) {
+      console.error('❌ 目標保存エラー:', error);
+      alert('保存中にエラーが発生しました');
+    } finally {
+      setSavingGoal(false);
+    }
+  };
 
   // 🆕 改善: ドリンク・シャンパン数の集計を追加
   const fetchPersonalData = async () => {
@@ -121,11 +204,17 @@ const PersonalPage: React.FC<PersonalPageProps> = ({ user, onPageChange, onLogou
         const totalChampagneCount = thisMonthReports.filter((r: DailyReport) => 
           (r.champagne_price || 0) > 0
         ).length;
+
+        // 🆕 キャッチ数の集計
+        const totalCatch = thisMonthReports.reduce((sum: number, r: DailyReport) => {
+          return sum + (r.catch_count || 0);
+        }, 0);
         
         console.log('📊 集計結果:', {
           totalSales,
           totalDrinks,
           totalChampagneCount,
+          totalCatch,
           reportCount: thisMonthReports.length
         });
         
@@ -135,7 +224,8 @@ const PersonalPage: React.FC<PersonalPageProps> = ({ user, onPageChange, onLogou
           average_sales: thisMonthReports.length > 0 ? totalSales / thisMonthReports.length : 0,
           approved_count: approvedCount,
           total_drinks: totalDrinks,              // 🆕 追加
-          total_champagne_count: totalChampagneCount  // 🆕 追加
+          total_champagne_count: totalChampagneCount,  // 🆕 追加
+          total_catch: totalCatch                  // 🆕 キャッチ追加
         });
       } else {
         const errorData = await reportsResponse.json();
@@ -173,7 +263,7 @@ const PersonalPage: React.FC<PersonalPageProps> = ({ user, onPageChange, onLogou
         dayLabel: date.getDate() + '日',
         sales: dayReport?.total_sales || 0,
         drinks: dayReport?.drink_count || 0,  // 🆕 実データ反映
-        catch: 0  // キャッチ数は将来的に実装
+        catch: dayReport?.catch_count || 0    // 🆕 キャッチ実データ反映
       });
     }
     
@@ -193,10 +283,10 @@ const PersonalPage: React.FC<PersonalPageProps> = ({ user, onPageChange, onLogou
   const workDays = thisMonthReports.length;
   const currentSales = monthlySummary?.total_sales || 0;
   const totalDrinks = monthlySummary?.total_drinks || 0;  // 🆕 実データ使用
-  const totalCatch = 0;  // キャッチ数は将来的に実装
+  const totalCatch = monthlySummary?.total_catch || 0;    // 🆕 実データ使用
 
   const updateGoalSettings = () => {
-    setShowGoalSettings(false);
+    savePersonalGoal();
   };
 
   const handleChartTypeChange = (type: 'sales' | 'drinks' | 'catch') => {
@@ -725,19 +815,35 @@ const PersonalPage: React.FC<PersonalPageProps> = ({ user, onPageChange, onLogou
               justifyContent: 'flex-end'
             }}>
               <button 
-                onClick={updateGoalSettings}
+                onClick={() => setShowGoalSettings(false)}
                 style={{
-                  background: 'linear-gradient(135deg, #9333EA, #F0E)',
+                  background: 'white',
+                  color: '#666',
+                  border: '1px solid #e1e8ed',
+                  padding: '12px 24px',
+                  borderRadius: '8px',
+                  fontSize: '16px',
+                  fontWeight: '500',
+                  cursor: 'pointer'
+                }}
+              >
+                キャンセル
+              </button>
+              <button 
+                onClick={updateGoalSettings}
+                disabled={savingGoal}
+                style={{
+                  background: savingGoal ? '#ccc' : 'linear-gradient(135deg, #9333EA, #F0E)',
                   color: 'white',
                   border: 'none',
                   padding: '12px 24px',
                   borderRadius: '8px',
                   fontSize: '16px',
                   fontWeight: '600',
-                  cursor: 'pointer'
+                  cursor: savingGoal ? 'not-allowed' : 'pointer'
                 }}
               >
-                保存
+                {savingGoal ? '保存中...' : '保存'}
               </button>
             </div>
           </div>

@@ -62,6 +62,25 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user, onLogout }) => {
   const [formLoading, setFormLoading] = useState(false);
   const [suggestedCode, setSuggestedCode] = useState('');
   
+  // 🆕 プロフィール編集モーダル状態
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [profileData, setProfileData] = useState({
+    name: user.name,
+    phone: '',
+    emergency_contact_name: '',
+    emergency_contact_phone: ''
+  });
+  const [passwordData, setPasswordData] = useState({
+    current_password: '',
+    new_password: '',
+    confirm_password: ''
+  });
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [passwordLoading, setPasswordLoading] = useState(false);
+  
   // 招待コードフォーム状態
   const [newInvite, setNewInvite] = useState({
     invited_role: 'staff' as 'staff' | 'manager' | 'owner',
@@ -77,6 +96,122 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user, onLogout }) => {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`
     };
+  };
+
+  // 🆕 プロフィール取得
+  const fetchProfile = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/employees/me/profile`, {
+        headers: getAuthHeaders()
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setProfileData({
+          name: data.name || '',
+          phone: data.phone || '',
+          emergency_contact_name: data.emergency_contact_name || '',
+          emergency_contact_phone: data.emergency_contact_phone || ''
+        });
+      }
+    } catch (error) {
+      console.error('プロフィール取得エラー:', error);
+    }
+  };
+
+  // 🆕 プロフィール更新
+  const handleUpdateProfile = async () => {
+    setProfileLoading(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/employees/me/profile`, {
+        method: 'PUT',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(profileData)
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        alert('プロフィールを更新しました');
+        
+        // ローカルストレージのユーザー情報も更新
+        const userDataStr = localStorage.getItem('user');
+        if (userDataStr) {
+          const userData = JSON.parse(userDataStr);
+          userData.name = profileData.name;
+          localStorage.setItem('user', JSON.stringify(userData));
+        }
+        
+        setShowProfileModal(false);
+      } else {
+        const error = await response.json();
+        alert(`エラー: ${error.detail || 'プロフィール更新に失敗しました'}`);
+      }
+    } catch (error) {
+      alert('プロフィール更新中にエラーが発生しました');
+      console.error(error);
+    } finally {
+      setProfileLoading(false);
+    }
+  };
+
+  // 🆕 パスワード変更
+  const handleChangePassword = async () => {
+    // バリデーション
+    if (passwordData.new_password !== passwordData.confirm_password) {
+      alert('新しいパスワードと確認用パスワードが一致しません');
+      return;
+    }
+    
+    if (passwordData.new_password.length < 8) {
+      alert('パスワードは8文字以上で入力してください');
+      return;
+    }
+
+    setPasswordLoading(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/employees/me/password`, {
+        method: 'PUT',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          current_password: passwordData.current_password,
+          new_password: passwordData.new_password
+        })
+      });
+
+      if (response.ok) {
+        alert('パスワードを変更しました');
+        setPasswordData({
+          current_password: '',
+          new_password: '',
+          confirm_password: ''
+        });
+        setShowPasswordModal(false);
+      } else {
+        const error = await response.json();
+        alert(`エラー: ${error.detail || 'パスワード変更に失敗しました'}`);
+      }
+    } catch (error) {
+      alert('パスワード変更中にエラーが発生しました');
+      console.error(error);
+    } finally {
+      setPasswordLoading(false);
+    }
+  };
+
+  // 🆕 プロフィール編集モーダルを開く
+  const handleOpenProfileModal = () => {
+    fetchProfile();
+    setShowProfileModal(true);
+  };
+
+  // 🆕 パスワード変更モーダルを開く
+  const handleOpenPasswordModal = () => {
+    setPasswordData({
+      current_password: '',
+      new_password: '',
+      confirm_password: ''
+    });
+    setShowPasswordModal(true);
   };
 
   // 招待コード一覧を取得
@@ -235,19 +370,19 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user, onLogout }) => {
           icon: User,
           label: '個人情報',
           value: user.name,
-          action: () => console.log('個人情報編集')
+          action: handleOpenProfileModal
         },
         {
           icon: Mail,
           label: 'メールアドレス',
           value: user.email,
-          action: () => console.log('メール編集')
+          isReadOnly: true
         },
         {
           icon: Lock,
           label: 'パスワード変更',
           value: '••••••••',
-          action: () => console.log('パスワード変更')
+          action: handleOpenPasswordModal
         }
       ]
     },
@@ -363,6 +498,194 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ user, onLogout }) => {
           <span>ログアウト</span>
         </button>
       </div>
+
+      {/* 🆕 プロフィール編集モーダル */}
+      {showProfileModal && (
+        <div className="modal-overlay">
+          <div className="profile-edit-modal">
+            <div className="modal-header">
+              <div className="modal-header-left">
+                <User size={24} color="#9333EA" />
+                <h3 className="modal-title">プロフィール編集</h3>
+              </div>
+              <button 
+                onClick={() => setShowProfileModal(false)}
+                className="close-modal-button"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="modal-content">
+              <div className="form-group">
+                <label className="form-label">名前 *</label>
+                <input
+                  type="text"
+                  value={profileData.name}
+                  onChange={(e) => setProfileData(prev => ({ ...prev, name: e.target.value }))}
+                  className="form-input"
+                  placeholder="山田太郎"
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">電話番号</label>
+                <input
+                  type="tel"
+                  value={profileData.phone}
+                  onChange={(e) => setProfileData(prev => ({ ...prev, phone: e.target.value }))}
+                  className="form-input"
+                  placeholder="090-1234-5678"
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">緊急連絡先（氏名）</label>
+                <input
+                  type="text"
+                  value={profileData.emergency_contact_name}
+                  onChange={(e) => setProfileData(prev => ({ ...prev, emergency_contact_name: e.target.value }))}
+                  className="form-input"
+                  placeholder="山田花子"
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">緊急連絡先（電話番号）</label>
+                <input
+                  type="tel"
+                  value={profileData.emergency_contact_phone}
+                  onChange={(e) => setProfileData(prev => ({ ...prev, emergency_contact_phone: e.target.value }))}
+                  className="form-input"
+                  placeholder="090-8765-4321"
+                />
+              </div>
+
+              <div className="modal-actions">
+                <button
+                  onClick={() => setShowProfileModal(false)}
+                  className="cancel-button"
+                >
+                  キャンセル
+                </button>
+                <button
+                  onClick={handleUpdateProfile}
+                  disabled={!profileData.name.trim() || profileLoading}
+                  className="submit-button"
+                >
+                  {profileLoading ? '保存中...' : '保存'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 🆕 パスワード変更モーダル */}
+      {showPasswordModal && (
+        <div className="modal-overlay">
+          <div className="profile-edit-modal">
+            <div className="modal-header">
+              <div className="modal-header-left">
+                <Lock size={24} color="#9333EA" />
+                <h3 className="modal-title">パスワード変更</h3>
+              </div>
+              <button 
+                onClick={() => setShowPasswordModal(false)}
+                className="close-modal-button"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="modal-content">
+              <div className="form-group">
+                <label className="form-label">現在のパスワード *</label>
+                <div className="password-input-wrapper">
+                  <input
+                    type={showCurrentPassword ? 'text' : 'password'}
+                    value={passwordData.current_password}
+                    onChange={(e) => setPasswordData(prev => ({ ...prev, current_password: e.target.value }))}
+                    className="form-input"
+                    placeholder="現在のパスワードを入力"
+                  />
+                  <button
+                    type="button"
+                    className="password-toggle"
+                    onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                  >
+                    {showCurrentPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">新しいパスワード *</label>
+                <div className="password-input-wrapper">
+                  <input
+                    type={showNewPassword ? 'text' : 'password'}
+                    value={passwordData.new_password}
+                    onChange={(e) => setPasswordData(prev => ({ ...prev, new_password: e.target.value }))}
+                    className="form-input"
+                    placeholder="8文字以上で入力"
+                  />
+                  <button
+                    type="button"
+                    className="password-toggle"
+                    onClick={() => setShowNewPassword(!showNewPassword)}
+                  >
+                    {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
+                <div className="password-hint">
+                  大文字・小文字・数字を含む8文字以上
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">新しいパスワード（確認） *</label>
+                <input
+                  type="password"
+                  value={passwordData.confirm_password}
+                  onChange={(e) => setPasswordData(prev => ({ ...prev, confirm_password: e.target.value }))}
+                  className="form-input"
+                  placeholder="新しいパスワードを再入力"
+                />
+                {passwordData.new_password && passwordData.confirm_password && (
+                  <div className={`password-match ${passwordData.new_password === passwordData.confirm_password ? 'match' : 'no-match'}`}>
+                    {passwordData.new_password === passwordData.confirm_password ? (
+                      <><Check size={14} /> パスワードが一致しています</>
+                    ) : (
+                      <><AlertCircle size={14} /> パスワードが一致しません</>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <div className="modal-actions">
+                <button
+                  onClick={() => setShowPasswordModal(false)}
+                  className="cancel-button"
+                >
+                  キャンセル
+                </button>
+                <button
+                  onClick={handleChangePassword}
+                  disabled={
+                    !passwordData.current_password ||
+                    !passwordData.new_password ||
+                    passwordData.new_password !== passwordData.confirm_password ||
+                    passwordLoading
+                  }
+                  className="submit-button"
+                >
+                  {passwordLoading ? '変更中...' : 'パスワードを変更'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* チーム管理モーダル（招待コード + メンバー一覧） */}
       {showInviteCodeModal && (
