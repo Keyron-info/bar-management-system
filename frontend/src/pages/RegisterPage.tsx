@@ -114,12 +114,19 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ onRegisterSuccess, onBackTo
 
   return (
     <div style={{
-      minHeight: '100vh',
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      width: '100%',
       background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
       display: 'flex',
       justifyContent: 'center',
       alignItems: 'center',
       padding: '20px',
+      boxSizing: 'border-box',
+      overflowY: 'auto',
       fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
     }}>
       <div style={{

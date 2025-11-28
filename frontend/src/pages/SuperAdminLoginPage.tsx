@@ -98,12 +98,19 @@ const SuperAdminLoginPage: React.FC<SuperAdminLoginProps> = ({ onLoginSuccess })
   return (
     <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
       <div style={{
-        minHeight: '100vh',
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        width: '100%',
         background: 'linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%)',
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
         padding: '20px',
+        boxSizing: 'border-box',
+        overflowY: 'auto',
         fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
       }}>
         <div style={{

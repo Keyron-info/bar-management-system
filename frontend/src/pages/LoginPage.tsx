@@ -406,7 +406,13 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess, onShowRegister })
           </div>
         </div>
 
-        <div className="page-footer">
+        <div style={{
+          textAlign: 'center',
+          fontSize: '12px',
+          color: 'rgba(255, 255, 255, 0.5)',
+          marginTop: '20px',
+          paddingBottom: '10px'
+        }}>
           Powered by KEYRON | SaaS Edition
         </div>
 

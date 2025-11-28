@@ -6,15 +6,22 @@ body {
 }
 
 .login-page-container {
-  width: 100vw;
-  height: 100vh;
-  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh; /* Dynamic viewport height for mobile browsers */
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   background: linear-gradient(191deg, #3A0E47 2.49%, #AB3AA4 48.43%, #521364 100%);
-  overflow: hidden;
+  overflow-y: auto;
   font-family: 'Narnoor', sans-serif;
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 20px;
+  box-sizing: border-box;
 }
 
 .login-form-box {
@@ -203,15 +210,21 @@ select.form-input option {
 
 /* レスポンシブデザイン */
 @media (max-width: 480px) {
+  .login-page-container {
+    padding: 15px;
+  }
+  
   .login-form-box {
-    width: 90%;
-    max-width: 320px;
-    padding: 30px 20px;
-    margin: 20px;
+    width: 100%;
+    max-width: 100%;
+    padding: 25px 20px;
+    margin: 0;
+    border-radius: 12px;
   }
   
   .form-header {
     font-size: 24px;
+    margin-bottom: 25px;
   }
   
   .form-input {
@@ -224,12 +237,33 @@ select.form-input option {
     width: 18px;
     height: 18px;
   }
+  
+  .auth-links {
+    flex-direction: column;
+    gap: 15px;
+    align-items: flex-start;
+  }
+  
+  .auth-link-section {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  
+  .page-footer {
+    position: relative;
+    bottom: auto;
+    margin-top: 20px;
+    padding: 10px 0;
+  }
 }
 
-@media (max-width: 390px) {
-  .login-page-container {
-    width: 390px;
-    height: 844px;
-    margin: 0 auto;
+@media (max-width: 360px) {
+  .login-form-box {
+    padding: 20px 15px;
+  }
+  
+  .form-header {
+    font-size: 22px;
   }
 }
