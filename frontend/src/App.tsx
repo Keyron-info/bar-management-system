@@ -12,6 +12,7 @@ import SettingsPage from './pages/SettingsPage';
 import ReportHistoryPage from './pages/ReportHistoryPage';
 import SuperAdminLoginPage from './pages/SuperAdminLoginPage';
 import SuperAdminDashboard from './pages/SuperAdminDashboard';
+import ReceiptScanPage from './pages/ReceiptScanPage';
 
 // 通知システムのインポート
 import { NotificationProvider, NotificationBell, useNotifications } from './components/NotificationSystem';
@@ -32,7 +33,7 @@ interface Store {
   monthly_goal: number;
 }
 
-type PageType = 'personal' | 'store' | 'daily-report' | 'shift' | 'settings' | 'report-history';
+type PageType = 'personal' | 'store' | 'daily-report' | 'shift' | 'settings' | 'report-history' | 'receipt-scan';
 
 function App() {
   const [user, setUser] = useState<User | null>(null);
@@ -77,6 +78,20 @@ function App() {
     }
 
     setLoading(false);
+
+    // カスタムナビゲーションイベントのリスナー
+    const handleNavigate = (event: CustomEvent) => {
+      const page = event.detail as PageType;
+      if (page) {
+        setCurrentPage(page);
+      }
+    };
+
+    window.addEventListener('navigateTo', handleNavigate as EventListener);
+    
+    return () => {
+      window.removeEventListener('navigateTo', handleNavigate as EventListener);
+    };
   }, []);
 
   const handleLoginSuccess = () => {
@@ -167,6 +182,14 @@ function App() {
         return <SettingsPage user={user} onLogout={handleLogout} />;
       case 'report-history':
         return <ReportHistoryPage user={user} />;
+      case 'receipt-scan':
+        return (
+          <ReceiptScanPage 
+            user={user} 
+            onBack={() => setCurrentPage('daily-report')}
+            onReceiptAdded={() => setCurrentPage('daily-report')}
+          />
+        );
       default:
         return <PersonalPage user={user} />;
     }
@@ -372,6 +395,43 @@ function App() {
             <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
           </svg>
           <span style={{ fontSize: '10px', marginTop: '4px' }}>日報</span>
+        </button>
+
+        {/* AI伝票スキャン */}
+        <button
+          onClick={() => setCurrentPage('receipt-scan')}
+          style={{
+            background: currentPage === 'receipt-scan' 
+              ? 'linear-gradient(135deg, rgba(147,51,234,0.4), rgba(236,72,153,0.4))' 
+              : 'none',
+            border: 'none',
+            color: 'white',
+            cursor: 'pointer',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            padding: '8px 12px',
+            borderRadius: '12px',
+            opacity: currentPage === 'receipt-scan' ? 1 : 0.7,
+            transition: 'all 0.2s ease',
+            position: 'relative'
+          }}
+        >
+          <div style={{
+            position: 'absolute',
+            top: '2px',
+            right: '2px',
+            width: '8px',
+            height: '8px',
+            borderRadius: '50%',
+            background: 'linear-gradient(135deg, #fbbf24, #f59e0b)',
+            animation: 'pulse 2s infinite'
+          }} />
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="white">
+            <path d="M4 4h16v2H4V4zm0 14h16v2H4v-2zm0-7h16v2H4v-2zM2 2v20h20V2H2zm18 18H4V4h16v16z"/>
+            <circle cx="12" cy="12" r="3" fill="white"/>
+          </svg>
+          <span style={{ fontSize: '10px', marginTop: '4px' }}>スキャン</span>
         </button>
 
         {/* 履歴（店長・オーナーのみ） */}

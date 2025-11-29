@@ -730,3 +730,82 @@ class NotificationResponse(BaseModel):
 class NotificationMarkRead(BaseModel):
     """通知既読マーク用スキーマ"""
     notification_ids: List[int]
+
+
+# ====== AI伝票スキャン関連スキーマ ======
+
+class ProcessingStatus(str, Enum):
+    """OCR処理ステータス"""
+    PENDING = "pending"
+    PROCESSING = "processing"
+    COMPLETED = "completed"
+    FAILED = "failed"
+
+
+class ReceiptScanRequest(BaseModel):
+    """伝票スキャンリクエスト"""
+    image_data: str = Field(..., description="Base64エンコードされた画像データ")
+    daily_report_id: Optional[int] = Field(None, description="関連付ける日報ID")
+
+
+class ExtractedReceiptData(BaseModel):
+    """OCR抽出データ"""
+    total_amount: Optional[int] = Field(None, description="合計金額")
+    customer_name: Optional[str] = Field(None, description="顧客名")
+    employee_name: Optional[str] = Field(None, description="担当者名")
+    date: Optional[str] = Field(None, description="日付 (YYYY-MM-DD)")
+    drink_count: Optional[int] = Field(None, description="ドリンク数")
+    champagne_type: Optional[str] = Field(None, description="シャンパン種類")
+    champagne_price: Optional[int] = Field(None, description="シャンパン金額")
+    is_card: Optional[bool] = Field(None, description="カード決済かどうか")
+
+
+class ReceiptScanResponse(BaseModel):
+    """伝票スキャンレスポンス"""
+    success: bool
+    receipt_image_id: Optional[int] = None
+    image_url: Optional[str] = None
+    extracted_data: Optional[ExtractedReceiptData] = None
+    confidence_score: Optional[float] = None
+    ocr_text: Optional[str] = None
+    is_test_mode: bool = False
+    error: Optional[str] = None
+    
+    class Config:
+        from_attributes = True
+
+
+class ReceiptScanConfirmRequest(BaseModel):
+    """スキャン結果確認リクエスト"""
+    confirmed_data: ExtractedReceiptData
+    manual_corrections: Optional[dict] = Field(None, description="手動修正内容")
+    daily_report_id: Optional[int] = Field(None, description="日報ID")
+
+
+class ReceiptScanConfirmResponse(BaseModel):
+    """スキャン結果確認レスポンス"""
+    success: bool
+    receipt_id: Optional[int] = None
+    daily_report_id: Optional[int] = None
+    message: str
+    
+    class Config:
+        from_attributes = True
+
+
+class ReceiptImageResponse(BaseModel):
+    """伝票画像レスポンス"""
+    id: int
+    store_id: int
+    employee_id: int
+    daily_report_id: Optional[int] = None
+    receipt_id: Optional[int] = None
+    image_url: str
+    processing_status: str
+    confidence_score: Optional[float] = None
+    is_verified: bool
+    uploaded_at: datetime
+    processed_at: Optional[datetime] = None
+    
+    class Config:
+        from_attributes = True

@@ -315,6 +315,46 @@ class DailyReport(Base):
     receipts = relationship("Receipt", back_populates="daily_report", cascade="all, delete-orphan")
 
 
+class ProcessingStatus(enum.Enum):
+    """OCR処理ステータス"""
+    PENDING = "pending"
+    PROCESSING = "processing"
+    COMPLETED = "completed"
+    FAILED = "failed"
+
+
+class ReceiptImage(Base):
+    """伝票画像テーブル（OCR用）"""
+    __tablename__ = "receipt_images"
+    id = Column(Integer, primary_key=True, index=True)
+    store_id = Column(Integer, ForeignKey("stores.id"), nullable=False)
+    employee_id = Column(Integer, ForeignKey("employees.id"), nullable=False)
+    daily_report_id = Column(Integer, ForeignKey("daily_reports.id"), nullable=True)
+    receipt_id = Column(Integer, ForeignKey("receipts.id"), nullable=True)
+    
+    # 画像情報
+    image_url = Column(String(500), nullable=False)
+    image_hash = Column(String(64))  # SHA-256ハッシュ（重複検出用）
+    file_size = Column(Integer)
+    mime_type = Column(String(50))
+    
+    # OCR結果
+    ocr_raw_response = Column(Text)  # JSONテキスト
+    ocr_extracted_data = Column(Text)  # JSON形式の抽出データ
+    
+    # 処理状態
+    processing_status = Column(Enum(ProcessingStatus), default=ProcessingStatus.PENDING)
+    error_message = Column(Text)
+    is_verified = Column(Boolean, default=False)
+    confidence_score = Column(Float)
+    
+    # タイムスタンプ
+    uploaded_at = Column(DateTime, default=datetime.utcnow)
+    processed_at = Column(DateTime)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
 class Receipt(Base):
     """伝票テーブル"""
     __tablename__ = "receipts"
@@ -331,6 +371,11 @@ class Receipt(Base):
     receipt_number = Column(String(50))
     table_number = Column(String(20))
     service_charge = Column(Integer, default=0)
+    
+    # OCR関連
+    receipt_image_id = Column(Integer, ForeignKey("receipt_images.id"), nullable=True)
+    is_auto_generated = Column(Boolean, default=False)  # OCRで自動生成されたか
+    manual_corrections = Column(Text)  # 手動修正内容（JSON）
     
     created_at = Column(DateTime, default=datetime.utcnow)
     

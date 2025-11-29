@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { API_BASE_URL } from '../config';
-import { Calendar, Plus, Settings, X, Receipt, Calculator, DollarSign, User, Edit, ChevronDown, Wine, Trash2, Users } from 'lucide-react';
+import { Calendar, Plus, Settings, X, Receipt, Calculator, DollarSign, User, Edit, ChevronDown, Wine, Trash2, Users, Camera, Sparkles, Scan } from 'lucide-react';
 
 interface User {
   id: number;
@@ -669,31 +669,78 @@ const submitDailyReport = async () => {
           </span>
         </div>
         
-        <button 
-          onClick={() => setShowReceiptForm(true)}
-          style={{
-            width: '100%',
-            padding: '15px',
-            background: 'linear-gradient(135deg, #9333EA, #F0E)',
-            color: 'white',
-            border: 'none',
-            borderRadius: '8px',
-            fontSize: '16px',
-            fontWeight: '600',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '8px',
-            marginBottom: '20px',
-            transition: 'transform 0.2s ease'
-          }}
-          onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-1px)'}
-          onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
-        >
-          <Plus size={20} />
-          新しい伝票を追加
-        </button>
+        {/* AI伝票スキャンボタン */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr',
+          gap: '12px',
+          marginBottom: '20px'
+        }}>
+          <a 
+            href="#receipt-scan"
+            onClick={(e) => {
+              e.preventDefault();
+              // ナビゲーションイベントを発火してスキャンページへ
+              window.dispatchEvent(new CustomEvent('navigateTo', { detail: 'receipt-scan' }));
+            }}
+            style={{
+              padding: '15px',
+              background: 'linear-gradient(135deg, #0f0f1a, #1a1a2e)',
+              color: 'white',
+              border: '2px solid transparent',
+              borderImage: 'linear-gradient(135deg, #9333EA, #ec4899) 1',
+              borderRadius: '12px',
+              fontSize: '14px',
+              fontWeight: '600',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              transition: 'all 0.3s ease',
+              textDecoration: 'none',
+              position: 'relative',
+              overflow: 'hidden'
+            }}
+          >
+            <div style={{
+              position: 'absolute',
+              top: '8px',
+              right: '8px',
+              width: '8px',
+              height: '8px',
+              borderRadius: '50%',
+              background: 'linear-gradient(135deg, #fbbf24, #f59e0b)',
+              animation: 'pulse 2s infinite'
+            }} />
+            <Sparkles size={18} style={{ color: '#fbbf24' }} />
+            <span>AIスキャン</span>
+          </a>
+
+          <button 
+            onClick={() => setShowReceiptForm(true)}
+            style={{
+              padding: '15px',
+              background: 'linear-gradient(135deg, #9333EA, #ec4899)',
+              color: 'white',
+              border: 'none',
+              borderRadius: '12px',
+              fontSize: '14px',
+              fontWeight: '600',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              transition: 'transform 0.2s ease'
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-1px)'}
+            onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+          >
+            <Plus size={18} />
+            <span>手動入力</span>
+          </button>
+        </div>
 
         {receipts.length > 0 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>

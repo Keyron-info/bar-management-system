@@ -213,6 +213,15 @@ def startup_event():
         print("アプリケーションは起動しますが、一部機能が制限される可能性があります")
 
 
+# ====== AI伝票スキャンルーターを追加 ======
+try:
+    from routes.receipt_scan import router as receipt_scan_router
+    app.include_router(receipt_scan_router)
+    print("✅ 伝票スキャンAPIルーター登録完了")
+except ImportError as e:
+    print(f"⚠️ 伝票スキャンAPIルーター登録スキップ: {e}")
+
+
 # ====== ヘルスチェック・基本エンドポイント ======
 
 @app.get("/")
