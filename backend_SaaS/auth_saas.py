@@ -1,3 +1,4 @@
+import os
 from datetime import datetime, timedelta
 from typing import Optional, Union
 from jose import JWTError, jwt
@@ -12,10 +13,12 @@ import ipaddress
 # パスワードハッシュ化の設定
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-# JWT設定
-SECRET_KEY = "your-super-secret-key-change-in-production-saas-2024"
+# JWT設定 - 環境変数から取得（本番では必ず設定する）
+SECRET_KEY = os.getenv("SECRET_KEY", "your-super-secret-key-change-in-production-saas-2024")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 480  # 8時間（SaaS運用を考慮して長め）
+
+print(f"🔐 JWT SECRET_KEY loaded (length: {len(SECRET_KEY)})")
 
 # HTTP Bearer認証
 security = HTTPBearer()

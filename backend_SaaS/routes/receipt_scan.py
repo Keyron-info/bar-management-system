@@ -259,8 +259,8 @@ async def delete_scan(
             detail="スキャン画像が見つかりません"
         )
     
-    # 関連する伝票がある場合は削除不可
-    if receipt_image.receipt_id:
+    # 既に確認済みの場合は削除不可
+    if receipt_image.is_verified:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="この画像は伝票に紐付いているため削除できません"
